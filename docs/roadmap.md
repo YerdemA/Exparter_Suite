@@ -6,7 +6,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 
 | Faz | Konu | Durum |
 |---|---|---|
-| 0 | Kurulum | Tamamlandı, onay bekliyor |
+| 0 | Kurulum | Tamamlandı (2026-10-06) |
 | 1 | Domain ve veri tasarımı | Başlamadı |
 | 2 | API sözleşmesi | Başlamadı |
 | 3 | Backend iskeleti | Başlamadı |
