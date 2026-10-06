@@ -170,10 +170,12 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 - Bir kullanıcı kendine takas isteği gönderemez.
 - Aynı iki kullanıcı arasında aynı anda yalnızca bir aktif (`Pending`) istek olabilir.
 - Mesajlaşma yalnızca eşleşmiş kullanıcılar arasında mümkündür.
-- Değerlendirme yalnızca tamamlanmış bir takas oturumundan sonra ve her oturum için kişi başı bir kez yapılabilir.
+- Değerlendirme yalnızca tamamlanmış bir takas oturumundan sonra yapılabilir. Bir kullanıcı başka bir kullanıcıyı yalnızca bir kez değerlendirebilir.
 - Durum geçişleri domain katmanında korunur. Geçersiz geçiş, domain hatası fırlatır.
 
 **AÇIK SORULAR (karar vermeden bana sor):**
+
+> Bu beş soru 2026-10-06'da karara bağlandı. Kararlar ve hâlâ açık olan sorular `docs/domain/open-questions.md` dosyasındadır.
 
 1. Zaman/kredi bankası sistemi olacak mı, yoksa takas tamamen karşılıklı mı?
 2. Takaslar yalnızca çevrimiçi mi, yüz yüze seçeneği de olacak mı? Konum verisi tutulacak mı?
