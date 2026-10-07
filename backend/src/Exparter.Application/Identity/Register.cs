@@ -13,10 +13,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
     public RegisterCommandValidator()
     {
         RuleFor(x => x.Email).NotEmpty().MaximumLength(254).EmailAddress();
-        RuleFor(x => x.Username)
-            .NotEmpty()
-            .Must(username => Username.IsWellFormed(Username.Normalize(username)))
-            .WithMessage("The username must be 3-30 characters of letters, digits, underscores and periods, with no period at the start or end and no consecutive periods.");
+        RuleFor(x => x.Username).ValidUsername();
         RuleFor(x => x.Password).NotEmpty().MinimumLength(8).MaximumLength(128);
         RuleFor(x => x.AgeConfirmed).Equal(true).WithMessage("You must confirm that you are 18 or older.");
     }
@@ -39,7 +36,7 @@ public sealed class RegisterCommandHandler(
             throw IdentityAppErrors.EmailAlreadyRegistered();
         }
 
-        if (await users.GetByUsernameAsync(Username.Normalize(command.Username), cancellationToken) is not null)
+        if (await users.GetByUsernameAsync(command.Username, cancellationToken) is not null)
         {
             throw IdentityAppErrors.UsernameAlreadyTaken();
         }

@@ -235,7 +235,7 @@ erDiagram
 | Tablo | Kısıt | Kural |
 |---|---|---|
 | `USER` | `email` benzersiz (küçük harfe normalize) | ID-01 |
-| `USER` | `username` benzersiz (küçük harfe normalize) | ID-15 |
+| `USER` | `username` benzersiz | ID-15 |
 | `SKILL` | `slug` benzersiz | SK-03 |
 | `USER_SKILL` | (`user_id`, `skill_id`, `type`) benzersiz | SK-04 |
 | `SWAP_REQUEST` | Sırasız kullanıcı çifti benzersiz, yalnızca `status = Pending` satırlarda (kısmi index) | RQ-05 |

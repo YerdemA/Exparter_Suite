@@ -19,7 +19,7 @@ public class RegisterCommandHandlerTests
         _context.UnitOfWork,
         _context.Clock);
 
-    private static RegisterCommand Command(string email = "Ayse@Example.com", string username = "Ayse") =>
+    private static RegisterCommand Command(string email = "Ayse@Example.com", string username = "ayse") =>
         new(email, username, IdentityTestContext.Password, AgeConfirmed: true);
 
     [Fact]
@@ -56,12 +56,12 @@ public class RegisterCommandHandlerTests
     }
 
     [Fact]
-    public async Task Rejects_a_username_that_is_already_taken_regardless_of_case()
+    public async Task Rejects_a_username_that_is_already_taken()
     {
         _context.AddUser(email: "other@example.com", username: "ayse");
 
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await Handler.Handle(Command(username: "AYSE"), CancellationToken.None));
+            async () => await Handler.Handle(Command(username: "ayse"), CancellationToken.None));
 
         Assert.Equal("username_already_taken", exception.Code);
     }
@@ -83,17 +83,19 @@ public class RegisterCommandValidatorTests
 
     [Fact]
     public void Accepts_a_valid_command() =>
-        Assert.True(_validator.Validate(new RegisterCommand("ayse@example.com", "Ayse.Yilmaz", "Passw0rd!x", true)).IsValid);
+        Assert.True(_validator.Validate(new RegisterCommand("ayse@example.com", "ayse.yilmaz", "Passw0rd!x", true)).IsValid);
 
     [Theory]
     [InlineData("not-an-email", "ayse", "Passw0rd!x", true, nameof(RegisterCommand.Email))]
     [InlineData("ayse@example.com", "a", "Passw0rd!x", true, nameof(RegisterCommand.Username))]
     [InlineData("ayse@example.com", "ay..se", "Passw0rd!x", true, nameof(RegisterCommand.Username))]
+    [InlineData("ayse@example.com", "Ayse", "Passw0rd!x", true, nameof(RegisterCommand.Username))]
+    [InlineData("ayse@example.com", null, "Passw0rd!x", true, nameof(RegisterCommand.Username))]
     [InlineData("ayse@example.com", "ayse", "short", true, nameof(RegisterCommand.Password))]
     [InlineData("ayse@example.com", "ayse", "Passw0rd!x", false, nameof(RegisterCommand.AgeConfirmed))]
-    public void Rejects_invalid_fields(string email, string username, string password, bool ageConfirmed, string field)
+    public void Rejects_invalid_fields(string email, string? username, string password, bool ageConfirmed, string field)
     {
-        var result = _validator.Validate(new RegisterCommand(email, username, password, ageConfirmed));
+        var result = _validator.Validate(new RegisterCommand(email, username!, password, ageConfirmed));
 
         Assert.Contains(result.Errors, error => error.PropertyName == field);
     }

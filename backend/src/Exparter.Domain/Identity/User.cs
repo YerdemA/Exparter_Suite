@@ -57,6 +57,8 @@ public sealed class User
 
     public void ChangePassword(string passwordHash) => PasswordHash = passwordHash;
 
+    public void ChangeUsername(string username) => Username = Identity.Username.Parse(username);
+
     public void RequestDeletion(DateTimeOffset now)
     {
         if (Status != UserStatus.Active)

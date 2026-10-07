@@ -196,6 +196,27 @@ paths:
               schema: { $ref: '#/components/schemas/Account' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /api/v1/me/username:
+    put:
+      tags: [Account]
+      operationId: changeUsername
+      summary: Change the signed-in user's username
+      description: Sending the current username succeeds without changing anything.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangeUsernameRequest' }
+      responses:
+        '200':
+          description: The account with its new username.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
   /api/v1/me/deletion-request:
     post:
       tags: [Account]
@@ -1625,10 +1646,10 @@ components:
       type: string
       minLength: 3
       maxLength: 30
-      pattern: '^[A-Za-z0-9_][A-Za-z0-9_.]{1,28}[A-Za-z0-9_]$'
+      pattern: '^[a-z0-9_][a-z0-9_.]{1,28}[a-z0-9_]$'
       description: |
-        Unique handle. Letters, digits, underscores and periods; no period at the start
-        or end and no consecutive periods. Case-insensitive: stored and returned in lowercase.
+        Unique handle. Lowercase letters, digits, underscores and periods; no period at the
+        start or end and no consecutive periods. Uppercase letters are rejected.
       example: ayse.yilmaz
 
     RegisterRequest:
@@ -1649,7 +1670,7 @@ components:
         identifier:
           type: string
           maxLength: 254
-          description: The account's email address or username.
+          description: The account's email address or username. Matching ignores letter case.
         password: { type: string, format: password, maxLength: 128 }
 
     RefreshTokenRequest:
@@ -1713,6 +1734,12 @@ components:
         emailVerified: { type: boolean }
         role: { $ref: '#/components/schemas/UserRole' }
         createdAt: { type: string, format: date-time }
+
+    ChangeUsernameRequest:
+      type: object
+      required: [username]
+      properties:
+        username: { $ref: '#/components/schemas/Username' }
 
     AccountDeletionRequest:
       type: object

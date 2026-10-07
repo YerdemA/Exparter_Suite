@@ -6,16 +6,26 @@ namespace Exparter.Domain.Tests.Identity;
 public class UsernameTests
 {
     [Theory]
-    [InlineData("ayse", "ayse")]
-    [InlineData("Ayse.Yilmaz", "ayse.yilmaz")]
-    [InlineData("  user_01  ", "user_01")]
-    [InlineData("a_b", "a_b")]
+    [InlineData("ayse")]
+    [InlineData("ayse.yilmaz")]
+    [InlineData("user_01")]
+    [InlineData("a_b")]
+    [InlineData("_a1")]
+    public void Parse_accepts_valid_usernames(string input) =>
+        Assert.Equal(input, Username.Parse(input));
+
+    [Theory]
+    [InlineData("Ayse", "ayse")]
+    [InlineData("  ayse.yilmaz  ", "ayse.yilmaz")]
     [InlineData("ISIK", "isik")]
-    public void Parse_normalizes_valid_usernames(string input, string expected) =>
-        Assert.Equal(expected, Username.Parse(input));
+    public void NormalizeForLookup_folds_sign_in_input_to_the_stored_form(string input, string expected) =>
+        Assert.Equal(expected, Username.NormalizeForLookup(input));
 
     [Theory]
     [InlineData("ab")]
+    [InlineData("Ayse")]
+    [InlineData("AYSE")]
+    [InlineData(" ayse")]
     [InlineData(".ayse")]
     [InlineData("ayse.")]
     [InlineData("ay..se")]
@@ -31,7 +41,7 @@ public class UsernameTests
 
     [Theory]
     [InlineData("admin")]
-    [InlineData("Exparter")]
+    [InlineData("exparter")]
     [InlineData("destek")]
     public void Parse_rejects_reserved_usernames(string input)
     {

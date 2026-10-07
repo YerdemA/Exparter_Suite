@@ -28,7 +28,7 @@ public sealed class LoginCommandHandler(
         // A username can never contain "@", so its presence tells the two apart.
         var user = command.Identifier.Contains('@')
             ? await users.GetByEmailAsync(User.NormalizeEmail(command.Identifier), cancellationToken)
-            : await users.GetByUsernameAsync(Username.Normalize(command.Identifier), cancellationToken);
+            : await users.GetByUsernameAsync(Username.NormalizeForLookup(command.Identifier), cancellationToken);
 
         if (user is null || !passwordHasher.Verify(user.PasswordHash, command.Password))
         {

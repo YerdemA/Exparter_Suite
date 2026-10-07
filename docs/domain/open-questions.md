@@ -44,7 +44,7 @@
 | Eşleşme sona erince oturumlar | Tamamlanmamış oturumlar iptal edilir. |
 | Kullanılan yeteneği kaldırma | Aktif eşleşmede veya bekleyen istekte kullanılan sunulan yetenek kaldırılamaz. |
 | ADR 0003 | Token süreleri ve PBKDF2 `PasswordHasher` onaylandı. |
-| Kullanıcı adı | Kayıtta benzersiz kullanıcı adı alınır; giriş e-posta veya kullanıcı adıyla yapılabilir (referans: Instagram). |
+| Kullanıcı adı | Kayıtta benzersiz kullanıcı adı alınır; giriş e-posta veya kullanıcı adıyla yapılabilir (referans: Instagram). Yalnızca küçük harf kullanılır; kullanıcı adı sonradan değiştirilebilir. |
 | Admin kapsamı | MVP'de katalog yönetimi ve kullanıcı askıya alma endpoint'i yok; katalog başlangıç verisi migration ile gelir. |
 | E-posta bekleme süresi | 3 ay, kalıcı silmeden itibaren sayılır. |
 

@@ -30,6 +30,56 @@ public class GetAccountQueryHandlerTests
     }
 }
 
+public class ChangeUsernameCommandHandlerTests
+{
+    private readonly IdentityTestContext _context = new();
+
+    private ChangeUsernameCommandHandler Handler => new(_context.Users, _context.UnitOfWork);
+
+    [Fact]
+    public async Task Changes_the_username()
+    {
+        var user = _context.AddUser();
+
+        var account = await Handler.Handle(new ChangeUsernameCommand(user.Id, "ayse.yilmaz"), CancellationToken.None);
+
+        Assert.Equal("ayse.yilmaz", account.Username);
+        Assert.Equal("ayse.yilmaz", user.Username);
+        Assert.Equal(1, _context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task Keeping_the_current_username_is_a_no_op()
+    {
+        var user = _context.AddUser();
+
+        var account = await Handler.Handle(new ChangeUsernameCommand(user.Id, "ayse"), CancellationToken.None);
+
+        Assert.Equal("ayse", account.Username);
+        Assert.Equal(0, _context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task Rejects_a_username_taken_by_someone_else()
+    {
+        var user = _context.AddUser();
+        _context.AddUser(email: "other@example.com", username: "taken");
+
+        var exception = await Assert.ThrowsAsync<AppException>(
+            async () => await Handler.Handle(new ChangeUsernameCommand(user.Id, "taken"), CancellationToken.None));
+
+        Assert.Equal("username_already_taken", exception.Code);
+        Assert.Equal("ayse", user.Username);
+    }
+
+    [Theory]
+    [InlineData("Ayse")]
+    [InlineData("a")]
+    [InlineData("")]
+    public void Validator_rejects_malformed_usernames(string username) =>
+        Assert.False(new ChangeUsernameCommandValidator().Validate(new ChangeUsernameCommand(Guid.NewGuid(), username)).IsValid);
+}
+
 public class RequestAccountDeletionCommandHandlerTests
 {
     private readonly IdentityTestContext _context = new();

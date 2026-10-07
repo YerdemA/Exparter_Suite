@@ -7,10 +7,10 @@ public class UserTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 7, 12, 0, 0, TimeSpan.Zero);
 
-    private static User NewUser() => User.Register("Ayse@Example.com", "Ayse", "hash", ageConfirmed: true, Now);
+    private static User NewUser() => User.Register("Ayse@Example.com", "ayse", "hash", ageConfirmed: true, Now);
 
     [Fact]
-    public void Register_normalizes_email_and_username()
+    public void Register_normalizes_the_email()
     {
         var user = NewUser();
 
@@ -29,6 +29,28 @@ public class UserTests
             () => User.Register("ayse@example.com", "ayse", "hash", ageConfirmed: false, Now));
 
         Assert.Equal(IdentityErrors.AgeNotConfirmedCode, exception.Code);
+    }
+
+    [Fact]
+    public void Register_rejects_an_uppercase_username()
+    {
+        var exception = Assert.Throws<DomainException>(
+            () => User.Register("ayse@example.com", "Ayse", "hash", ageConfirmed: true, Now));
+
+        Assert.Equal(IdentityErrors.InvalidUsernameCode, exception.Code);
+    }
+
+    [Fact]
+    public void ChangeUsername_applies_the_same_rules_as_registration()
+    {
+        var user = NewUser();
+
+        user.ChangeUsername("ayse.yilmaz");
+
+        Assert.Equal("ayse.yilmaz", user.Username);
+        Assert.Equal(IdentityErrors.InvalidUsernameCode, Assert.Throws<DomainException>(() => user.ChangeUsername("Ayse")).Code);
+        Assert.Equal(IdentityErrors.UsernameReservedCode, Assert.Throws<DomainException>(() => user.ChangeUsername("admin")).Code);
+        Assert.Equal("ayse.yilmaz", user.Username);
     }
 
     [Fact]

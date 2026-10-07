@@ -19,6 +19,8 @@ internal sealed record PasswordResetConfirmRequest(string Token, string NewPassw
 
 internal sealed record AccountDeletionRequest(string Password);
 
+internal sealed record ChangeUsernameRequest(string Username);
+
 internal static class IdentityEndpoints
 {
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder routes)
@@ -73,6 +75,9 @@ internal static class IdentityEndpoints
 
         me.MapGet("", async (ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
             Results.Ok(await sender.Send(new GetAccountQuery(user.GetUserId()), cancellationToken)));
+
+        me.MapPut("/username", async (ChangeUsernameRequest request, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
+            Results.Ok(await sender.Send(new ChangeUsernameCommand(user.GetUserId(), request.Username), cancellationToken)));
 
         me.MapPost("/deletion-request", async (AccountDeletionRequest request, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
         {

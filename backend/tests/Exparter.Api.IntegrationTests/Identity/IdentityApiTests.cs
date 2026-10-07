@@ -72,7 +72,7 @@ public class IdentityApiTests(ApiFixture fixture)
         var id = Unique();
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = $"New{id}@Example.com", username = $"New{id}", password = Password, ageConfirmed = true });
+            new { email = $"New{id}@Example.com", username = $"new{id}", password = Password, ageConfirmed = true });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -128,7 +128,7 @@ public class IdentityApiTests(ApiFixture fixture)
             new { email = user.Email.ToUpperInvariant(), username = $"other{Unique()}", password = Password, ageConfirmed = true });
         var sameUsername = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = $"other{Unique()}@example.com", username = user.Username.ToUpperInvariant(), password = Password, ageConfirmed = true });
+            new { email = $"other{Unique()}@example.com", username = user.Username, password = Password, ageConfirmed = true });
         var reserved = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
             new { email = $"other{Unique()}@example.com", username = "admin", password = Password, ageConfirmed = true });
@@ -136,6 +136,45 @@ public class IdentityApiTests(ApiFixture fixture)
         await AssertProblemAsync(sameEmail, HttpStatusCode.Conflict, "email_already_registered");
         await AssertProblemAsync(sameUsername, HttpStatusCode.Conflict, "username_already_taken");
         await AssertProblemAsync(reserved, HttpStatusCode.Conflict, "username_reserved");
+    }
+
+    [Fact]
+    public async Task Register_rejects_an_uppercase_username()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new { email = $"upper{Unique()}@example.com", username = $"Upper{Unique()}", password = Password, ageConfirmed = true });
+
+        var problem = await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_failed");
+        Assert.True(problem.GetProperty("errors").TryGetProperty("username", out _));
+    }
+
+    [Fact]
+    public async Task Username_can_be_changed_and_used_to_sign_in()
+    {
+        var user = await RegisterAsync();
+        var other = await RegisterAsync();
+        var newUsername = $"renamed.{Unique()}";
+
+        var change = await SendAuthorizedAsync(HttpMethod.Put, "/api/v1/me/username", user.AccessToken, new { username = newUsername });
+        Assert.Equal(HttpStatusCode.OK, change.StatusCode);
+        Assert.Equal(newUsername, (await change.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("username").GetString());
+
+        Assert.Equal(HttpStatusCode.OK, (await LoginAsync(newUsername)).StatusCode);
+        await AssertProblemAsync(await LoginAsync(user.Username), HttpStatusCode.Unauthorized, "invalid_credentials");
+
+        await AssertProblemAsync(
+            await SendAuthorizedAsync(HttpMethod.Put, "/api/v1/me/username", user.AccessToken, new { username = other.Username }),
+            HttpStatusCode.Conflict,
+            "username_already_taken");
+        await AssertProblemAsync(
+            await SendAuthorizedAsync(HttpMethod.Put, "/api/v1/me/username", user.AccessToken, new { username = "Not.Lowercase" }),
+            HttpStatusCode.BadRequest,
+            "validation_failed");
+        await AssertProblemAsync(
+            await _client.PutAsJsonAsync("/api/v1/me/username", new { username = newUsername }),
+            HttpStatusCode.Unauthorized,
+            "unauthorized");
     }
 
     [Fact]
