@@ -1,6 +1,6 @@
 # ADR 0005: API sözleşmesinin biçimi ve denetimi
 
-- **Durum:** Önerildi
+- **Durum:** Kabul edildi
 - **Tarih:** 2026-10-07
 
 ## Bağlam

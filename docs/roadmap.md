@@ -8,7 +8,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 |---|---|---|
 | 0 | Kurulum | Tamamlandı (2026-10-06) |
 | 1 | Domain ve veri tasarımı | Tamamlandı (2026-10-07) |
-| 2 | API sözleşmesi | Taslak hazır, onay bekliyor |
+| 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Başlamadı |
 | 4 | Mobil iskelet | Başlamadı |
 | 5 | Dikey dilimler | Başlamadı |
