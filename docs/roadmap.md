@@ -7,7 +7,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | Faz | Konu | Durum |
 |---|---|---|
 | 0 | Kurulum | Tamamlandı (2026-10-06) |
-| 1 | Domain ve veri tasarımı | Başlamadı |
+| 1 | Domain ve veri tasarımı | Tamamlandı (2026-10-07) |
 | 2 | API sözleşmesi | Başlamadı |
 | 3 | Backend iskeleti | Başlamadı |
 | 4 | Mobil iskelet | Başlamadı |
@@ -21,6 +21,14 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 - `docker-compose.yml` yalnızca PostgreSQL içerir. Host portu `.env` içindeki `POSTGRES_PORT` ile ayarlanır (varsayılan 5432).
 - MinIO kapsamdan çıkarıldı. S3 uyumlu nesne depolama ürünü Faz 5.1'de (avatar yükleme) ADR ile seçilecek.
 - Kabul kriteri doğrulandı (2026-10-06): `docker compose up -d --wait` ile PostgreSQL `healthy` duruma geldi ve sorgu yanıtladı.
+
+## Faz 1 — Domain ve veri tasarımı
+
+- `docs/domain/`: sözlük, domain modeli, iş kuralları, kararlar ve açık sorular.
+- `docs/erd/erd.md`: Mermaid ERD, tablo sahipliği, benzersizlik kısıtları.
+- `docs/adr/`: 0001 modüler monolit, 0002 PostgreSQL, 0003 auth stratejisi, 0004 mobil state yönetimi.
+- Domain modeli ve ERD 2026-10-07'de onaylandı.
+- Faz 2'den önce cevaplanması gereken tek açık soru: reşit olmayan kullanıcılar (`docs/domain/open-questions.md`).
 
 ## Geliştirme ortamı
 

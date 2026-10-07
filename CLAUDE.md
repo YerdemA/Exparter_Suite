@@ -20,7 +20,7 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 ## Mimari (değiştirmek için ADR ve onay gerekir)
 
 - **API-first:** `contracts/openapi.yaml` tek doğruluk kaynağıdır. Endpoint önce sözleşmede tanımlanır; istemci API kodu sözleşmeden üretilir, elle yazılmaz.
-- **Modüler monolit:** `Identity`, `Profiles`, `Skills`, `Matching`, `Messaging`, `Sessions`, `Reviews`, `Notifications`. Modüller birbirinin tablolarına erişmez; uygulama servisleri veya domain event'leriyle konuşur. Mikroservis ve event sourcing yok.
+- **Modüler monolit:** `Identity`, `Profiles`, `Skills`, `Matching`, `Messaging`, `Sessions`, `Reviews`, `Notifications`, `Moderation`. Modüller birbirinin tablolarına erişmez; uygulama servisleri veya domain event'leriyle konuşur. Mikroservis ve event sourcing yok.
 - **Gerçek zamanlılık:** SignalR hub'ları istemci tipinden bağımsızdır; arka planda FCM.
 - **Dikey dilimler:** Her özellik sözleşme → backend → test → mobil ekran sırasıyla uçtan uca bitirilir.
 - Backend, web istemcisini engelleyecek mobile özel varsayım içermez.
