@@ -22,7 +22,7 @@ Arayüzde Türkçe terim, kodda İngilizce ad kullanılır. Bu tablo ikisi aras�
 | Süre aşımı | `Expired` | İsteğin 3 gün içinde cevaplanmadığı için düşmesi. |
 | Eşleşme | `Match` | Kabul edilmiş takas isteğinden doğan, iki kullanıcı arasındaki takas ilişkisi. |
 | Eşleşmeyi sonlandırma | match ending | İki tarafın karşılıklı onayıyla eşleşmenin kapanması. |
-| Sohbet | `Conversation` | Bir eşleşmeye bağlı mesajlaşma kanalı. |
+| Sohbet | `Conversation` | İki kullanıcı arasındaki tek mesajlaşma kanalı. İlk eşleşmede açılır. |
 | Mesaj | `Message` | Sohbetteki tek bir metin mesajı. |
 | Takas oturumu | `SwapSession` | Eşleşen iki kullanıcının planladığı tek bir buluşma (tarih, süre, biçim). |
 | Oturum biçimi | `SessionMode` | `Online` veya `InPerson` (yüz yüze). |

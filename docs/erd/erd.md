@@ -1,6 +1,6 @@
 # ERD
 
-Durum: **Taslak, onay bekliyor.** Alan açıklamaları için `docs/domain/domain-model.md` dosyasına bak.
+Durum: **Onaylandı (2026-10-07).** Alan açıklamaları için `docs/domain/domain-model.md` dosyasına bak.
 
 Bu şema mantıksal modeldir. Tablo ve sütun adları, tipler ve index'ler Faz 3'te EF Core migration'larıyla kesinleşir.
 
@@ -45,7 +45,7 @@ erDiagram
     SKILL ||..o{ SWAP_REQUEST : "offered or requested in"
 
     SWAP_REQUEST ||--o| MATCH : "becomes"
-    MATCH ||..|| CONVERSATION : "has"
+    USER ||..o{ CONVERSATION : "participates"
     MATCH ||..o{ SWAP_SESSION : "schedules"
     CONVERSATION ||--|{ CONVERSATION_PARTICIPANT : "has"
     CONVERSATION ||--o{ MESSAGE : "contains"
@@ -59,6 +59,9 @@ erDiagram
         string role
         timestamp email_verified_at
         timestamp age_confirmed_at
+        timestamp deletion_requested_at
+        timestamp deleted_at
+        string deleted_email_hash
         timestamp created_at
     }
     REFRESH_TOKEN {
@@ -141,8 +144,11 @@ erDiagram
     }
     CONVERSATION {
         uuid id PK
-        uuid match_id UK
+        uuid user_low_id
+        uuid user_high_id
         timestamp created_at
+        timestamp closed_at
+        uuid closed_by_user_id
     }
     CONVERSATION_PARTICIPANT {
         uuid conversation_id PK
@@ -235,7 +241,7 @@ erDiagram
 | `SWAP_REQUEST` | Sırasız kullanıcı çifti benzersiz, yalnızca `status = Pending` satırlarda (kısmi index) | RQ-05 |
 | `MATCH` | `swap_request_id` benzersiz | MT-01 |
 | `MATCH` | Sırasız kullanıcı çifti benzersiz, yalnızca `status <> Ended` satırlarda (kısmi index) | MT-02 |
-| `CONVERSATION` | `match_id` benzersiz | MS-01 |
+| `CONVERSATION` | (`user_low_id`, `user_high_id`) benzersiz | MS-01 |
 | `REVIEW` | (`reviewer_id`, `reviewee_id`) benzersiz, silinmiş satırlar dahil | RV-01, RV-07 |
 | `DEVICE` | `fcm_token` benzersiz | — |
 

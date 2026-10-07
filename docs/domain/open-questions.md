@@ -27,13 +27,13 @@
 |---|---|
 | Admin işleri | `User.Role` (`User`/`Admin`) ve arayüzsüz admin endpoint'leri. Panel sonradan aynı endpoint'leri kullanır. |
 | Moderation modülü | Dokuzuncu modül olarak eklendi; `Block` ve `Report` bu modüldedir. |
-| Hesap silme | Olacak. Kapsamı için bkz. Ö3. |
-| Yaş | Kayıtta kullanıcı 18 yaş ve üstü olduğunu onaylar. |
+| Hesap silme | Olacak; 30 gün içinde geri alınabilir. Aynı e-postayla yeniden kayıt için 3 ay bekleme süresi var. Ayrıntılar: Ö3. |
+| Yaş | Kayıtta kullanıcı 13 yaş ve üstü olduğunu onaylar (önce 18 idi; uygulama liselilere de hitap ettiği için 13'e çekildi). |
 | E-posta gönderimi | Lokalde yakalayıcı SMTP sunucusu; gerçek sağlayıcı Faz 3'te ADR ile. |
 | Sonlandırma isteği cevapsız kalırsa | 7 gün sonra eşleşme kendiliğinden sonlanır. Ayrıntılar: Ö1. |
 | Tamamlandı işareti cevapsız kalırsa | 72 saat sonra oturum kendiliğinden tamamlanır. Ayrıntılar: Ö2. |
 | Aynı yetenek iki tipte | Olabilir; istenen seviye sunulan seviyeden yüksek olmalıdır. |
-| Eşleşme sonrası sohbet | Açık kalır; devamı kullanıcılara bırakılır. Ayrıntılar: Ö4. |
+| Eşleşme sonrası sohbet | Açık kalır; devamı kullanıcılara bırakılır. Her çift arasında tek sohbet olur. Ayrıntılar: Ö4. |
 | Silinen değerlendirme | Yerine yenisi yazılamaz. |
 | Engelleme | Aktif eşleşmeyi tek taraflı sonlandırır, bekleyen istekleri iptal eder. |
 | Oturum planlama | Bir taraf önerir, diğeri kabul veya reddeder. |
@@ -49,9 +49,17 @@
 
 **Brief ile çelişen ikinci karar:** Brief Bölüm 6'da "mesajlaşma yalnızca eşleşmiş kullanıcılar arasında mümkündür" kuralı vardı. Yeni karara göre sohbet eşleşme ile başlar ama eşleşme sona erdikten sonra da sürebilir. Brief buna göre güncellendi.
 
-## Onay bekleyen öneriler
+## Açık soru
 
-Dokümanlarda `(Ö#)` ile işaretli yerler aşağıdaki önerilere karşılık gelir.
+**Reşit olmayan kullanıcılar.** Yaş sınırı 13'e indiği için 13–17 yaşındaki kullanıcılar yetişkinlerle eşleşebilir, özel mesajlaşabilir ve yüz yüze oturum planlayabilir. Mevcut model yalnızca "13 yaş ve üstüyüm" onayını saklar; kullanıcının reşit olup olmadığını bilmez, bu yüzden hiçbir koruma uygulayamaz. Karar gereken noktalar:
+
+1. Reşit olmayanlar için kısıt olacak mı? Seçenekler: yalnızca çevrimiçi oturum; yalnızca kendi yaş grubuyla eşleşme; kısıt yok.
+2. Kısıt olacaksa yaş grubunu bilmek gerekir: kayıtta doğum tarihi veya "18 yaşından küçüğüm" beyanı.
+3. Veli onayı aranacak mı? KVKK ve uygulama mağazası kuralları açısından bir hukukçuyla doğrulanmalıdır.
+
+Bu soru kayıt endpoint'ini ve eşleşme kurallarını etkiler; Faz 2 sözleşmesi yazılmadan önce cevaplanmalıdır.
+
+## Onaylanan ayrıntılar (2026-10-07)
 
 ### Ö1 — Eşleşmenin 7 gün sonunda kendiliğinden sonlanması
 
@@ -76,11 +84,11 @@ Dokümanlarda `(Ö#)` ile işaretli yerler aşağıdaki önerilere karşılık g
 ### Ö3 — Hesap silme
 
 1. Kullanıcı silmeyi uygulama içinden başlatır ve parolasını yeniden girerek onaylar.
-2. Silme hemendir ve geri alınamaz; bekleme süresi yoktur. Alternatif: 30 günlük geri alma süresi (hesap bu sürede gizlenir, giriş yapılırsa silme iptal olur).
+2. Silme isteği 30 gün içinde geri alınabilir. Bu sürede hesap `PendingDeletion` durumundadır ve gizlidir; kullanıcı giriş yaparsa silme iptal olur. Madde 4'teki ilişkiler istek anında kapanır ve geri alınınca geri gelmez. Madde 3, 5 ve 6 ise 30 gün dolunca uygulanır.
 3. Silinen veriler: profil (ad, biyografi, avatar dosyası, şehir), kullanıcının yetenekleri, cihaz kayıtları, bildirimler, tüm token'lar, kullanıcının aldığı değerlendirmeler ve puan özeti.
 4. Kapanan ilişkiler: bekleyen istekler iptal edilir, aktif eşleşme `EndReason = AccountDeleted` ile sonlanır, tamamlanmamış oturumlar iptal edilir, sohbetler kapatılır.
 5. Anonimleştirilerek kalan veriler: kullanıcının gönderdiği mesajlar ve yazdığı değerlendirmeler karşı tarafta "Silinmiş kullanıcı" adıyla görünmeye devam eder. Geçmiş istek, eşleşme ve oturum kayıtları da kimlik referansıyla kalır.
-6. `User` satırı `Status = Deleted` olarak kalır; e-posta ve parola hash'i silinir, böylece aynı e-postayla yeniden kayıt olunabilir.
+6. `User` satırı `Status = Deleted` olarak kalır; e-posta ve parola hash'i silinir. Aynı e-postayla yeniden kayıt, kalıcı silmeden sonraki 3 ay boyunca engellenir; bunun için e-postanın yalnızca hash'i saklanır ve 3 ay sonunda o da silinir.
 7. Kullanıcı hakkındaki açık şikâyetler sonuçlanana kadar saklanır.
 
 Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir konudur. Bu öneri teknik bir varsayılandır; yayından önce bir hukukçuyla doğrulanmalıdır.
@@ -92,10 +100,6 @@ Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir 
 3. Aktif eşleşme yokken taraflardan biri sohbeti tek başına kapatabilir. Kapatılan sohbet salt okunur olur; geçmiş mesajlar iki tarafta da görünür kalır.
 4. Engelleme ve hesap silme sohbeti kapatır.
 5. Aynı iki kullanıcı yeniden eşleşirse kapalı sohbet yeniden açılır ve geçmiş korunur.
-
-Alternatif: Sohbet eşleşmeye bağlı kalır ve her yeni eşleşme yeni bir sohbet açar. Daha basit, ama aynı çift arasında birden fazla açık sohbet oluşabilir.
-
-Ö4 onaylanırsa `Conversation.MatchId` alanı kullanıcı çiftiyle değiştirilir; domain modeli ve ERD buna göre güncellenir. Şu an dokümanlar eski (eşleşmeye bağlı) yapıyı gösteriyor.
 
 ## Sonraki fazlarda netleşecekler
 

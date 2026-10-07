@@ -1,6 +1,6 @@
 # İş Kuralları
 
-Durum: **Taslak, onay bekliyor.** `(Ö#)` ile işaretli kurallar henüz onaylanmamış önerilerdir; bkz. `open-questions.md`.
+Durum: **Onaylandı (2026-10-07).** Reşit olmayan kullanıcılarla ilgili tek açık soru `open-questions.md` dosyasındadır.
 
 **Katman** sütunu kuralın nerede korunduğunu söyler:
 
@@ -20,8 +20,11 @@ Durum: **Taslak, onay bekliyor.** `(Ö#)` ile işaretli kurallar henüz onaylanm
 | ID-06 | Doğrulama ve parola sıfırlama token'ları tek kullanımlıktır ve süreleri dolunca geçersizdir. | Domain |
 | ID-07 | Parola sıfırlandığında kullanıcının tüm refresh token'ları iptal edilir. | Domain |
 | ID-08 | `Suspended` durumundaki kullanıcı giriş yapamaz ve token yenileyemez. | Domain |
-| ID-09 | Kayıt olurken kullanıcı 18 yaşında veya daha büyük olduğunu onaylamalıdır. Onay olmadan hesap oluşturulmaz; onay zamanı saklanır, doğum tarihi istenmez. | Domain |
-| ID-10 | Kullanıcı hesabını silebilir. Silmenin kapsamı ve etkileri için bkz. (Ö3). | Application |
+| ID-09 | Kayıt olurken kullanıcı 13 yaşında veya daha büyük olduğunu onaylamalıdır. Onay olmadan hesap oluşturulmaz; onay zamanı saklanır, doğum tarihi istenmez. | Domain |
+| ID-10 | Kullanıcı parolasını yeniden girerek hesabını silebilir. İstekle birlikte hesap gizlenir, oturumları kapanır, bekleyen istekleri iptal edilir, aktif eşleşmesi sonlanır, tamamlanmamış oturumları iptal edilir ve sohbetleri kapanır. | Application |
+| ID-12 | Silme isteği 30 gün içinde geri alınabilir: kullanıcı bu sürede giriş yaparsa hesap yeniden etkinleşir. Kapanan istek, eşleşme, oturum ve sohbetler geri gelmez. | Domain |
+| ID-13 | 30 gün dolunca silme kalıcı olur: profil, avatar, yetenekler, cihazlar, bildirimler ve kullanıcının aldığı değerlendirmeler silinir. Gönderdiği mesajlar ve yazdığı değerlendirmeler "Silinmiş kullanıcı" adıyla kalır. | Application |
+| ID-14 | Kalıcı olarak silinen hesabın e-postasıyla, kalıcı silmeden sonraki 3 ay boyunca yeni hesap açılamaz. Bunun için e-postanın kendisi değil hash'i saklanır. | Application |
 | ID-11 | Admin yetkisi `User.Role` ile belirlenir. Yetenek önerilerini onaylama, şikâyetleri sonuçlandırma ve iptal sebeplerini listeleme yalnızca adminlere açıktır. | Application |
 
 ## Profil
@@ -70,17 +73,21 @@ Durum: **Taslak, onay bekliyor.** `(Ö#)` ile işaretli kurallar henüz onaylanm
 | MT-04 | Sonlandırma isteğini karşı taraf reddedebilir, isteyen taraf geri alabilir; eşleşme `Active` durumuna döner. | Domain |
 | MT-05 | Engelleme, eşleşmeyi karşı tarafın onayı olmadan sonlandırır. | Application |
 | MT-06 | Sona eren eşleşme yeniden açılamaz. Taraflar yeni bir istekle yeniden eşleşebilir. | Domain |
-| MT-07 | Sonlandırma isteği 7 gün içinde onaylanmaz, reddedilmez veya geri alınmazsa eşleşme kendiliğinden sonlanır. Ayrıntılar için bkz. (Ö1). | Domain |
+| MT-07 | Sonlandırma isteği 7 gün içinde onaylanmaz, reddedilmez veya geri alınmazsa eşleşme kendiliğinden sonlanır. Sürenin bitmesine 24 saat kala karşı tarafa hatırlatma gider. | Domain |
+| MT-08 | Reddedilen sonlandırma isteğinin ardından yeniden istemek için bekleme süresi yoktur. | — |
+| MT-09 | Sonlandırma isteği beklerken yeni oturum planlanamaz; mevcut oturumlar etkilenmez. | Application |
 
 ## Mesajlaşma
 
 | No | Kural | Katman |
 |---|---|---|
-| MS-01 | Sohbet yalnızca eşleşme ile başlar; eşleşmemiş iki kullanıcı birbirine mesaj atamaz. | Application, DB |
+| MS-01 | Sohbet yalnızca eşleşme ile başlar; hiç eşleşmemiş iki kullanıcı birbirine mesaj atamaz. İki kullanıcı arasında tek bir sohbet olur. | Application, DB |
 | MS-02 | Mesaj yalnızca metindir. Boş olamaz ve uzunluk sınırı vardır (sınır Faz 2'de sözleşmede belirlenir). | Domain |
 | MS-03 | Yalnızca sohbetin iki tarafı mesaj gönderebilir ve okuyabilir. | Application |
 | MS-04 | Eşleşme sona erince sohbet açık kalır; devam edip etmemek kullanıcılara bırakılır. | — |
-| MS-05 | Taraflardan biri sohbeti tek başına kapatabilir; kapatılan sohbet salt okunur olur. Engelleme de sohbeti kapatır (Ö4). | Domain |
+| MS-05 | Aktif eşleşme yokken taraflardan biri sohbeti tek başına kapatabilir. Kapatılan sohbet salt okunur olur; geçmiş mesajlar iki tarafta da görünür kalır. | Domain |
+| MS-06 | Engelleme ve hesap silme sohbeti kapatır. | Application |
+| MS-07 | Aynı iki kullanıcı yeniden eşleşirse kapalı sohbet geçmişiyle birlikte yeniden açılır. | Application |
 
 ## Takas oturumu
 
@@ -95,7 +102,10 @@ Durum: **Taslak, onay bekliyor.** `(Ö#)` ile işaretli kurallar henüz onaylanm
 | SS-07 | İptal sebebi karşı tarafa bildirim olarak gider ve admin tarafından görülebilir. | Application |
 | SS-08 | `Completed`, `Declined` ve `Cancelled` son durumlardır. | Domain |
 | SS-09 | Eşleşme sona erince tamamlanmamış oturumlar iptal edilir. | Application |
-| SS-10 | Tamamlandı işareti 72 saat içinde onaylanmaz ve oturum iptal edilmezse oturum kendiliğinden tamamlanmış sayılır. Ayrıntılar için bkz. (Ö2). | Domain |
+| SS-10 | Tamamlandı işareti 72 saat içinde onaylanmaz ve oturum iptal edilmezse oturum kendiliğinden tamamlanmış sayılır ve bu şekilde işaretlenir. Sürenin bitmesine 24 saat kala karşı tarafa hatırlatma gider. | Domain |
+| SS-11 | Tamamlandı işaretine itirazı olan taraf oturumu sebep yazarak iptal eder. | Domain |
+| SS-12 | Kendiliğinden tamamlanan oturum da değerlendirme hakkı doğurur. | Application |
+| SS-13 | Karşı taraf kabul etmeden başlangıç zamanı geçen oturum önerisi kendiliğinden `Declined` olur. | Domain |
 
 ## Değerlendirme
 
