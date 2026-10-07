@@ -1,0 +1,2396 @@
+openapi: 3.0.3
+info:
+  title: Exparter API
+  version: 1.0.0
+  description: |
+    Skill swap platform API. This file is the single source of truth: endpoints
+    are defined here first, and client code is generated from it.
+
+    Conventions (see docs/api-conventions.md for details):
+    - All timestamps are ISO 8601 in UTC.
+    - All identifiers are UUIDs.
+    - Errors use RFC 9457 problem details with a machine-readable `code`.
+    - List endpoints are paginated: page-based by default, cursor-based for
+      discovery and messages.
+servers:
+  - url: /
+    description: Same origin as the document
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+    description: Registration, sign-in, tokens, email verification and password reset.
+  - name: Account
+    description: The signed-in user's account.
+  - name: Profiles
+    description: User profiles and avatars.
+  - name: Skills
+    description: Skill catalog, skill proposals and user skills.
+  - name: Discovery
+    description: Finding other users ranked by compatibility.
+  - name: SwapRequests
+    description: Sending and answering swap requests.
+  - name: Matches
+    description: Matches created from accepted swap requests.
+  - name: Conversations
+    description: Conversations and messages between two users.
+  - name: Sessions
+    description: Swap sessions scheduled within a match.
+  - name: Reviews
+    description: Reviews between users.
+  - name: Notifications
+    description: In-app notifications and push devices.
+  - name: Moderation
+    description: Blocking and reporting.
+  - name: Admin
+    description: Operations restricted to administrators.
+
+paths:
+  # ---------------------------------------------------------------- Auth
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      summary: Create an account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Account created. The user is signed in but the email is not yet verified.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Sign in with email and password
+      description: Signing in to an account that is pending deletion cancels the deletion.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Signed in.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Exchange a refresh token for a new token pair
+      description: The presented refresh token is revoked. Reusing a revoked token revokes its whole token family.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '200':
+          description: New token pair.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Revoke a refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '204': { description: 'Token revoked, or it was already invalid.' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/v1/auth/email-verification/request:
+    post:
+      tags: [Auth]
+      operationId: requestEmailVerification
+      summary: Send a new verification email to the signed-in user
+      responses:
+        '202': { description: Verification email queued. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/auth/email-verification/confirm:
+    post:
+      tags: [Auth]
+      operationId: confirmEmailVerification
+      summary: Verify an email address with a one-time token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OneTimeTokenRequest' }
+      responses:
+        '204': { description: Email verified. }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/v1/auth/password-reset/request:
+    post:
+      tags: [Auth]
+      operationId: requestPasswordReset
+      summary: Send a password reset email
+      description: Always answers 202 so that the response does not reveal whether the email is registered.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetRequest' }
+      responses:
+        '202': { description: Request accepted. }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/v1/auth/password-reset/confirm:
+    post:
+      tags: [Auth]
+      operationId: confirmPasswordReset
+      summary: Set a new password with a one-time token
+      description: Revokes all refresh tokens of the user.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetConfirmRequest' }
+      responses:
+        '204': { description: Password changed. }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  # ------------------------------------------------------------- Account
+  /api/v1/me:
+    get:
+      tags: [Account]
+      operationId: getAccount
+      summary: Get the signed-in user's account
+      responses:
+        '200':
+          description: The account.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/me/deletion-request:
+    post:
+      tags: [Account]
+      operationId: requestAccountDeletion
+      summary: Request deletion of the signed-in user's account
+      description: |
+        The account is hidden immediately, all sessions are signed out, pending swap
+        requests are cancelled, the active match ends and conversations are closed.
+        Signing in within 30 days restores the account; after that the deletion is permanent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccountDeletionRequest' }
+      responses:
+        '202':
+          description: Deletion scheduled.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccountDeletionScheduled' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ------------------------------------------------------------ Profiles
+  /api/v1/me/profile:
+    get:
+      tags: [Profiles]
+      operationId: getOwnProfile
+      summary: Get the signed-in user's profile
+      responses:
+        '200':
+          description: The profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    put:
+      tags: [Profiles]
+      operationId: updateOwnProfile
+      summary: Replace the signed-in user's profile details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfileRequest' }
+      responses:
+        '200':
+          description: The updated profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/me/avatar/upload-url:
+    post:
+      tags: [Profiles]
+      operationId: createAvatarUploadUrl
+      summary: Get a presigned URL to upload an avatar image
+      description: Upload the file with an HTTP PUT to `uploadUrl`, then call `PUT /api/v1/me/avatar` with the returned `objectKey`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AvatarUploadUrlRequest' }
+      responses:
+        '200':
+          description: Presigned upload target.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AvatarUploadUrl' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/me/avatar:
+    put:
+      tags: [Profiles]
+      operationId: setAvatar
+      summary: Set an uploaded image as the avatar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetAvatarRequest' }
+      responses:
+        '200':
+          description: The updated profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Profile' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [Profiles]
+      operationId: deleteAvatar
+      summary: Remove the avatar
+      responses:
+        '204': { description: Avatar removed. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/users/{userId}:
+    get:
+      tags: [Profiles]
+      operationId: getUserProfile
+      summary: Get another user's public profile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: The public profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicProfile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cities:
+    get:
+      tags: [Profiles]
+      operationId: listCities
+      summary: List the cities a profile can choose from
+      description: Fixed reference list of the 81 provinces; not paginated.
+      security: []
+      responses:
+        '200':
+          description: All cities.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/City' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # -------------------------------------------------------------- Skills
+  /api/v1/skill-categories:
+    get:
+      tags: [Skills]
+      operationId: listSkillCategories
+      summary: List skill categories
+      description: Small reference list; not paginated.
+      security: []
+      responses:
+        '200':
+          description: All categories in display order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SkillCategory' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/v1/skills:
+    get:
+      tags: [Skills]
+      operationId: listSkills
+      summary: Search the approved skill catalog
+      security: []
+      parameters:
+        - name: categoryId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: q
+          in: query
+          description: Case-insensitive match on the skill name.
+          schema: { type: string, maxLength: 60 }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of skills.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SkillPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/v1/skill-proposals:
+    post:
+      tags: [Skills]
+      operationId: proposeSkill
+      summary: Propose a skill that is missing from the catalog
+      description: The skill stays hidden and unusable until an administrator approves it. Requires a verified email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProposeSkillRequest' }
+      responses:
+        '201':
+          description: Proposal created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Skill' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/me/skill-proposals:
+    get:
+      tags: [Skills]
+      operationId: listOwnSkillProposals
+      summary: List the signed-in user's skill proposals
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of proposals.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SkillPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/me/skills:
+    get:
+      tags: [Skills]
+      operationId: listOwnSkills
+      summary: List the signed-in user's skills
+      parameters:
+        - $ref: '#/components/parameters/UserSkillTypeFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of user skills.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserSkillPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Skills]
+      operationId: addOwnSkill
+      summary: Add an offered or wanted skill
+      description: |
+        The same skill may be both offered and wanted only if the wanted level is
+        higher than the offered level.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddUserSkillRequest' }
+      responses:
+        '201':
+          description: Skill added.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserSkill' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/me/skills/{userSkillId}:
+    parameters:
+      - name: userSkillId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [Skills]
+      operationId: updateOwnSkill
+      summary: Change the level of a user skill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserSkillRequest' }
+      responses:
+        '200':
+          description: The updated user skill.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserSkill' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Skills]
+      operationId: removeOwnSkill
+      summary: Remove a user skill
+      description: An offered skill used by a pending swap request or an active match cannot be removed.
+      responses:
+        '204': { description: Skill removed. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/users/{userId}/skills:
+    get:
+      tags: [Skills]
+      operationId: listUserSkills
+      summary: List another user's skills
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/UserSkillTypeFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of user skills.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserSkillPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ----------------------------------------------------------- Discovery
+  /api/v1/discovery/users:
+    get:
+      tags: [Discovery]
+      operationId: discoverUsers
+      summary: Find users ranked by compatibility with the signed-in user
+      description: |
+        Ranking: mutual compatibility first, then one-way compatibility, then
+        matching preferences (same city or both online), then rating. The caller,
+        blocked users and suspended or deleted accounts are never returned.
+      parameters:
+        - name: skillId
+          in: query
+          description: Only users who offer this skill.
+          schema: { type: string, format: uuid }
+        - name: categoryId
+          in: query
+          description: Only users who offer a skill in this category.
+          schema: { type: string, format: uuid }
+        - name: city
+          in: query
+          schema: { $ref: '#/components/schemas/CityCode' }
+        - name: mode
+          in: query
+          description: Only users who accept this session mode.
+          schema: { $ref: '#/components/schemas/SessionMode' }
+        - name: q
+          in: query
+          description: Case-insensitive match on display name or offered skill name.
+          schema: { type: string, maxLength: 60 }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A cursor page of users.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DiscoveryUserCursorPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # -------------------------------------------------------- SwapRequests
+  /api/v1/swap-requests:
+    get:
+      tags: [SwapRequests]
+      operationId: listSwapRequests
+      summary: List swap requests sent or received by the signed-in user
+      parameters:
+        - name: direction
+          in: query
+          required: true
+          schema: { type: string, enum: [Incoming, Outgoing] }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/SwapRequestStatus' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of swap requests, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapRequestPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [SwapRequests]
+      operationId: sendSwapRequest
+      summary: Send a swap request
+      description: |
+        Requires a verified email. `offeredSkillId` must be one of the sender's offered
+        skills and `requestedSkillId` one of the recipient's offered skills. Rejected with
+        409 if the two users already have a pending request or an unfinished match, or if
+        either has blocked the other.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendSwapRequestRequest' }
+      responses:
+        '201':
+          description: Swap request created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapRequest' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/swap-requests/{swapRequestId}:
+    get:
+      tags: [SwapRequests]
+      operationId: getSwapRequest
+      summary: Get a swap request
+      parameters:
+        - $ref: '#/components/parameters/SwapRequestId'
+      responses:
+        '200':
+          description: The swap request.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/swap-requests/{swapRequestId}/accept:
+    post:
+      tags: [SwapRequests]
+      operationId: acceptSwapRequest
+      summary: Accept a received swap request
+      description: Only the recipient can accept. Creates a match and opens the conversation between the two users.
+      parameters:
+        - $ref: '#/components/parameters/SwapRequestId'
+      responses:
+        '200':
+          description: The match created by accepting the request.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Match' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/swap-requests/{swapRequestId}/decline:
+    post:
+      tags: [SwapRequests]
+      operationId: declineSwapRequest
+      summary: Decline a received swap request
+      parameters:
+        - $ref: '#/components/parameters/SwapRequestId'
+      responses:
+        '200':
+          description: The declined swap request.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/swap-requests/{swapRequestId}/cancel:
+    post:
+      tags: [SwapRequests]
+      operationId: cancelSwapRequest
+      summary: Withdraw a sent swap request
+      parameters:
+        - $ref: '#/components/parameters/SwapRequestId'
+      responses:
+        '200':
+          description: The cancelled swap request.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ------------------------------------------------------------- Matches
+  /api/v1/matches:
+    get:
+      tags: [Matches]
+      operationId: listMatches
+      summary: List the signed-in user's matches
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/MatchStatus' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of matches, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MatchPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/matches/{matchId}:
+    get:
+      tags: [Matches]
+      operationId: getMatch
+      summary: Get a match
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: The match.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Match' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/matches/{matchId}/end-request:
+    post:
+      tags: [Matches]
+      operationId: requestMatchEnd
+      summary: Ask the other user to end the match
+      description: If the other user does not answer within 7 days the match ends automatically.
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: The match, now waiting for the other user's answer.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Match' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Matches]
+      operationId: withdrawMatchEndRequest
+      summary: Withdraw the signed-in user's own end request
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: The match, active again.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Match' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/matches/{matchId}/end-request/accept:
+    post:
+      tags: [Matches]
+      operationId: acceptMatchEnd
+      summary: Accept the other user's end request
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: The ended match.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Match' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/matches/{matchId}/end-request/reject:
+    post:
+      tags: [Matches]
+      operationId: rejectMatchEnd
+      summary: Reject the other user's end request
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+      responses:
+        '200':
+          description: The match, active again.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Match' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ------------------------------------------------------- Conversations
+  /api/v1/conversations:
+    get:
+      tags: [Conversations]
+      operationId: listConversations
+      summary: List the signed-in user's conversations
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of conversations, most recently active first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversationPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/conversations/{conversationId}:
+    get:
+      tags: [Conversations]
+      operationId: getConversation
+      summary: Get a conversation
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      responses:
+        '200':
+          description: The conversation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversation' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/conversations/{conversationId}/messages:
+    get:
+      tags: [Conversations]
+      operationId: listMessages
+      summary: List messages in a conversation, newest first
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A cursor page of messages.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MessageCursorPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Conversations]
+      operationId: sendMessage
+      summary: Send a text message
+      description: Requires a verified email. Rejected with 409 if the conversation is closed.
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SendMessageRequest' }
+      responses:
+        '201':
+          description: Message sent.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/conversations/{conversationId}/read:
+    post:
+      tags: [Conversations]
+      operationId: markConversationRead
+      summary: Mark all messages in a conversation as read
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      responses:
+        '204': { description: Marked as read. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/conversations/{conversationId}/close:
+    post:
+      tags: [Conversations]
+      operationId: closeConversation
+      summary: Close a conversation
+      description: |
+        Either participant can close the conversation while the two users have no active
+        match. A closed conversation is read-only and reopens if the users match again.
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      responses:
+        '200':
+          description: The closed conversation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversation' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ------------------------------------------------------------ Sessions
+  /api/v1/matches/{matchId}/sessions:
+    get:
+      tags: [Sessions]
+      operationId: listMatchSessions
+      summary: List the sessions of a match
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of sessions ordered by scheduled time, latest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSessionPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Sessions]
+      operationId: proposeSession
+      summary: Propose a session to the other user of a match
+      description: |
+        Requires a verified email. The match must be active and must not have a pending
+        end request. The other user accepts or declines; a proposal that is not accepted
+        before its start time is declined automatically.
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProposeSessionRequest' }
+      responses:
+        '201':
+          description: Session proposed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/sessions:
+    get:
+      tags: [Sessions]
+      operationId: listSessions
+      summary: List the signed-in user's sessions across all matches
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/SwapSessionStatus' }
+        - name: from
+          in: query
+          description: Only sessions scheduled at or after this time.
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: Only sessions scheduled before this time.
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of sessions ordered by scheduled time, latest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSessionPage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/sessions/{sessionId}:
+    get:
+      tags: [Sessions]
+      operationId: getSession
+      summary: Get a session
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: The session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/sessions/{sessionId}/accept:
+    post:
+      tags: [Sessions]
+      operationId: acceptSession
+      summary: Accept a session proposed by the other user
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: The scheduled session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/sessions/{sessionId}/decline:
+    post:
+      tags: [Sessions]
+      operationId: declineSession
+      summary: Decline a session proposed by the other user
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: The declined session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/sessions/{sessionId}/cancel:
+    post:
+      tags: [Sessions]
+      operationId: cancelSession
+      summary: Cancel a session
+      description: Either user can cancel alone. The reason is sent to the other user and is visible to administrators.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancelSessionRequest' }
+      responses:
+        '200':
+          description: The cancelled session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/sessions/{sessionId}/completion:
+    post:
+      tags: [Sessions]
+      operationId: markSessionCompleted
+      summary: Mark a scheduled session as completed
+      description: |
+        Allowed only after the scheduled start time. The other user confirms; without an
+        answer within 72 hours the session is completed automatically.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: The session, waiting for the other user's confirmation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/sessions/{sessionId}/completion/confirm:
+    post:
+      tags: [Sessions]
+      operationId: confirmSessionCompleted
+      summary: Confirm that a session marked by the other user was completed
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: The completed session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ------------------------------------------------------------- Reviews
+  /api/v1/reviews:
+    post:
+      tags: [Reviews]
+      operationId: createReview
+      summary: Review the other user of a completed session
+      description: |
+        Requires a verified email. A user can review another user only once, ever;
+        a deleted review cannot be replaced. Reviews are visible immediately and cannot be edited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateReviewRequest' }
+      responses:
+        '201':
+          description: Review created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Review' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/reviews/{reviewId}:
+    delete:
+      tags: [Reviews]
+      operationId: deleteReview
+      summary: Delete a review written by the signed-in user
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Review deleted. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/users/{userId}/reviews:
+    get:
+      tags: [Reviews]
+      operationId: listUserReviews
+      summary: List the reviews a user has received
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of reviews, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/me/reviews/given:
+    get:
+      tags: [Reviews]
+      operationId: listGivenReviews
+      summary: List the reviews the signed-in user has written
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of reviews, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ------------------------------------------------------- Notifications
+  /api/v1/notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: List the signed-in user's notifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of notifications, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/notifications/unread-count:
+    get:
+      tags: [Notifications]
+      operationId: getUnreadNotificationCount
+      summary: Count unread notifications
+      responses:
+        '200':
+          description: The unread count.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UnreadCount' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/notifications/read-all:
+    post:
+      tags: [Notifications]
+      operationId: markAllNotificationsRead
+      summary: Mark all notifications as read
+      responses:
+        '204': { description: All notifications marked as read. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      operationId: markNotificationRead
+      summary: Mark a notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Marked as read. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/devices:
+    post:
+      tags: [Notifications]
+      operationId: registerDevice
+      summary: Register or refresh a push notification device
+      description: Registering a token that already exists moves it to the signed-in user and refreshes it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterDeviceRequest' }
+      responses:
+        '200':
+          description: The registered device.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/devices/{deviceId}:
+    delete:
+      tags: [Notifications]
+      operationId: unregisterDevice
+      summary: Remove a push notification device
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Device removed. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------------------------------------------------- Moderation
+  /api/v1/blocks:
+    get:
+      tags: [Moderation]
+      operationId: listBlocks
+      summary: List the users blocked by the signed-in user
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of blocks, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BlockPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Moderation]
+      operationId: blockUser
+      summary: Block a user
+      description: |
+        Cancels pending swap requests between the two users, ends their active match
+        without the other user's consent and closes their conversation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BlockUserRequest' }
+      responses:
+        '201':
+          description: User blocked.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Block' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/blocks/{userId}:
+    delete:
+      tags: [Moderation]
+      operationId: unblockUser
+      summary: Unblock a user
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204': { description: User unblocked. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/reports:
+    post:
+      tags: [Moderation]
+      operationId: createReport
+      summary: Report a user, a message or a review
+      description: Requires a verified email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateReportRequest' }
+      responses:
+        '201':
+          description: Report created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Report' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # --------------------------------------------------------------- Admin
+  /api/v1/admin/skill-proposals:
+    get:
+      tags: [Admin]
+      operationId: adminListSkillProposals
+      summary: List skill proposals
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/SkillStatus' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of proposed skills, oldest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminSkillProposalPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/admin/skill-proposals/{skillId}/approve:
+    post:
+      tags: [Admin]
+      operationId: adminApproveSkillProposal
+      summary: Approve a skill proposal
+      parameters:
+        - $ref: '#/components/parameters/SkillId'
+      responses:
+        '200':
+          description: The approved skill.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Skill' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/admin/skill-proposals/{skillId}/reject:
+    post:
+      tags: [Admin]
+      operationId: adminRejectSkillProposal
+      summary: Reject a skill proposal
+      parameters:
+        - $ref: '#/components/parameters/SkillId'
+      responses:
+        '200':
+          description: The rejected skill.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Skill' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/admin/reports:
+    get:
+      tags: [Admin]
+      operationId: adminListReports
+      summary: List reports
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ReportStatus' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of reports, oldest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminReportPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/admin/reports/{reportId}/resolution:
+    post:
+      tags: [Admin]
+      operationId: adminResolveReport
+      summary: Resolve or dismiss a report
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResolveReportRequest' }
+      responses:
+        '200':
+          description: The closed report.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminReport' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/admin/session-cancellations:
+    get:
+      tags: [Admin]
+      operationId: adminListSessionCancellations
+      summary: List cancelled sessions with their reasons
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of cancellations, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionCancellationPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: 1-based page number.
+      schema: { type: integer, format: int32, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, format: int32, minimum: 1, maximum: 50, default: 20 }
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque value from `nextCursor` of the previous page. Omit for the first page.
+      schema: { type: string, maxLength: 512 }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, format: int32, minimum: 1, maximum: 50, default: 20 }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SkillId:
+      name: skillId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SwapRequestId:
+      name: swapRequestId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    MatchId:
+      name: matchId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ConversationId:
+      name: conversationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserSkillTypeFilter:
+      name: type
+      in: query
+      schema: { $ref: '#/components/schemas/UserSkillType' }
+
+  responses:
+    ValidationError:
+      description: The request is malformed or fails validation. `errors` lists the problems per field.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Unauthorized:
+      description: Missing, invalid or expired credentials.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Forbidden:
+      description: The caller is not allowed to do this, for example because the email is not verified.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    NotFound:
+      description: The resource does not exist or is not visible to the caller.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    Conflict:
+      description: The request conflicts with the current state or breaks a business rule. `code` identifies the rule.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+    ServerError:
+      description: Unexpected server error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  schemas:
+    # ------------------------------------------------------------ Common
+    ProblemDetails:
+      type: object
+      description: RFC 9457 problem details with Exparter extensions.
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, description: URI reference identifying the problem type. }
+        title: { type: string }
+        status: { type: integer, format: int32 }
+        detail: { type: string }
+        instance: { type: string }
+        code:
+          type: string
+          description: Stable machine-readable error code, for example `email_not_verified`. Clients map this to a localized message.
+        traceId: { type: string }
+        errors:
+          type: object
+          description: Validation errors keyed by field name. Present only on validation failures.
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    PageMeta:
+      type: object
+      required: [page, pageSize, totalCount]
+      properties:
+        page: { type: integer, format: int32 }
+        pageSize: { type: integer, format: int32 }
+        totalCount: { type: integer, format: int32 }
+
+    CursorMeta:
+      type: object
+      properties:
+        nextCursor:
+          type: string
+          nullable: true
+          description: Pass as `cursor` to get the next page. Null when there are no more items.
+
+    CityCode:
+      type: string
+      pattern: '^(0[1-9]|[1-7][0-9]|8[01])$'
+      description: Two-digit province plate code, `01` to `81`.
+      example: '34'
+
+    City:
+      type: object
+      required: [code, name]
+      properties:
+        code: { $ref: '#/components/schemas/CityCode' }
+        name: { type: string, example: İstanbul }
+
+    UserSummary:
+      type: object
+      required: [userId, isDeleted]
+      properties:
+        userId: { type: string, format: uuid }
+        displayName:
+          type: string
+          nullable: true
+          description: Null for deleted users; clients show a localized placeholder.
+        avatarUrl: { type: string, format: uri, nullable: true }
+        isDeleted: { type: boolean }
+
+    SkillRef:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+
+    RatingSummary:
+      type: object
+      required: [reviewCount]
+      properties:
+        reviewCount: { type: integer, format: int32 }
+        averageRating:
+          type: number
+          format: double
+          nullable: true
+          minimum: 1
+          maximum: 10
+          description: Null when the user has no reviews.
+
+    UnreadCount:
+      type: object
+      required: [count]
+      properties:
+        count: { type: integer, format: int32 }
+
+    # -------------------------------------------------------------- Auth
+    Password:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 128
+
+    RegisterRequest:
+      type: object
+      required: [email, password, ageConfirmed]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { $ref: '#/components/schemas/Password' }
+        ageConfirmed:
+          type: boolean
+          description: Must be true. The user confirms being 18 or older.
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, format: password, maxLength: 128 }
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string, maxLength: 512 }
+
+    OneTimeTokenRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, maxLength: 512 }
+
+    PasswordResetRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+
+    PasswordResetConfirmRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string, maxLength: 512 }
+        newPassword: { $ref: '#/components/schemas/Password' }
+
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken, expiresIn]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn:
+          type: integer
+          format: int32
+          description: Lifetime of the access token in seconds.
+
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/TokenPair'
+        - type: object
+          required: [account, accountRestored]
+          properties:
+            account: { $ref: '#/components/schemas/Account' }
+            accountRestored:
+              type: boolean
+              description: True when this sign-in cancelled a pending account deletion.
+
+    UserRole:
+      type: string
+      enum: [User, Admin]
+
+    Account:
+      type: object
+      required: [id, email, emailVerified, role, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        emailVerified: { type: boolean }
+        role: { $ref: '#/components/schemas/UserRole' }
+        createdAt: { type: string, format: date-time }
+
+    AccountDeletionRequest:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, format: password, maxLength: 128 }
+
+    AccountDeletionScheduled:
+      type: object
+      required: [permanentDeletionAt]
+      properties:
+        permanentDeletionAt:
+          type: string
+          format: date-time
+          description: Signing in before this time restores the account.
+
+    # ---------------------------------------------------------- Profiles
+    UpdateProfileRequest:
+      type: object
+      required: [displayName, acceptsOnline, acceptsInPerson]
+      properties:
+        displayName: { type: string, minLength: 2, maxLength: 50 }
+        bio: { type: string, maxLength: 500, nullable: true }
+        city:
+          type: string
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CityCode'
+          description: Required when `acceptsInPerson` is true.
+        acceptsOnline: { type: boolean }
+        acceptsInPerson:
+          type: boolean
+          description: At least one of `acceptsOnline` and `acceptsInPerson` must be true.
+
+    Profile:
+      allOf:
+        - $ref: '#/components/schemas/UpdateProfileRequest'
+        - type: object
+          required: [userId, isComplete, rating, createdAt, updatedAt]
+          properties:
+            userId: { type: string, format: uuid }
+            avatarUrl: { type: string, format: uri, nullable: true }
+            isComplete:
+              type: boolean
+              description: False until the user has saved the profile for the first time after registering.
+            rating: { $ref: '#/components/schemas/RatingSummary' }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    PublicProfile:
+      type: object
+      required: [userId, displayName, acceptsOnline, acceptsInPerson, rating]
+      properties:
+        userId: { type: string, format: uuid }
+        displayName: { type: string }
+        bio: { type: string, nullable: true }
+        avatarUrl: { type: string, format: uri, nullable: true }
+        city:
+          type: string
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CityCode'
+        acceptsOnline: { type: boolean }
+        acceptsInPerson: { type: boolean }
+        rating: { $ref: '#/components/schemas/RatingSummary' }
+
+    AvatarUploadUrlRequest:
+      type: object
+      required: [contentType, contentLength]
+      properties:
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+        contentLength:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5242880
+          description: File size in bytes; at most 5 MB.
+
+    AvatarUploadUrl:
+      type: object
+      required: [uploadUrl, objectKey, expiresAt]
+      properties:
+        uploadUrl: { type: string, format: uri }
+        objectKey: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    SetAvatarRequest:
+      type: object
+      required: [objectKey]
+      properties:
+        objectKey: { type: string, maxLength: 512 }
+
+    # ------------------------------------------------------------ Skills
+    SkillCategory:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+
+    SkillStatus:
+      type: string
+      enum: [PendingApproval, Approved, Rejected]
+
+    Skill:
+      type: object
+      required: [id, categoryId, name, slug, status]
+      properties:
+        id: { type: string, format: uuid }
+        categoryId: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        status: { $ref: '#/components/schemas/SkillStatus' }
+
+    ProposeSkillRequest:
+      type: object
+      required: [categoryId, name]
+      properties:
+        categoryId: { type: string, format: uuid }
+        name: { type: string, minLength: 2, maxLength: 60 }
+
+    UserSkillType:
+      type: string
+      enum: [Offered, Wanted]
+
+    SkillLevel:
+      type: string
+      enum: [Beginner, Intermediate, Advanced, Expert]
+      description: For an offered skill, the user's own level. For a wanted skill, the minimum level of the teacher the user is looking for.
+
+    UserSkill:
+      type: object
+      required: [id, skill, type, level, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        skill: { $ref: '#/components/schemas/Skill' }
+        type: { $ref: '#/components/schemas/UserSkillType' }
+        level: { $ref: '#/components/schemas/SkillLevel' }
+        createdAt: { type: string, format: date-time }
+
+    AddUserSkillRequest:
+      type: object
+      required: [skillId, type, level]
+      properties:
+        skillId: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/UserSkillType' }
+        level: { $ref: '#/components/schemas/SkillLevel' }
+
+    UpdateUserSkillRequest:
+      type: object
+      required: [level]
+      properties:
+        level: { $ref: '#/components/schemas/SkillLevel' }
+
+    SkillPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Skill' }
+
+    UserSkillPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/UserSkill' }
+
+    # --------------------------------------------------------- Discovery
+    Compatibility:
+      type: string
+      enum: [Mutual, OneWay, None]
+      description: |
+        `Mutual`: each user offers something the other wants. `OneWay`: the listed user
+        offers something the caller wants. `None`: neither.
+
+    DiscoveryUserSkill:
+      type: object
+      required: [skill, level]
+      properties:
+        skill: { $ref: '#/components/schemas/SkillRef' }
+        level: { $ref: '#/components/schemas/SkillLevel' }
+
+    DiscoveryUser:
+      type: object
+      required: [user, acceptsOnline, acceptsInPerson, compatibility, rating, offeredSkills, wantedSkills]
+      properties:
+        user: { $ref: '#/components/schemas/UserSummary' }
+        city:
+          type: string
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CityCode'
+        acceptsOnline: { type: boolean }
+        acceptsInPerson: { type: boolean }
+        compatibility: { $ref: '#/components/schemas/Compatibility' }
+        rating: { $ref: '#/components/schemas/RatingSummary' }
+        offeredSkills:
+          type: array
+          items: { $ref: '#/components/schemas/DiscoveryUserSkill' }
+        wantedSkills:
+          type: array
+          items: { $ref: '#/components/schemas/DiscoveryUserSkill' }
+
+    DiscoveryUserCursorPage:
+      allOf:
+        - $ref: '#/components/schemas/CursorMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/DiscoveryUser' }
+
+    # ------------------------------------------------------ SwapRequests
+    SwapRequestStatus:
+      type: string
+      enum: [Pending, Accepted, Declined, Cancelled, Expired]
+
+    SendSwapRequestRequest:
+      type: object
+      required: [recipientId, offeredSkillId, requestedSkillId]
+      properties:
+        recipientId: { type: string, format: uuid }
+        offeredSkillId:
+          type: string
+          format: uuid
+          description: The skill the sender will teach.
+        requestedSkillId:
+          type: string
+          format: uuid
+          description: The skill the sender wants to learn from the recipient.
+
+    SwapRequest:
+      type: object
+      required: [id, requester, recipient, offeredSkill, requestedSkill, status, createdAt, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        requester: { $ref: '#/components/schemas/UserSummary' }
+        recipient: { $ref: '#/components/schemas/UserSummary' }
+        offeredSkill: { $ref: '#/components/schemas/SkillRef' }
+        requestedSkill: { $ref: '#/components/schemas/SkillRef' }
+        status: { $ref: '#/components/schemas/SwapRequestStatus' }
+        createdAt: { type: string, format: date-time }
+        expiresAt:
+          type: string
+          format: date-time
+          description: Three days after creation.
+        respondedAt: { type: string, format: date-time, nullable: true }
+
+    SwapRequestPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/SwapRequest' }
+
+    # ----------------------------------------------------------- Matches
+    MatchStatus:
+      type: string
+      enum: [Active, EndRequested, Ended]
+
+    MatchEndReason:
+      type: string
+      enum: [MutualConsent, EndRequestExpired, Blocked, AccountDeleted]
+
+    Match:
+      type: object
+      required: [id, swapRequestId, userA, userB, skillTaughtByA, skillTaughtByB, status, conversationId, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        swapRequestId: { type: string, format: uuid }
+        userA:
+          allOf:
+            - $ref: '#/components/schemas/UserSummary'
+          description: The user who sent the swap request.
+        userB:
+          allOf:
+            - $ref: '#/components/schemas/UserSummary'
+          description: The user who accepted the swap request.
+        skillTaughtByA: { $ref: '#/components/schemas/SkillRef' }
+        skillTaughtByB: { $ref: '#/components/schemas/SkillRef' }
+        status: { $ref: '#/components/schemas/MatchStatus' }
+        conversationId: { type: string, format: uuid }
+        endRequestedByUserId: { type: string, format: uuid, nullable: true }
+        endRequestedAt: { type: string, format: date-time, nullable: true }
+        endRequestExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When a pending end request ends the match automatically.
+        endReason:
+          type: string
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/MatchEndReason'
+        createdAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time, nullable: true }
+
+    MatchPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Match' }
+
+    # ----------------------------------------------------- Conversations
+    Message:
+      type: object
+      required: [id, conversationId, senderId, body, sentAt]
+      properties:
+        id: { type: string, format: uuid }
+        conversationId: { type: string, format: uuid }
+        senderId: { type: string, format: uuid }
+        body: { type: string }
+        sentAt: { type: string, format: date-time }
+        clientMessageId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Echo of the value sent by the client, so it can match the real-time copy to its optimistic one.
+
+    SendMessageRequest:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, minLength: 1, maxLength: 2000 }
+        clientMessageId:
+          type: string
+          format: uuid
+          description: Client-generated id. Sending the same id twice returns the original message instead of creating a duplicate.
+
+    Conversation:
+      type: object
+      required: [id, otherUser, isClosed, hasActiveMatch, unreadCount, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        otherUser: { $ref: '#/components/schemas/UserSummary' }
+        isClosed:
+          type: boolean
+          description: A closed conversation is read-only.
+        closedAt: { type: string, format: date-time, nullable: true }
+        closedByUserId: { type: string, format: uuid, nullable: true }
+        hasActiveMatch:
+          type: boolean
+          description: Whether the two users currently have an unfinished match. The conversation can be closed only when false.
+        lastMessage:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Message'
+        unreadCount: { type: integer, format: int32 }
+        createdAt: { type: string, format: date-time }
+
+    ConversationPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Conversation' }
+
+    MessageCursorPage:
+      allOf:
+        - $ref: '#/components/schemas/CursorMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Message' }
+
+    # ---------------------------------------------------------- Sessions
+    SessionMode:
+      type: string
+      enum: [Online, InPerson]
+
+    SwapSessionStatus:
+      type: string
+      enum: [Proposed, Scheduled, CompletionPending, Completed, Declined, Cancelled]
+
+    ProposeSessionRequest:
+      type: object
+      required: [scheduledAt, durationMinutes, mode]
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+          description: Must be in the future.
+        durationMinutes: { type: integer, format: int32, minimum: 15, maximum: 480 }
+        mode: { $ref: '#/components/schemas/SessionMode' }
+        note:
+          type: string
+          maxLength: 500
+          description: Free text such as a meeting link or a place.
+
+    CancelSessionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 5, maxLength: 500 }
+
+    SwapSession:
+      type: object
+      required: [id, matchId, proposedByUserId, scheduledAt, durationMinutes, mode, status, completedAutomatically, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        matchId: { type: string, format: uuid }
+        proposedByUserId: { type: string, format: uuid }
+        scheduledAt: { type: string, format: date-time }
+        durationMinutes: { type: integer, format: int32 }
+        mode: { $ref: '#/components/schemas/SessionMode' }
+        note: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/SwapSessionStatus' }
+        completionMarkedByUserId: { type: string, format: uuid, nullable: true }
+        completionMarkedAt: { type: string, format: date-time, nullable: true }
+        completionConfirmDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: When a session waiting for confirmation is completed automatically.
+        completedAt: { type: string, format: date-time, nullable: true }
+        completedAutomatically:
+          type: boolean
+          description: True when the confirmation was given by the system because the deadline passed.
+        cancelledByUserId: { type: string, format: uuid, nullable: true }
+        cancelReason: { type: string, nullable: true }
+        cancelledAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    SwapSessionPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/SwapSession' }
+
+    # ----------------------------------------------------------- Reviews
+    CreateReviewRequest:
+      type: object
+      required: [sessionId, rating]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: A completed session between the caller and the user being reviewed.
+        rating: { type: integer, format: int32, minimum: 1, maximum: 10 }
+        comment: { type: string, maxLength: 1000 }
+
+    Review:
+      type: object
+      required: [id, reviewer, revieweeId, sessionId, rating, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        reviewer: { $ref: '#/components/schemas/UserSummary' }
+        revieweeId: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        rating: { type: integer, format: int32, minimum: 1, maximum: 10 }
+        comment: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    ReviewPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Review' }
+
+    # ----------------------------------------------------- Notifications
+    NotificationType:
+      type: string
+      enum:
+        - SwapRequestReceived
+        - SwapRequestAccepted
+        - SwapRequestDeclined
+        - SwapRequestCancelled
+        - SwapRequestExpired
+        - MatchCreated
+        - MatchEndRequested
+        - MatchEndRequestRejected
+        - MatchEndRequestWithdrawn
+        - MatchEndReminder
+        - MatchEnded
+        - SessionProposed
+        - SessionAccepted
+        - SessionDeclined
+        - SessionCancelled
+        - SessionCompletionMarked
+        - SessionCompletionReminder
+        - SessionCompleted
+        - ReviewReceived
+        - SkillProposalApproved
+        - SkillProposalRejected
+
+    NotificationData:
+      type: object
+      description: Identifiers of the resources the notification is about. Which fields are set depends on `type`.
+      properties:
+        actorUserId: { type: string, format: uuid, nullable: true }
+        swapRequestId: { type: string, format: uuid, nullable: true }
+        matchId: { type: string, format: uuid, nullable: true }
+        sessionId: { type: string, format: uuid, nullable: true }
+        reviewId: { type: string, format: uuid, nullable: true }
+        skillId: { type: string, format: uuid, nullable: true }
+        reason:
+          type: string
+          nullable: true
+          description: The cancellation reason, for `SessionCancelled`.
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: The automatic deadline, for end request and completion notifications.
+
+    Notification:
+      type: object
+      required: [id, type, data, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/NotificationType' }
+        data: { $ref: '#/components/schemas/NotificationData' }
+        createdAt: { type: string, format: date-time }
+        readAt: { type: string, format: date-time, nullable: true }
+
+    NotificationPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Notification' }
+
+    DevicePlatform:
+      type: string
+      enum: [Android, Ios, Web]
+
+    RegisterDeviceRequest:
+      type: object
+      required: [fcmToken, platform]
+      properties:
+        fcmToken: { type: string, minLength: 1, maxLength: 4096 }
+        platform: { $ref: '#/components/schemas/DevicePlatform' }
+
+    Device:
+      type: object
+      required: [id, platform, lastSeenAt]
+      properties:
+        id: { type: string, format: uuid }
+        platform: { $ref: '#/components/schemas/DevicePlatform' }
+        lastSeenAt: { type: string, format: date-time }
+
+    # -------------------------------------------------------- Moderation
+    BlockUserRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: string, format: uuid }
+
+    Block:
+      type: object
+      required: [user, createdAt]
+      properties:
+        user: { $ref: '#/components/schemas/UserSummary' }
+        createdAt: { type: string, format: date-time }
+
+    BlockPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Block' }
+
+    ReportTargetType:
+      type: string
+      enum: [User, Message, Review]
+
+    ReportReason:
+      type: string
+      enum: [Spam, Harassment, InappropriateContent, FakeProfile, Other]
+
+    ReportStatus:
+      type: string
+      enum: [Open, Resolved, Dismissed]
+
+    CreateReportRequest:
+      type: object
+      required: [targetType, targetId, reason]
+      properties:
+        targetType: { $ref: '#/components/schemas/ReportTargetType' }
+        targetId: { type: string, format: uuid }
+        reason: { $ref: '#/components/schemas/ReportReason' }
+        description: { type: string, maxLength: 1000 }
+
+    Report:
+      type: object
+      required: [id, targetType, targetId, reason, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        targetType: { $ref: '#/components/schemas/ReportTargetType' }
+        targetId: { type: string, format: uuid }
+        reason: { $ref: '#/components/schemas/ReportReason' }
+        description: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/ReportStatus' }
+        createdAt: { type: string, format: date-time }
+
+    # ------------------------------------------------------------- Admin
+    AdminSkillProposal:
+      allOf:
+        - $ref: '#/components/schemas/Skill'
+        - type: object
+          required: [createdAt]
+          properties:
+            proposedByUserId: { type: string, format: uuid, nullable: true }
+            createdAt: { type: string, format: date-time }
+            reviewedAt: { type: string, format: date-time, nullable: true }
+
+    AdminSkillProposalPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/AdminSkillProposal' }
+
+    AdminReport:
+      allOf:
+        - $ref: '#/components/schemas/Report'
+        - type: object
+          required: [reporterId]
+          properties:
+            reporterId: { type: string, format: uuid }
+            resolvedAt: { type: string, format: date-time, nullable: true }
+            resolvedByUserId: { type: string, format: uuid, nullable: true }
+
+    AdminReportPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/AdminReport' }
+
+    ResolveReportRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [Resolved, Dismissed]
+
+    SessionCancellation:
+      type: object
+      required: [sessionId, matchId, cancelledByUserId, otherUserId, reason, cancelledAt]
+      properties:
+        sessionId: { type: string, format: uuid }
+        matchId: { type: string, format: uuid }
+        cancelledByUserId: { type: string, format: uuid }
+        otherUserId: { type: string, format: uuid }
+        reason: { type: string }
+        cancelledAt: { type: string, format: date-time }
+
+    SessionCancellationPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/SessionCancellation' }

@@ -8,7 +8,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 |---|---|---|
 | 0 | Kurulum | Tamamlandı (2026-10-06) |
 | 1 | Domain ve veri tasarımı | Tamamlandı (2026-10-07) |
-| 2 | API sözleşmesi | Başlamadı |
+| 2 | API sözleşmesi | Taslak hazır, onay bekliyor |
 | 3 | Backend iskeleti | Başlamadı |
 | 4 | Mobil iskelet | Başlamadı |
 | 5 | Dikey dilimler | Başlamadı |
@@ -28,6 +28,14 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 - `docs/erd/erd.md`: Mermaid ERD, tablo sahipliği, benzersizlik kısıtları.
 - `docs/adr/`: 0001 modüler monolit, 0002 PostgreSQL, 0003 auth stratejisi, 0004 mobil state yönetimi.
 - Domain modeli ve ERD 2026-10-07'de onaylandı.
+
+## Faz 2 — API sözleşmesi
+
+- `contracts/openapi.yaml`: MVP'nin tamamı; 74 operasyon, 87 şema (OpenAPI 3.0.3).
+- `docs/api-conventions.md`: ortak standartlar, sayfalama, hata biçimi ve hata kodları.
+- `docs/realtime.md`: SignalR hub'ı, olaylar ve push kuralları.
+- `docs/adr/0005-api-contract-format.md`: sözleşme biçimi ve lint aracı.
+- Lint: `npx --yes @redocly/cli@2.60.0 lint` hatasız geçiyor (2026-10-07); iki bulgu bilinçli olarak yok sayılıyor.
 
 ## Geliştirme ortamı
 

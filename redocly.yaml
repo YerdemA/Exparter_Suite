@@ -1,0 +1,13 @@
+apis:
+  main:
+    root: contracts/openapi.yaml
+
+extends:
+  - recommended
+
+rules:
+  # The API is proprietary; there is no license to declare.
+  info-license: off
+  operation-operationId: error
+  operation-4xx-response: error
+  no-unused-components: error
