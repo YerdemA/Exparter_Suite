@@ -18,5 +18,5 @@
 ## Sonuçlar
 
 - Boş olabilen alanlar 3.0'ın `nullable: true` sözdizimiyle yazılır. 3.1'e geçilirse bu alanlar dönüştürülmelidir.
-- .NET 10'un ürettiği OpenAPI belgesi varsayılan olarak 3.1'dir. Sözleşmeyle uyum denetimi Faz 3'te kurulurken bu fark hesaba katılacak.
-- Lint, backend CI'ına Faz 3'te eklenir; o zamana kadar elle çalıştırılır.
+- Backend OpenAPI belgesi üretmez; sözleşme elle yazılan dosyadır. Uyum, rota düzeyinde bir entegrasyon testiyle denetlenir (bkz. ADR 0006).
+- Lint, backend CI'ında her değişiklikte çalışır.

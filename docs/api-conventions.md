@@ -7,7 +7,7 @@
 - **Sürüm:** URL ile, `/api/v1/...`. Geriye dönük uyumu bozan değişiklik yeni sürüm gerektirir; alan veya endpoint eklemek gerektirmez.
 - **Biçim:** İstek ve yanıtlar JSON'dur. Alan adları `camelCase`, enum değerleri `PascalCase` yazılır.
 - **Kimlikler:** Tüm kimlikler UUID'dir.
-- **Zaman:** Tüm zamanlar ISO 8601 biçiminde ve UTC'dir (`2026-10-07T14:30:00Z`). İstemci yerel saate kendisi çevirir.
+- **Zaman:** Tüm zamanlar ISO 8601 biçiminde ve UTC'dir. Sunucu UTC'yi `+00:00` ofsetiyle yazar (`2026-10-07T14:30:00+00:00`); isteklerde `Z` de kabul edilir. İstemci yerel saate kendisi çevirir.
 - **Boş değerler:** İsteğe bağlı alanlar yanıtta `null` olarak döner, atlanmaz.
 - **Kimlik doğrulama:** `Authorization: Bearer <access token>`. Herkese açık endpoint'ler sözleşmede `security: []` ile işaretlidir.
 - **Durum değiştiren işlemler:** Kabul, ret, iptal gibi geçişler kaynağın altında `POST` ile yapılır (`/swap-requests/{id}/accept`) ve kaynağın güncel halini döner.
@@ -58,14 +58,17 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 |---|---|---|
 | `validation_failed` | 400 | Doğrulama hatası; ayrıntılar `errors` alanında. |
 | `invalid_token` | 400 | Tek kullanımlık token geçersiz, kullanılmış veya süresi dolmuş. |
+| `invalid_password` | 400 | Hesap silme gibi parola onayı isteyen işlemde parola hatalı. |
 | `invalid_credentials` | 401 | E-posta/kullanıcı adı veya parola hatalı. |
+| `unauthorized` | 401 | Access token yok veya geçersiz. |
 | `token_expired` | 401 | Access token'ın süresi dolmuş; istemci yenilemelidir. |
 | `refresh_token_invalid` | 401 | Refresh token geçersiz, iptal edilmiş veya süresi dolmuş; kullanıcı yeniden giriş yapmalıdır. |
 | `account_suspended` | 403 | Hesap askıya alınmış. |
 | `email_not_verified` | 403 | İşlem doğrulanmış e-posta gerektiriyor. |
 | `admin_required` | 403 | İşlem admin yetkisi gerektiriyor. |
 | `not_participant` | 403 | Çağıran bu işlemi yapabilecek taraf değil (ör. isteği gönderen kabul edemez). |
-| `not_found` | 404 | Kaynak bulunamadı. |
+| `forbidden` | 403 | Çağıranın rolü bu işleme izin vermiyor. |
+| `not_found` | 404 | Kaynak veya adres bulunamadı. |
 | `email_already_registered` | 409 | E-posta kullanımda. |
 | `username_already_taken` | 409 | Kullanıcı adı kullanımda. |
 | `username_reserved` | 409 | Kullanıcı adı ayrılmış bir ad (ör. `admin`). |
@@ -89,6 +92,9 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `review_already_exists` | 409 | Bu kullanıcı daha önce değerlendirilmiş. |
 | `session_not_completed` | 409 | Değerlendirme için tamamlanmış oturum gerekir. |
 | `already_blocked` | 409 | Kullanıcı zaten engellenmiş. |
+| `age_not_confirmed` | 409 | 18 yaş onayı verilmemiş. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `concurrent_update` | 409 | Kaynak aynı anda başka bir istekle değişti; istemci yeniden deneyebilir. |
+| `internal_error` | 500 | Beklenmeyen sunucu hatası. |
 
 ## Lint
 
