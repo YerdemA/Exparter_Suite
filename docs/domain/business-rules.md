@@ -1,6 +1,6 @@
 # İş Kuralları
 
-Durum: **Onaylandı (2026-10-07).** Reşit olmayan kullanıcılarla ilgili tek açık soru `open-questions.md` dosyasındadır.
+Durum: **Onaylandı (2026-10-07).**
 
 **Katman** sütunu kuralın nerede korunduğunu söyler:
 
@@ -20,7 +20,7 @@ Durum: **Onaylandı (2026-10-07).** Reşit olmayan kullanıcılarla ilgili tek a
 | ID-06 | Doğrulama ve parola sıfırlama token'ları tek kullanımlıktır ve süreleri dolunca geçersizdir. | Domain |
 | ID-07 | Parola sıfırlandığında kullanıcının tüm refresh token'ları iptal edilir. | Domain |
 | ID-08 | `Suspended` durumundaki kullanıcı giriş yapamaz ve token yenileyemez. | Domain |
-| ID-09 | Kayıt olurken kullanıcı 13 yaşında veya daha büyük olduğunu onaylamalıdır. Onay olmadan hesap oluşturulmaz; onay zamanı saklanır, doğum tarihi istenmez. | Domain |
+| ID-09 | Kayıt olurken kullanıcı 18 yaşında veya daha büyük olduğunu onaylamalıdır. Onay olmadan hesap oluşturulmaz; onay zamanı saklanır, doğum tarihi istenmez. | Domain |
 | ID-10 | Kullanıcı parolasını yeniden girerek hesabını silebilir. İstekle birlikte hesap gizlenir, oturumları kapanır, bekleyen istekleri iptal edilir, aktif eşleşmesi sonlanır, tamamlanmamış oturumları iptal edilir ve sohbetleri kapanır. | Application |
 | ID-12 | Silme isteği 30 gün içinde geri alınabilir: kullanıcı bu sürede giriş yaparsa hesap yeniden etkinleşir. Kapanan istek, eşleşme, oturum ve sohbetler geri gelmez. | Domain |
 | ID-13 | 30 gün dolunca silme kalıcı olur: profil, avatar, yetenekler, cihazlar, bildirimler ve kullanıcının aldığı değerlendirmeler silinir. Gönderdiği mesajlar ve yazdığı değerlendirmeler "Silinmiş kullanıcı" adıyla kalır. | Application |

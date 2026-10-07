@@ -189,7 +189,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 ## 7. MVP Kapsamı
 
 **Kapsam içi:**
-- Kayıt (13 yaş onayıyla), e-posta doğrulama, giriş, çıkış, token yenileme, parola sıfırlama, hesap silme
+- Kayıt (18 yaş onayıyla), e-posta doğrulama, giriş, çıkış, token yenileme, parola sıfırlama, hesap silme
 - Profil oluşturma ve düzenleme, avatar yükleme
 - Sunulan/istenen yetenek yönetimi (katalogdan seçim)
 - Keşfet: filtreleme, arama, karşılıklı uyuma göre sıralama
@@ -207,6 +207,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 - Ödeme
 - Gelişmiş öneri algoritması
 - Çoklu dil desteği
+- 18 yaşından küçük kullanıcılar
 
 ---
 

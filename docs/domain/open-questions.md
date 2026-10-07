@@ -28,7 +28,7 @@
 | Admin işleri | `User.Role` (`User`/`Admin`) ve arayüzsüz admin endpoint'leri. Panel sonradan aynı endpoint'leri kullanır. |
 | Moderation modülü | Dokuzuncu modül olarak eklendi; `Block` ve `Report` bu modüldedir. |
 | Hesap silme | Olacak; 30 gün içinde geri alınabilir. Aynı e-postayla yeniden kayıt için 3 ay bekleme süresi var. Ayrıntılar: Ö3. |
-| Yaş | Kayıtta kullanıcı 13 yaş ve üstü olduğunu onaylar (önce 18 idi; uygulama liselilere de hitap ettiği için 13'e çekildi). |
+| Yaş | MVP'de kayıtta kullanıcı 18 yaş ve üstü olduğunu onaylar. Reşit olmayan kullanıcılar MVP sonrasına bırakıldı. |
 | E-posta gönderimi | Lokalde yakalayıcı SMTP sunucusu; gerçek sağlayıcı Faz 3'te ADR ile. |
 | Sonlandırma isteği cevapsız kalırsa | 7 gün sonra eşleşme kendiliğinden sonlanır. Ayrıntılar: Ö1. |
 | Tamamlandı işareti cevapsız kalırsa | 72 saat sonra oturum kendiliğinden tamamlanır. Ayrıntılar: Ö2. |
@@ -48,16 +48,6 @@
 **Brief ile çelişen karar:** Brief Bölüm 6'da değerlendirme "her oturum için kişi başı bir kez" idi. Yeni karar "bir kullanıcıyı yalnızca bir kez". Brief buna göre güncellendi.
 
 **Brief ile çelişen ikinci karar:** Brief Bölüm 6'da "mesajlaşma yalnızca eşleşmiş kullanıcılar arasında mümkündür" kuralı vardı. Yeni karara göre sohbet eşleşme ile başlar ama eşleşme sona erdikten sonra da sürebilir. Brief buna göre güncellendi.
-
-## Açık soru
-
-**Reşit olmayan kullanıcılar.** Yaş sınırı 13'e indiği için 13–17 yaşındaki kullanıcılar yetişkinlerle eşleşebilir, özel mesajlaşabilir ve yüz yüze oturum planlayabilir. Mevcut model yalnızca "13 yaş ve üstüyüm" onayını saklar; kullanıcının reşit olup olmadığını bilmez, bu yüzden hiçbir koruma uygulayamaz. Karar gereken noktalar:
-
-1. Reşit olmayanlar için kısıt olacak mı? Seçenekler: yalnızca çevrimiçi oturum; yalnızca kendi yaş grubuyla eşleşme; kısıt yok.
-2. Kısıt olacaksa yaş grubunu bilmek gerekir: kayıtta doğum tarihi veya "18 yaşından küçüğüm" beyanı.
-3. Veli onayı aranacak mı? KVKK ve uygulama mağazası kuralları açısından bir hukukçuyla doğrulanmalıdır.
-
-Bu soru kayıt endpoint'ini ve eşleşme kurallarını etkiler; Faz 2 sözleşmesi yazılmadan önce cevaplanmalıdır.
 
 ## Onaylanan ayrıntılar (2026-10-07)
 
@@ -107,4 +97,5 @@ Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir 
 - Modül başına ayrı `DbContext` ve PostgreSQL şeması kullanımı: Faz 3 (bkz. ADR 0001).
 - Metin alanlarının uzunluk sınırları: Faz 2 (sözleşme).
 - E-posta sağlayıcısı: Faz 3 (ADR).
+- Reşit olmayan (13–17 yaş) kullanıcılar: MVP sonrası. Yetişkinlerle eşleşme, özel mesajlaşma ve yüz yüze oturum için koruma kuralları, yaş bilgisinin toplanması ve veli onayı o zaman kararlaştırılacak.
 

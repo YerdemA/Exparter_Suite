@@ -1,6 +1,6 @@
 # Domain Modeli
 
-Durum: **Onaylandı (2026-10-07).** Kararların dökümü `open-questions.md` dosyasındadır; reşit olmayan kullanıcılarla ilgili tek açık soru da oradadır.
+Durum: **Onaylandı (2026-10-07).** Kararların dökümü `open-questions.md` dosyasındadır.
 
 Ortak kurallar:
 
@@ -20,7 +20,7 @@ Ortak kurallar:
 | `Status` | `Active`, `Suspended`, `PendingDeletion`, `Deleted` |
 | `Role` | `User`, `Admin`. Admin işlemleri MVP'de arayüzsüz endpoint'lerle yapılır. |
 | `EmailVerifiedAt` | Boşsa e-posta doğrulanmamıştır. |
-| `AgeConfirmedAt` | Kullanıcının 13 yaş ve üstü olduğunu onayladığı an. Kayıtta zorunludur; doğum tarihi tutulmaz. |
+| `AgeConfirmedAt` | Kullanıcının 18 yaş ve üstü olduğunu onayladığı an. Kayıtta zorunludur; doğum tarihi tutulmaz. |
 | `CreatedAt` | |
 | `DeletionRequestedAt` | Silme isteğinin zamanı. 30 gün içinde giriş yapılırsa silme geri alınır. |
 | `DeletedAt` | Kalıcı silmenin zamanı. |
