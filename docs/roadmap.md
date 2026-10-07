@@ -28,7 +28,6 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 - `docs/erd/erd.md`: Mermaid ERD, tablo sahipliği, benzersizlik kısıtları.
 - `docs/adr/`: 0001 modüler monolit, 0002 PostgreSQL, 0003 auth stratejisi, 0004 mobil state yönetimi.
 - Domain modeli ve ERD 2026-10-07'de onaylandı.
-- Faz 2'den önce cevaplanması gereken tek açık soru: reşit olmayan kullanıcılar (`docs/domain/open-questions.md`).
 
 ## Geliştirme ortamı
 
