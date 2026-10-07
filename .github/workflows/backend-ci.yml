@@ -1,0 +1,43 @@
+name: Backend CI
+
+on:
+  push:
+    # Phase branches are built too, so a phase is verified before it is merged.
+    branches: [main, 'phase-**']
+    paths: ['backend/**', 'contracts/**', 'redocly.yaml', '.redocly.lint-ignore.yaml', '.github/workflows/backend-ci.yml']
+  pull_request:
+    paths: ['backend/**', 'contracts/**', 'redocly.yaml', '.redocly.lint-ignore.yaml', '.github/workflows/backend-ci.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Lint API contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npx --yes @redocly/cli@2.60.0 lint
+
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore
+      - run: dotnet build --no-restore --configuration Release
+      # Integration tests start PostgreSQL through Testcontainers; the runner's Docker is enough.
+      - run: dotnet test --no-build --configuration Release

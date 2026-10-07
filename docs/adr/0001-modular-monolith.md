@@ -27,4 +27,4 @@ Domain event'leri süreç içinde (in-process) yayınlanır. Kalıcı mesaj kuyr
 
 ## Açık noktalar
 
-- **Veritabanı düzeni:** Modül başına ayrı PostgreSQL şeması ve ayrı `DbContext` kullanılıp kullanılmayacağı Faz 3'ün başında kararlaştırılır.
+- **Veritabanı düzeni:** ADR 0006 ile karara bağlandı: tek `DbContext`, modül başına ayrı PostgreSQL şeması.

@@ -9,7 +9,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 0 | Kurulum | Tamamlandı (2026-10-06) |
 | 1 | Domain ve veri tasarımı | Tamamlandı (2026-10-07) |
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
-| 3 | Backend iskeleti | Başlamadı |
+| 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Başlamadı |
 | 5 | Dikey dilimler | Başlamadı |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
@@ -37,6 +37,30 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 - `docs/adr/0005-api-contract-format.md`: sözleşme biçimi ve lint aracı.
 - Lint: `npx --yes @redocly/cli@2.60.0 lint` hatasız geçiyor (2026-10-07); iki bulgu bilinçli olarak yok sayılıyor.
 
+## Faz 3 — Backend iskeleti
+
+- `backend/Exparter.sln`: dört katman projesi ve üç test projesi; modüller katmanların içinde klasör (ADR 0006).
+- Altyapı: Serilog, ProblemDetails ve hata kodları, FluentValidation hattı, JWT doğrulama, `/health`.
+- Veritabanı: EF Core + Npgsql, `identity` şeması, ilk migration (`InitialIdentity`).
+- Identity modülü: sözleşmedeki Auth ve Account endpoint'lerinin tamamı (11 operasyon). Kayıtta kullanıcı adı alınır; giriş e-posta veya kullanıcı adıyla yapılır; kullanıcı adı değiştirilebilir.
+- E-posta: SMTP ile gönderim, geliştirmede Mailpit (ADR 0007).
+- Testler (2026-10-07): 41 domain, 55 uygulama, 21 entegrasyon testi geçiyor. Entegrasyon testleri Testcontainers ile gerçek PostgreSQL kullanır.
+- CI: `.github/workflows/backend-ci.yml` sözleşme lint'i, build ve testleri çalıştırır.
+- Faz 5'e bırakılanlar: hesabın 30 gün sonunda kalıcı silinmesi ve e-posta için 3 aylık bekleme süresi (`Deleted` durumu, `DeletedAt`, `DeletedEmailHash` alanları henüz yok); e-posta doğrulaması gerektiren yetkilendirme kuralı (ilk kullanan endpoint ile gelir).
+- Bilinen sınır: hesabı askıya alacak bir endpoint yok; `Suspended` durumu şimdilik yalnızca veritabanından elle verilebilir.
+
+### Lokal çalıştırma
+
+```powershell
+docker compose up -d --wait
+cd backend
+dotnet user-secrets set --project src/Exparter.Api "ConnectionStrings:Database" "Host=localhost;Port=5432;Database=exparter;Username=exparter;Password=<.env içindeki parola>"
+dotnet user-secrets set --project src/Exparter.Api "Jwt:SigningKey" "<en az 32 karakterlik rastgele değer>"
+dotnet run --project src/Exparter.Api
+```
+
+API `http://localhost:5244` adresinde açılır ve Development ortamında migration'ları kendisi uygular. Gönderilen e-postalar `http://localhost:8025` adresinde görünür. Testler: `dotnet test` (Docker çalışıyor olmalı).
+
 ## Geliştirme ortamı
 
 2026-10-06 tarihinde ölçülen sürümler:
@@ -51,6 +75,8 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | Docker Compose | v5.4.0 |
 | Git | 2.55.0.windows.3 |
 | PostgreSQL imajı | `postgres:18.6-alpine` |
+| Mailpit imajı | `axllent/mailpit:v1.31.4` |
+| Node.js (lint için) | 24.14.0 |
 
 Notlar:
 

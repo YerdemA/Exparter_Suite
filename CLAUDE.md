@@ -45,4 +45,7 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 ## Ortam
 
 - Windows 11, PowerShell. Altyapı Docker Desktop üzerinde.
-- Veritabanını başlatma: `.env.example` dosyasını `.env` olarak kopyala, sonra `docker compose up -d`.
+- Altyapıyı başlatma: `.env.example` dosyasını `.env` olarak kopyala, sonra `docker compose up -d --wait` (PostgreSQL ve Mailpit).
+- Backend komutları `backend/` klasöründen: `dotnet build`, `dotnet test` (Docker gerekir), `dotnet run --project src/Exparter.Api`. Gizli ayarlar user-secrets ile verilir; ayrıntı `docs/roadmap.md` içinde.
+- Migration: `dotnet ef migrations add <Ad> --project src/Exparter.Infrastructure --startup-project src/Exparter.Api --output-dir Persistence/Migrations`.
+- Sözleşme lint'i (kökten): `npx --yes @redocly/cli@2.60.0 lint`.
