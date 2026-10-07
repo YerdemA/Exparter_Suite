@@ -1,15 +1,15 @@
 # ADR 0001: Modüler monolit
 
-- **Durum:** Kabul edildi (Moderation modülü onay bekliyor)
-- **Tarih:** 2026-10-06
+- **Durum:** Kabul edildi
+- **Tarih:** 2026-10-06 (Moderation modülü 2026-10-07'de eklendi)
 
 ## Bağlam
 
-Exparter tek geliştiriciyle başlayan bir üründür. Sekiz ayrı iş alanı var (kimlik, profil, yetenek, eşleşme, mesajlaşma, oturum, değerlendirme, bildirim) ve bunların sınırlarının zamanla bulanıklaşması en büyük bakım riskidir. Öte yandan dağıtık sistem işletmek (servisler arası ağ, dağıtık transaction, ayrı deploy hatları) bu ölçekte karşılığı olmayan bir maliyettir.
+Exparter tek geliştiriciyle başlayan bir üründür. Dokuz ayrı iş alanı var (kimlik, profil, yetenek, eşleşme, mesajlaşma, oturum, değerlendirme, bildirim, moderasyon) ve bunların sınırlarının zamanla bulanıklaşması en büyük bakım riskidir. Öte yandan dağıtık sistem işletmek (servisler arası ağ, dağıtık transaction, ayrı deploy hatları) bu ölçekte karşılığı olmayan bir maliyettir.
 
 ## Karar
 
-Tek deploy edilen bir ASP.NET Core uygulaması, içinde sınırları net modüller: `Identity`, `Profiles`, `Skills`, `Matching`, `Messaging`, `Sessions`, `Reviews`, `Notifications`.
+Tek deploy edilen bir ASP.NET Core uygulaması, içinde sınırları net modüller: `Identity`, `Profiles`, `Skills`, `Matching`, `Messaging`, `Sessions`, `Reviews`, `Notifications`, `Moderation`.
 
 - Her tablo tek bir modüle aittir. Bir modül başka modülün tablolarını sorgulamaz.
 - Modüller arası iletişim iki yolla olur: senkron ihtiyaçlar için karşı modülün uygulama servisi arayüzü, yan etkiler için domain event'leri.
@@ -27,5 +27,4 @@ Domain event'leri süreç içinde (in-process) yayınlanır. Kalıcı mesaj kuyr
 
 ## Açık noktalar
 
-- **Moderation modülü:** `Block` ve `Report` mevcut sekiz modüle oturmuyor. Dokuzuncu modül olarak eklenmesi önerildi (`docs/domain/open-questions.md`, V2). Onaylanırsa bu ADR güncellenir.
 - **Veritabanı düzeni:** Modül başına ayrı PostgreSQL şeması ve ayrı `DbContext` kullanılıp kullanılmayacağı Faz 3'ün başında kararlaştırılır.

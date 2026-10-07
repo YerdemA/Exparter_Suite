@@ -51,7 +51,7 @@ Kıdemli bir yazılım mimarı ve full-stack geliştirici gibi çalışacaksın.
 - Hiçbir endpoint belirli bir ekrana göre şekillendirilmez. Kaynak odaklı, genel amaçlı tasarla.
 
 ### 3.2 Modüler monolit
-- Tek deploy edilen backend uygulaması olacak, ama içinde sınırları net modüller bulunacak: `Identity`, `Profiles`, `Skills`, `Matching`, `Messaging`, `Sessions`, `Reviews`, `Notifications`.
+- Tek deploy edilen backend uygulaması olacak, ama içinde sınırları net modüller bulunacak: `Identity`, `Profiles`, `Skills`, `Matching`, `Messaging`, `Sessions`, `Reviews`, `Notifications`, `Moderation`.
 - Bir modül başka bir modülün veritabanı tablolarına doğrudan erişmez. Modüller birbirleriyle uygulama servisleri veya domain event'leri üzerinden konuşur.
 - Mikroservis **yok**. Event sourcing **yok**.
 
@@ -82,6 +82,7 @@ Kurulumdan önce her paketin **güncel kararlı sürümünü** kontrol et. Sür�
 | Kimlik doğrulama | JWT access token (kısa ömürlü) + rotasyonlu refresh token (veritabanında hash'lenmiş olarak saklanır) |
 | Gerçek zamanlı | SignalR |
 | Push bildirim | Firebase Cloud Messaging |
+| E-posta | Lokalde yakalayıcı bir SMTP sunucusu; gerçek sağlayıcı Faz 3'te ADR ile seçilecek |
 | Dosya depolama | S3 uyumlu object storage, istemciye presigned URL ile. Ürün seçimi Faz 5.1'de ADR ile yapılacak. |
 | Loglama | Serilog, yapılandırılmış log |
 | Test | xUnit, Testcontainers (gerçek PostgreSQL ile entegrasyon testi) |
@@ -169,7 +170,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 
 - Bir kullanıcı kendine takas isteği gönderemez.
 - Aynı iki kullanıcı arasında aynı anda yalnızca bir aktif (`Pending`) istek olabilir.
-- Mesajlaşma yalnızca eşleşmiş kullanıcılar arasında mümkündür.
+- Mesajlaşma yalnızca eşleşme ile başlar. Eşleşme sona erdikten sonra sohbetin sürmesi kullanıcılara bırakılır.
 - Değerlendirme yalnızca tamamlanmış bir takas oturumundan sonra yapılabilir. Bir kullanıcı başka bir kullanıcıyı yalnızca bir kez değerlendirebilir.
 - Durum geçişleri domain katmanında korunur. Geçersiz geçiş, domain hatası fırlatır.
 
@@ -188,7 +189,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 ## 7. MVP Kapsamı
 
 **Kapsam içi:**
-- Kayıt, giriş, çıkış, token yenileme, parola sıfırlama
+- Kayıt (18 yaş onayıyla), e-posta doğrulama, giriş, çıkış, token yenileme, parola sıfırlama, hesap silme
 - Profil oluşturma ve düzenleme, avatar yükleme
 - Sunulan/istenen yetenek yönetimi (katalogdan seçim)
 - Keşfet: filtreleme, arama, karşılıklı uyuma göre sıralama

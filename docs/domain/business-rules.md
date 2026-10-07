@@ -1,6 +1,6 @@
 # İş Kuralları
 
-Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli kurallar varsayımdır; bkz. `open-questions.md`.
+Durum: **Taslak, onay bekliyor.** `(Ö#)` ile işaretli kurallar henüz onaylanmamış önerilerdir; bkz. `open-questions.md`.
 
 **Katman** sütunu kuralın nerede korunduğunu söyler:
 
@@ -20,6 +20,9 @@ Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli kurallar varsayımdır; b
 | ID-06 | Doğrulama ve parola sıfırlama token'ları tek kullanımlıktır ve süreleri dolunca geçersizdir. | Domain |
 | ID-07 | Parola sıfırlandığında kullanıcının tüm refresh token'ları iptal edilir. | Domain |
 | ID-08 | `Suspended` durumundaki kullanıcı giriş yapamaz ve token yenileyemez. | Domain |
+| ID-09 | Kayıt olurken kullanıcı 18 yaşında veya daha büyük olduğunu onaylamalıdır. Onay olmadan hesap oluşturulmaz; onay zamanı saklanır, doğum tarihi istenmez. | Domain |
+| ID-10 | Kullanıcı hesabını silebilir. Silmenin kapsamı ve etkileri için bkz. (Ö3). | Application |
+| ID-11 | Admin yetkisi `User.Role` ile belirlenir. Yetenek önerilerini onaylama, şikâyetleri sonuçlandırma ve iptal sebeplerini listeleme yalnızca adminlere açıktır. | Application |
 
 ## Profil
 
@@ -27,19 +30,20 @@ Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli kurallar varsayımdır; b
 |---|---|---|
 | PR-01 | Her kullanıcının tam olarak bir profili vardır. | DB |
 | PR-02 | Konum olarak yalnızca şehir tutulur; koordinat veya adres tutulmaz. | — |
-| PR-03 | Çevrimiçi ve yüz yüze tercihlerinden en az biri seçili olmalıdır (V10). | Domain |
-| PR-04 | Yüz yüze tercihi seçiliyse şehir zorunludur (V10). | Domain |
+| PR-03 | Çevrimiçi ve yüz yüze tercihlerinden en az biri seçili olmalıdır. | Domain |
+| PR-04 | Yüz yüze tercihi seçiliyse şehir zorunludur. | Domain |
 
 ## Yetenekler
 
 | No | Kural | Katman |
 |---|---|---|
-| SK-01 | Kullanıcı profiline yalnızca katalogdaki onaylı yetenekleri ekleyebilir (V12). | Application |
+| SK-01 | Kullanıcı profiline yalnızca katalogdaki onaylı yetenekleri ekleyebilir. | Application |
 | SK-02 | Kullanıcı katalogda olmayan bir yeteneği önerebilir. Öneri admin onaylayana kadar katalogda görünmez. | Domain |
 | SK-03 | Aynı ada (slug) sahip ikinci bir yetenek oluşturulamaz veya önerilemez. | Application, DB |
-| SK-04 | Bir kullanıcı aynı yeteneği yalnızca bir kez ekleyebilir; aynı yetenek hem sunulan hem istenen olamaz (V13). | DB |
+| SK-04 | Bir kullanıcı aynı yeteneği her tipte (sunulan/istenen) en fazla bir kez ekleyebilir. | DB |
+| SK-07 | Aynı yetenek hem sunulan hem istenen olabilir; bu durumda istenen seviye sunulan seviyeden yüksek olmalıdır. Seviyelerden biri değiştirildiğinde de kural korunur. | Application |
 | SK-05 | Sunulan yetenekte seviye kullanıcının kendi seviyesidir. İstenen yetenekte seviye, aranan öğreticinin en düşük seviyesidir. | — |
-| SK-06 | Aktif bir eşleşmede veya bekleyen bir istekte kullanılan sunulan yetenek profilden kaldırılamaz (V16). | Application |
+| SK-06 | Aktif bir eşleşmede veya bekleyen bir istekte kullanılan sunulan yetenek profilden kaldırılamaz. | Application |
 
 ## Takas isteği
 
@@ -64,17 +68,19 @@ Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli kurallar varsayımdır; b
 | MT-02 | İki kullanıcı arasında aynı anda yalnızca bir sona ermemiş eşleşme olabilir. | Application, DB |
 | MT-03 | Eşleşme karşılıklı onayla sonlanır: bir taraf ister, diğer taraf onaylar. | Domain |
 | MT-04 | Sonlandırma isteğini karşı taraf reddedebilir, isteyen taraf geri alabilir; eşleşme `Active` durumuna döner. | Domain |
-| MT-05 | Engelleme, eşleşmeyi karşı tarafın onayı olmadan sonlandırır (V7). | Application |
+| MT-05 | Engelleme, eşleşmeyi karşı tarafın onayı olmadan sonlandırır. | Application |
 | MT-06 | Sona eren eşleşme yeniden açılamaz. Taraflar yeni bir istekle yeniden eşleşebilir. | Domain |
+| MT-07 | Sonlandırma isteği 7 gün içinde onaylanmaz, reddedilmez veya geri alınmazsa eşleşme kendiliğinden sonlanır. Ayrıntılar için bkz. (Ö1). | Domain |
 
 ## Mesajlaşma
 
 | No | Kural | Katman |
 |---|---|---|
-| MS-01 | Mesajlaşma yalnızca eşleşmiş kullanıcılar arasında mümkündür; her eşleşmenin tek bir sohbeti vardır. | Application, DB |
+| MS-01 | Sohbet yalnızca eşleşme ile başlar; eşleşmemiş iki kullanıcı birbirine mesaj atamaz. | Application, DB |
 | MS-02 | Mesaj yalnızca metindir. Boş olamaz ve uzunluk sınırı vardır (sınır Faz 2'de sözleşmede belirlenir). | Domain |
 | MS-03 | Yalnızca sohbetin iki tarafı mesaj gönderebilir ve okuyabilir. | Application |
-| MS-04 | Eşleşme sona erince sohbet salt okunur olur (V15). | Application |
+| MS-04 | Eşleşme sona erince sohbet açık kalır; devam edip etmemek kullanıcılara bırakılır. | — |
+| MS-05 | Taraflardan biri sohbeti tek başına kapatabilir; kapatılan sohbet salt okunur olur. Engelleme de sohbeti kapatır (Ö4). | Domain |
 
 ## Takas oturumu
 
@@ -82,13 +88,14 @@ Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli kurallar varsayımdır; b
 |---|---|---|
 | SS-01 | Oturum yalnızca `Active` durumundaki bir eşleşme için planlanabilir. | Application |
 | SS-02 | Oturum tarihi gelecekte olmalıdır. | Domain |
-| SS-03 | Oturumu bir taraf önerir, diğer taraf kabul veya reddeder (V8). | Domain |
+| SS-03 | Oturumu bir taraf önerir, diğer taraf kabul veya reddeder. | Domain |
 | SS-04 | Tamamlandı işareti yalnızca planlanan başlangıç zamanından sonra verilebilir. | Domain |
 | SS-05 | Oturum karşılıklı onayla tamamlanır: bir taraf işaretler, **diğer** taraf onaylar. | Domain |
 | SS-06 | Taraflardan herhangi biri oturumu tek başına iptal edebilir. İptal sebebi zorunludur. | Domain |
 | SS-07 | İptal sebebi karşı tarafa bildirim olarak gider ve admin tarafından görülebilir. | Application |
 | SS-08 | `Completed`, `Declined` ve `Cancelled` son durumlardır. | Domain |
-| SS-09 | Eşleşme sona erince tamamlanmamış oturumlar iptal edilir (V15). | Application |
+| SS-09 | Eşleşme sona erince tamamlanmamış oturumlar iptal edilir. | Application |
+| SS-10 | Tamamlandı işareti 72 saat içinde onaylanmaz ve oturum iptal edilmezse oturum kendiliğinden tamamlanmış sayılır. Ayrıntılar için bkz. (Ö2). | Domain |
 
 ## Değerlendirme
 
@@ -97,10 +104,10 @@ Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli kurallar varsayımdır; b
 | RV-01 | Bir kullanıcı başka bir kullanıcıyı yalnızca bir kez değerlendirebilir. | Application, DB |
 | RV-02 | Değerlendirme için iki kullanıcı arasında en az bir `Completed` oturum olmalıdır. | Application |
 | RV-03 | Kullanıcı kendini değerlendiremez. | Domain |
-| RV-04 | Puan 1–10 arasında tam sayıdır. Yorum isteğe bağlıdır (V14). | Domain |
+| RV-04 | Puan 1–10 arasında tam sayıdır. Yorum isteğe bağlıdır. | Domain |
 | RV-05 | Değerlendirme yapıldığı anda herkese görünür olur. | — |
 | RV-06 | Değerlendirme düzenlenemez. Yazarı silebilir. | Domain |
-| RV-07 | Silinen değerlendirmenin yerine yenisi yazılamaz (V5). | DB |
+| RV-07 | Silinen değerlendirmenin yerine yenisi yazılamaz. | DB |
 | RV-08 | Ortalama puan yalnızca silinmemiş değerlendirmelerden hesaplanır. | Application |
 
 ## Moderasyon
@@ -109,7 +116,7 @@ Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli kurallar varsayımdır; b
 |---|---|---|
 | MD-01 | Kullanıcı kendini engelleyemez veya şikâyet edemez. | Domain |
 | MD-02 | Engelleme tek yönlü kaydedilir ama etkisi iki yönlüdür: taraflar keşfette birbirini görmez ve birbirine istek gönderemez. | Application |
-| MD-03 | Engelleme, aradaki bekleyen istekleri iptal eder (V7). | Application |
+| MD-03 | Engelleme, aradaki bekleyen istekleri iptal eder. | Application |
 | MD-04 | Şikâyet bir kullanıcıya, mesaja veya değerlendirmeye yapılabilir. | Domain |
 
 ## Keşfet sıralaması (MVP: kural tabanlı)

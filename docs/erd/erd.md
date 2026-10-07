@@ -18,7 +18,7 @@ Farklı modüllerdeki tablolar arasındaki ilişkiler yalnızca kimlik referans�
 | Sessions | `SWAP_SESSION` |
 | Reviews | `REVIEW`, `USER_RATING_SUMMARY` |
 | Notifications | `NOTIFICATION`, `DEVICE` |
-| Moderation (onay bekliyor) | `BLOCK`, `REPORT` |
+| Moderation | `BLOCK`, `REPORT` |
 
 ## Diyagram
 
@@ -58,6 +58,7 @@ erDiagram
         string status
         string role
         timestamp email_verified_at
+        timestamp age_confirmed_at
         timestamp created_at
     }
     REFRESH_TOKEN {
@@ -165,6 +166,8 @@ erDiagram
         string note
         string status
         uuid completion_marked_by_user_id
+        timestamp completion_marked_at
+        boolean completed_automatically
         timestamp completed_at
         uuid cancelled_by_user_id
         string cancel_reason
@@ -228,7 +231,7 @@ erDiagram
 |---|---|---|
 | `USER` | `email` benzersiz (küçük harfe normalize) | ID-01 |
 | `SKILL` | `slug` benzersiz | SK-03 |
-| `USER_SKILL` | (`user_id`, `skill_id`) benzersiz | SK-04 |
+| `USER_SKILL` | (`user_id`, `skill_id`, `type`) benzersiz | SK-04 |
 | `SWAP_REQUEST` | Sırasız kullanıcı çifti benzersiz, yalnızca `status = Pending` satırlarda (kısmi index) | RQ-05 |
 | `MATCH` | `swap_request_id` benzersiz | MT-01 |
 | `MATCH` | Sırasız kullanıcı çifti benzersiz, yalnızca `status <> Ended` satırlarda (kısmi index) | MT-02 |

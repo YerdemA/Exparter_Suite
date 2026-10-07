@@ -7,7 +7,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | Faz | Konu | Durum |
 |---|---|---|
 | 0 | Kurulum | Tamamlandı (2026-10-06) |
-| 1 | Domain ve veri tasarımı | Taslak hazır, onay bekliyor |
+| 1 | Domain ve veri tasarımı | Kararlar işlendi; Ö1–Ö4 önerileri onay bekliyor |
 | 2 | API sözleşmesi | Başlamadı |
 | 3 | Backend iskeleti | Başlamadı |
 | 4 | Mobil iskelet | Başlamadı |
@@ -27,7 +27,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 - `docs/domain/`: sözlük, domain modeli, iş kuralları, kararlar ve açık sorular.
 - `docs/erd/erd.md`: Mermaid ERD, tablo sahipliği, benzersizlik kısıtları.
 - `docs/adr/`: 0001 modüler monolit, 0002 PostgreSQL, 0003 auth stratejisi, 0004 mobil state yönetimi.
-- Onay için bekleyenler: `docs/domain/open-questions.md` içindeki V1–V16 ve ADR 0003'teki süreler ile parola hash'i seçimi.
+- Onay için bekleyenler: `docs/domain/open-questions.md` içindeki Ö1–Ö4 önerileri.
 
 ## Geliştirme ortamı
 

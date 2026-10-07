@@ -1,6 +1,6 @@
 # Domain Modeli
 
-Durum: **Taslak, onay bekliyor.** `(V#)` ile işaretli yerler henüz onaylanmamış varsayımlardır; numaralar `open-questions.md` dosyasındaki sorulara karşılık gelir.
+Durum: **Taslak, onay bekliyor.** `(Ö#)` ile işaretli yerler henüz onaylanmamış önerilerdir; numaralar `open-questions.md` dosyasındaki önerilere karşılık gelir.
 
 Ortak kurallar:
 
@@ -17,10 +17,11 @@ Ortak kurallar:
 | `Id` | |
 | `Email` | Küçük harfe normalize edilir, benzersizdir. |
 | `PasswordHash` | |
-| `Status` | `Active`, `Suspended` |
-| `Role` | `User`, `Admin` (V1) |
+| `Status` | `Active`, `Suspended`, `Deleted` (Ö3) |
+| `Role` | `User`, `Admin`. Admin işlemleri MVP'de arayüzsüz endpoint'lerle yapılır. |
 | `EmailVerifiedAt` | Boşsa e-posta doğrulanmamıştır. |
-| `CreatedAt` | |
+| `AgeConfirmedAt` | Kullanıcının 18 yaş ve üstü olduğunu onayladığı an. Kayıtta zorunludur; doğum tarihi tutulmaz. |
+| `CreatedAt`, `DeletedAt` | |
 
 **`RefreshToken`** (User aggregate'inin parçası)
 
@@ -50,8 +51,8 @@ Ortak kurallar:
 | `DisplayName` | |
 | `Bio` | |
 | `AvatarKey` | Nesne depolamadaki anahtar. URL saklanmaz, istek anında presigned URL üretilir. |
-| `City` | Koordinat tutulmaz. 81 ilden biri (V11). Boş olabilir. |
-| `AcceptsOnline`, `AcceptsInPerson` | Takas tercihi; en az biri seçili olmalı (V10). |
+| `City` | Koordinat tutulmaz. 81 ilden biri. Boş olabilir. |
+| `AcceptsOnline`, `AcceptsInPerson` | Takas tercihi; en az biri seçili olmalı. |
 | `CreatedAt`, `UpdatedAt` | |
 
 ## 3. Skills
@@ -80,12 +81,12 @@ stateDiagram-v2
 
 | Alan | Açıklama |
 |---|---|
-| `Id`, `UserId`, `SkillId` | Yalnızca `Approved` yetenekler eklenebilir (V12). |
+| `Id`, `UserId`, `SkillId` | Yalnızca `Approved` yetenekler eklenebilir. |
 | `Type` | `Offered`, `Wanted` |
 | `Level` | `Offered` için kullanıcının kendi seviyesi; `Wanted` için aradığı öğreticinin en düşük seviyesi. |
 | `CreatedAt` | |
 
-Bir kullanıcı aynı yeteneği yalnızca bir kez ekleyebilir; aynı yetenek hem sunulan hem istenen olamaz (V13).
+Bir kullanıcı aynı yeteneği her tipte en fazla bir kez ekleyebilir. Aynı yetenek hem sunulan hem istenen olabilir; bu durumda istenen seviye sunulan seviyeden yüksek olmalıdır. Sonuç olarak `Expert` seviyesinde sunulan bir yetenek aynı anda istenen olamaz.
 
 ## 4. Matching
 
@@ -119,8 +120,8 @@ stateDiagram-v2
 | `UserAId`, `UserBId` | A isteği gönderen, B alan taraftır. |
 | `SkillTaughtByAId`, `SkillTaughtByBId` | İstekten kopyalanır; istek sonradan değişmez ama eşleşme kendi başına okunabilir olmalı. |
 | `Status` | `Active`, `EndRequested`, `Ended` |
-| `EndRequestedByUserId`, `EndRequestedAt` | |
-| `EndReason` | `MutualConsent`, `Blocked` (V7) |
+| `EndRequestedByUserId`, `EndRequestedAt` | İstek 7 gün cevapsız kalırsa eşleşme kendiliğinden sonlanır. |
+| `EndReason` | `MutualConsent`, `EndRequestExpired`, `Blocked`, `AccountDeleted` (Ö3) |
 | `CreatedAt`, `EndedAt` | |
 
 ```mermaid
@@ -128,14 +129,15 @@ stateDiagram-v2
     [*] --> Active
     Active --> EndRequested: bir taraf sonlandırmak ister
     EndRequested --> Ended: diğer taraf onaylar
+    EndRequested --> Ended: 7 gün cevapsız kalır
     EndRequested --> Active: diğer taraf reddeder veya isteyen vazgeçer
-    Active --> Ended: engelleme (V7)
-    EndRequested --> Ended: engelleme (V7)
+    Active --> Ended: engelleme
+    EndRequested --> Ended: engelleme
 ```
 
 ## 5. Messaging
 
-**`Conversation`** (aggregate root): `Id`, `MatchId` (benzersiz), `CreatedAt`. Eşleşme oluşunca otomatik açılır. Eşleşme sona erince salt okunur olur (V15).
+**`Conversation`** (aggregate root): `Id`, `MatchId` (benzersiz), `CreatedAt`. Eşleşme oluşunca otomatik açılır. Eşleşme sona erdikten sonra da açık kalır; devam edip etmemek kullanıcılara bırakılır. Sohbetin nasıl kapatılacağı ve aynı çiftin yeniden eşleşmesi durumu için bkz. (Ö4).
 
 **`ConversationParticipant`**: `ConversationId`, `UserId`, `LastReadAt`. Okunmamış mesaj sayısı için gerekir.
 
@@ -150,26 +152,28 @@ stateDiagram-v2
 | `Id`, `MatchId` | |
 | `ProposedByUserId` | |
 | `ScheduledAt`, `DurationMinutes` | |
-| `Mode` | `Online`, `InPerson` (V10) |
+| `Mode` | `Online`, `InPerson` |
 | `Note` | Serbest metin: bağlantı, buluşma yeri vb. |
 | `Status` | `Proposed`, `Scheduled`, `CompletionPending`, `Completed`, `Declined`, `Cancelled` |
-| `CompletionMarkedByUserId`, `CompletedAt` | |
+| `CompletionMarkedByUserId`, `CompletionMarkedAt` | İşaret 72 saat cevapsız kalırsa oturum kendiliğinden tamamlanmış sayılır. |
+| `CompletedAt`, `CompletedAutomatically` | `CompletedAutomatically`, onayın süre dolduğu için sistemce verildiğini gösterir (Ö2). |
 | `CancelledByUserId`, `CancelReason`, `CancelledAt` | `CancelReason` iptalde zorunludur. |
 | `CreatedAt` | |
 
 ```mermaid
 stateDiagram-v2
     [*] --> Proposed
-    Proposed --> Scheduled: diğer taraf kabul eder (V8)
-    Proposed --> Declined: diğer taraf reddeder (V8)
+    Proposed --> Scheduled: diğer taraf kabul eder
+    Proposed --> Declined: diğer taraf reddeder
     Scheduled --> CompletionPending: bir taraf tamamlandı işaretler
     CompletionPending --> Completed: diğer taraf onaylar
+    CompletionPending --> Completed: 72 saat cevapsız kalır
     Proposed --> Cancelled: taraflardan biri iptal eder
     Scheduled --> Cancelled: taraflardan biri iptal eder
     CompletionPending --> Cancelled: taraflardan biri iptal eder
 ```
 
-İptal tek taraflıdır ve sebep metni zorunludur. Sebep karşı tarafa bildirim olarak gider ve admin tarafından listelenebilir (V1).
+İptal tek taraflıdır ve sebep metni zorunludur. Sebep karşı tarafa bildirim olarak gider ve admin tarafından listelenebilir.
 
 ## 7. Reviews
 
@@ -181,7 +185,7 @@ stateDiagram-v2
 | `ReviewerId`, `RevieweeId` | Çift benzersizdir: bir kullanıcı diğerini yalnızca bir kez değerlendirir. |
 | `SwapSessionId` | Değerlendirme hakkını doğuran tamamlanmış oturum. |
 | `Rating` | 1–10 |
-| `Comment` | İsteğe bağlı (V14). |
+| `Comment` | İsteğe bağlı. |
 | `CreatedAt`, `DeletedAt` | Düzenlenemez. Yazarı silebilir; silme geri alınmaz. |
 
 **`UserRatingSummary`**: `UserId`, `ReviewCount`, `AverageRating`. Silinmemiş değerlendirmelerden türetilir; keşfet sıralamasında ve profilde kullanılır.
@@ -192,9 +196,9 @@ stateDiagram-v2
 
 **`Device`**: `Id`, `UserId`, `FcmToken` (benzersiz), `Platform` (`Android`, `Ios`, `Web`), `LastSeenAt`.
 
-## 9. Moderation (V2)
+## 9. Moderation
 
-Brief'teki sekiz modül arasında yoktur; ayrı modül olarak eklenmesi onay bekliyor.
+Dokuzuncu modül olarak 2026-10-07'de onaylandı (bkz. ADR 0001).
 
 **`Block`**: `BlockerId`, `BlockedId`, `CreatedAt`. Çift benzersizdir.
 
@@ -209,11 +213,12 @@ Brief'teki sekiz modül arasında yoktur; ayrı modül olarak eklenmesi onay bek
 | `SwapRequestSent` / `Accepted` / `Declined` / `Cancelled` / `Expired` | Matching | Notifications: ilgili tarafa bildirim. |
 | `MatchCreated` | Matching | Messaging: sohbet açar. Notifications: iki tarafa bildirim. |
 | `MatchEndRequested` | Matching | Notifications: karşı tarafa bildirim. |
-| `MatchEnded` | Matching | Messaging: sohbeti salt okunur yapar. Sessions: tamamlanmamış oturumları iptal eder (V15). Notifications. |
+| `MatchEnded` | Matching | Sessions: tamamlanmamış oturumları iptal eder. Notifications: iki tarafa bildirim. Sohbet açık kalır. |
 | `MessageSent` | Messaging | Notifications: alıcı çevrimdışıysa push. |
 | `SessionProposed` / `Scheduled` / `Declined` / `CompletionMarked` / `Completed` / `Cancelled` | Sessions | Notifications: karşı tarafa bildirim (iptalde sebep metniyle). |
 | `ReviewCreated` / `ReviewDeleted` | Reviews | Notifications: değerlendirilen kullanıcıya bildirim (yalnızca oluşturmada). |
-| `UserBlocked` | Moderation | Matching: aradaki bekleyen istekleri iptal eder, aktif eşleşmeyi sonlandırır (V7). |
+| `UserBlocked` | Moderation | Matching: aradaki bekleyen istekleri iptal eder, aktif eşleşmeyi sonlandırır. Messaging: aradaki sohbeti kapatır. |
+| `UserDeleted` (Ö3) | Identity | Tüm modüller: kullanıcının verisini siler veya anonimleştirir. Matching: bekleyen istekleri iptal eder, aktif eşleşmeyi sonlandırır. |
 
 Senkron sorgular (event değil, uygulama servisi çağrısı):
 
