@@ -58,7 +58,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 |---|---|---|
 | `validation_failed` | 400 | Doğrulama hatası; ayrıntılar `errors` alanında. |
 | `invalid_token` | 400 | Tek kullanımlık token geçersiz, kullanılmış veya süresi dolmuş. |
-| `invalid_credentials` | 401 | E-posta veya parola hatalı. |
+| `invalid_credentials` | 401 | E-posta/kullanıcı adı veya parola hatalı. |
 | `token_expired` | 401 | Access token'ın süresi dolmuş; istemci yenilemelidir. |
 | `refresh_token_invalid` | 401 | Refresh token geçersiz, iptal edilmiş veya süresi dolmuş; kullanıcı yeniden giriş yapmalıdır. |
 | `account_suspended` | 403 | Hesap askıya alınmış. |
@@ -67,6 +67,8 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `not_participant` | 403 | Çağıran bu işlemi yapabilecek taraf değil (ör. isteği gönderen kabul edemez). |
 | `not_found` | 404 | Kaynak bulunamadı. |
 | `email_already_registered` | 409 | E-posta kullanımda. |
+| `username_already_taken` | 409 | Kullanıcı adı kullanımda. |
+| `username_reserved` | 409 | Kullanıcı adı ayrılmış bir ad (ör. `admin`). |
 | `email_recently_deleted` | 409 | Bu e-postaya ait hesap yakın zamanda silindi; bekleme süresi dolmadı. |
 | `email_already_verified` | 409 | E-posta zaten doğrulanmış. |
 | `skill_already_exists` | 409 | Aynı ada sahip yetenek katalogda veya öneriler arasında var. |

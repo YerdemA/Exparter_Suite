@@ -16,6 +16,7 @@ Ortak kurallar:
 |---|---|
 | `Id` | |
 | `Email` | Küçük harfe normalize edilir, benzersizdir. Kalıcı silmede boşaltılır. |
+| `Username` | Benzersiz kullanıcı adı. Küçük harfe normalize edilir. Girişte e-posta yerine kullanılabilir ve diğer kullanıcılara görünür. Kalıcı silmede boşaltılır. |
 | `PasswordHash` | |
 | `Status` | `Active`, `Suspended`, `PendingDeletion`, `Deleted` |
 | `Role` | `User`, `Admin`. Admin işlemleri MVP'de arayüzsüz endpoint'lerle yapılır. |

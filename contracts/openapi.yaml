@@ -71,7 +71,7 @@ paths:
     post:
       tags: [Auth]
       operationId: login
-      summary: Sign in with email and password
+      summary: Sign in with email or username and password
       description: Signing in to an account that is pending deletion cancels the deletion.
       security: []
       requestBody:
@@ -530,7 +530,7 @@ paths:
           schema: { $ref: '#/components/schemas/SessionMode' }
         - name: q
           in: query
-          description: Case-insensitive match on display name or offered skill name.
+          description: Case-insensitive match on username, display name or offered skill name.
           schema: { type: string, maxLength: 60 }
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Limit'
@@ -1577,6 +1577,10 @@ components:
       required: [userId, isDeleted]
       properties:
         userId: { type: string, format: uuid }
+        username:
+          type: string
+          nullable: true
+          description: Null for deleted users.
         displayName:
           type: string
           nullable: true
@@ -1617,11 +1621,22 @@ components:
       minLength: 8
       maxLength: 128
 
+    Username:
+      type: string
+      minLength: 3
+      maxLength: 30
+      pattern: '^[A-Za-z0-9_][A-Za-z0-9_.]{1,28}[A-Za-z0-9_]$'
+      description: |
+        Unique handle. Letters, digits, underscores and periods; no period at the start
+        or end and no consecutive periods. Case-insensitive: stored and returned in lowercase.
+      example: ayse.yilmaz
+
     RegisterRequest:
       type: object
-      required: [email, password, ageConfirmed]
+      required: [email, username, password, ageConfirmed]
       properties:
         email: { type: string, format: email, maxLength: 254 }
+        username: { $ref: '#/components/schemas/Username' }
         password: { $ref: '#/components/schemas/Password' }
         ageConfirmed:
           type: boolean
@@ -1629,9 +1644,12 @@ components:
 
     LoginRequest:
       type: object
-      required: [email, password]
+      required: [identifier, password]
       properties:
-        email: { type: string, format: email, maxLength: 254 }
+        identifier:
+          type: string
+          maxLength: 254
+          description: The account's email address or username.
         password: { type: string, format: password, maxLength: 128 }
 
     RefreshTokenRequest:
@@ -1687,10 +1705,11 @@ components:
 
     Account:
       type: object
-      required: [id, email, emailVerified, role, createdAt]
+      required: [id, email, username, emailVerified, role, createdAt]
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email }
+        username: { type: string }
         emailVerified: { type: boolean }
         role: { $ref: '#/components/schemas/UserRole' }
         createdAt: { type: string, format: date-time }
@@ -1745,9 +1764,10 @@ components:
 
     PublicProfile:
       type: object
-      required: [userId, displayName, acceptsOnline, acceptsInPerson, rating]
+      required: [userId, username, displayName, acceptsOnline, acceptsInPerson, rating]
       properties:
         userId: { type: string, format: uuid }
+        username: { type: string }
         displayName: { type: string }
         bio: { type: string, nullable: true }
         avatarUrl: { type: string, format: uri, nullable: true }

@@ -151,7 +151,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 
 | Varlık | Açıklama |
 |---|---|
-| `User` | Kimlik bilgileri (e-posta, parola hash'i, durum) |
+| `User` | Kimlik bilgileri (e-posta, kullanıcı adı, parola hash'i, durum) |
 | `RefreshToken` | Kullanıcının refresh token'ları |
 | `Device` | Push bildirim için FCM token'ları |
 | `Profile` | Ad, biyografi, avatar, şehir/çevrimiçi tercihi |
@@ -189,7 +189,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 ## 7. MVP Kapsamı
 
 **Kapsam içi:**
-- Kayıt (18 yaş onayıyla), e-posta doğrulama, giriş, çıkış, token yenileme, parola sıfırlama, hesap silme
+- Kayıt (18 yaş onayıyla, benzersiz kullanıcı adıyla), e-posta doğrulama, e-posta veya kullanıcı adıyla giriş, çıkış, token yenileme, parola sıfırlama, hesap silme
 - Profil oluşturma ve düzenleme, avatar yükleme
 - Sunulan/istenen yetenek yönetimi (katalogdan seçim)
 - Keşfet: filtreleme, arama, karşılıklı uyuma göre sıralama

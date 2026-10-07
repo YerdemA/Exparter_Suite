@@ -5,6 +5,7 @@ Arayüzde Türkçe terim, kodda İngilizce ad kullanılır. Bu tablo ikisi aras�
 | Türkçe (arayüz) | Kod adı | Tanım |
 |---|---|---|
 | Kullanıcı | `User` | Kimlik kaydı: e-posta, parola hash'i, durum. Kişisel bilgi taşımaz. |
+| Kullanıcı adı | `Username` | Kullanıcının benzersiz, herkese görünen adı. Girişte e-posta yerine kullanılabilir. |
 | E-posta doğrulaması | `EmailVerifiedAt` | Kullanıcının e-postasını doğruladığı an. Doğrulanmamış kullanıcı başkalarıyla etkileşime giremez. |
 | Profil | `Profile` | Kullanıcının herkese görünen yüzü: ad, biyografi, avatar, şehir, takas tercihi. |
 | Kategori | `SkillCategory` | Yeteneklerin gruplandığı başlık (ör. Müzik, Dil). |
