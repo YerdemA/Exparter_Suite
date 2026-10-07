@@ -471,15 +471,12 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
 
   /api/v1/me/skills/{userSkillId}:
-    parameters:
-      - name: userSkillId
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
     patch:
       tags: [Skills]
       operationId: updateOwnSkill
       summary: Change the level of a user skill
+      parameters:
+        - $ref: "#/components/parameters/UserSkillId"
       requestBody:
         required: true
         content:
@@ -500,6 +497,8 @@ paths:
       operationId: removeOwnSkill
       summary: Remove a user skill
       description: An offered skill used by a pending swap request or an active match cannot be removed.
+      parameters:
+        - $ref: "#/components/parameters/UserSkillId"
       responses:
         '204': { description: Skill removed. }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1478,6 +1477,11 @@ components:
       schema: { type: integer, format: int32, minimum: 1, maximum: 50, default: 20 }
     UserId:
       name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserSkillId:
+      name: userSkillId
       in: path
       required: true
       schema: { type: string, format: uuid }

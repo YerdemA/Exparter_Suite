@@ -21,6 +21,6 @@ Değerlendirilen alternatif Bloc'tu. Bloc daha katı bir olay/durum ayrımı sun
 
 ## Sonuçlar
 
-- Kod üretimi `build_runner` adımı gerektirir; üretilen dosyalar (`*.g.dart`) repoya girmez ve CI'da üretilir. (Bu tercih Faz 4'te mobil CI kurulurken kesinleşir.)
+- Kod üretimi `build_runner` adımı gerektirir; üretilen dosyalar (`*.g.dart`) repoya girmez ve CI'da üretilir. (ADR 0008 ile kesinleşti.)
 - Provider'lar global erişilebilir olduğu için feature sınırları kuralla korunur: bir feature başka bir feature'ın `data/` katmanına doğrudan erişmez.
 - Notifier'lar widget ağacı olmadan, `ProviderContainer` ile birim test edilebilir.

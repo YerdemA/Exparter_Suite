@@ -10,7 +10,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 1 | Domain ve veri tasarımı | Tamamlandı (2026-10-07) |
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
-| 4 | Mobil iskelet | Başlamadı |
+| 4 | Mobil iskelet | Kod ve testler hazır; emülatörde uçtan uca doğrulama bekliyor |
 | 5 | Dikey dilimler | Başlamadı |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
@@ -61,6 +61,30 @@ dotnet run --project src/Exparter.Api
 
 API `http://localhost:5244` adresinde açılır ve Development ortamında migration'ları kendisi uygular. Gönderilen e-postalar `http://localhost:8025` adresinde görünür. Testler: `dotnet test` (Docker çalışıyor olmalı).
 
+## Faz 4 — Mobil iskelet
+
+- `mobile/`: Flutter projesi (`com.exparter.app`), feature-first yapı; tema token'ları (`core/theme/`), `l10n` (Türkçe), go_router, Riverpod (kod üretimiyle).
+- API client sözleşmeden üretilir (swagger_parser, ADR 0008). Üretilen kod repoya girmez.
+- Oturum: token'lar ve hesap güvenli depolamada; süresi dolan access token tek seferde yenilenir, bekleyen istekler yeniden denenir; refresh token reddedilirse kullanıcı giriş ekranına döner.
+- Ekranlar: kayıt (kullanıcı adı ve 18 yaş onayıyla), giriş (e-posta veya kullanıcı adı), çıkışlı geçici ana ekran. Hata kodları Türkçe mesajlara eşlenir.
+- Testler (2026-10-07): 32 birim ve widget testi geçiyor. `integration_test/auth_flow_test.dart` gerçek backend'e karşı kayıt, yeniden açılışta oturumun korunması, çıkış ve kullanıcı adıyla girişi dener; **henüz çalıştırılamadı** (emülatör derlemesi sırasında makinenin belleği tükendi).
+- CI: `.github/workflows/mobile-ci.yml` kodu üretir, analiz eder ve testleri çalıştırır.
+- Faz 5'in ilk dilimine bırakılanlar: e-posta doğrulama ve parola sıfırlama ekranları ile derin bağlantı.
+- Identity'ye bu fazda eklenen: kullanıcı adı 7 günde bir kez değiştirilebilir.
+
+### Mobil uygulamayı lokal çalıştırma
+
+```powershell
+cd mobile
+flutter pub get
+dart run swagger_parser
+dart run build_runner build --delete-conflicting-outputs
+flutter run                                   # backend http://localhost:5244 adresinde çalışıyor olmalı
+flutter test integration_test -d emulator-5554   # uçtan uca test
+```
+
+Android emülatörü bilgisayarın `localhost` adresine `10.0.2.2` üzerinden ulaşır; varsayılan API adresi budur. Başka bir adres için `--dart-define=API_BASE_URL=...` verilir.
+
 ## Geliştirme ortamı
 
 2026-10-06 tarihinde ölçülen sürümler:
@@ -69,7 +93,7 @@ API `http://localhost:5244` adresinde açılır ve Development ortamında migrat
 |---|---|
 | İşletim sistemi | Windows 11 Pro 10.0.26300 |
 | .NET SDK | 10.0.301 (ayrıca 10.0.103 ve 9.0.312 kurulu) |
-| Flutter | 3.41.2 (stable) |
+| Flutter | 3.47.6 (stable), Dart 3.13.5 |
 | Android SDK | 36.1.0 |
 | Docker Engine | 29.7.2 (Docker Desktop) |
 | Docker Compose | v5.4.0 |
@@ -82,4 +106,3 @@ Notlar:
 
 - Bu makinede 5432 portunu yerel PostgreSQL 17 servisi (`postgresql-x64-17`) kullanıyor. Bu yüzden lokal `.env` dosyasında `POSTGRES_PORT=5433` ayarlı.
 - `flutter doctor` tek uyarı veriyor: Visual Studio'nun "Desktop development with C++" bileşenleri eksik. Bu yalnızca Windows masaüstü derlemesini etkiler; Android ve web hedefleri sorunsuz.
-- `flutter doctor` daha yeni bir Flutter sürümü olduğunu bildiriyor. Güncelleme Faz 4'ün başında yapılacak.

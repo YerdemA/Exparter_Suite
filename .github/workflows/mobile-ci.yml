@@ -1,0 +1,38 @@
+name: Mobile CI
+
+on:
+  push:
+    # Phase branches are built too, so a phase is verified before it is merged.
+    branches: [main, 'phase-**']
+    paths: ['mobile/**', 'contracts/**', '.github/workflows/mobile-ci.yml']
+  pull_request:
+    paths: ['mobile/**', 'contracts/**', '.github/workflows/mobile-ci.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.6
+          cache: true
+      - run: flutter pub get
+      # Generated code is not committed: the API client comes from the contract and the
+      # rest from build_runner, so a contract change that breaks the app fails here.
+      - run: dart run swagger_parser
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter analyze
+      - run: flutter test
