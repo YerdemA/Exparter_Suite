@@ -2,7 +2,8 @@ name: Backend CI
 
 on:
   push:
-    branches: [main]
+    # Phase branches are built too, so a phase is verified before it is merged.
+    branches: [main, 'phase-**']
     paths: ['backend/**', 'contracts/**', 'redocly.yaml', '.redocly.lint-ignore.yaml', '.github/workflows/backend-ci.yml']
   pull_request:
     paths: ['backend/**', 'contracts/**', 'redocly.yaml', '.redocly.lint-ignore.yaml', '.github/workflows/backend-ci.yml']
