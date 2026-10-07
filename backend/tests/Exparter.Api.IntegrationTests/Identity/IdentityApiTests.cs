@@ -172,6 +172,10 @@ public class IdentityApiTests(ApiFixture fixture)
             HttpStatusCode.BadRequest,
             "validation_failed");
         await AssertProblemAsync(
+            await SendAuthorizedAsync(HttpMethod.Put, "/api/v1/me/username", user.AccessToken, new { username = $"again.{Unique()}" }),
+            HttpStatusCode.Conflict,
+            "username_change_too_soon");
+        await AssertProblemAsync(
             await _client.PutAsJsonAsync("/api/v1/me/username", new { username = newUsername }),
             HttpStatusCode.Unauthorized,
             "unauthorized");

@@ -10,6 +10,7 @@ public static class IdentityErrors
     public const string EmailAlreadyVerifiedCode = "email_already_verified";
     public const string InvalidTokenCode = "invalid_token";
     public const string InvalidStateCode = "invalid_state";
+    public const string UsernameChangeTooSoonCode = "username_change_too_soon";
 
     public static DomainException AgeNotConfirmed() =>
         new(AgeNotConfirmedCode, "The user must confirm being 18 or older.");
@@ -25,6 +26,9 @@ public static class IdentityErrors
 
     public static DomainException InvalidToken() =>
         new(InvalidTokenCode, "The token is invalid, already used or expired.");
+
+    public static DomainException UsernameChangeTooSoon() =>
+        new(UsernameChangeTooSoonCode, "The username can be changed only once a week.");
 
     public static DomainException InvalidState(string message) =>
         new(InvalidStateCode, message);

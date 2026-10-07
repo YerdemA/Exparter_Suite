@@ -17,7 +17,7 @@ Durum: **Onaylandı (2026-10-07).**
 | ID-15 | Kullanıcı adı benzersizdir. 3–30 karakterdir; yalnızca küçük harf (a–z), rakam, alt çizgi ve nokta içerebilir; noktayla başlayamaz, noktayla bitemez ve art arda iki nokta içeremez. Büyük harf içeren ad reddedilir, küçük harfe çevrilmez. | Domain, DB |
 | ID-16 | Ayrılmış adlar (ör. `admin`, `exparter`, `destek`) kullanıcı adı olarak alınamaz. | Domain |
 | ID-17 | Giriş, parola ile birlikte e-posta veya kullanıcı adı verilerek yapılır. Girişte büyük/küçük harf ayrımı yapılmaz. | Application |
-| ID-18 | Kullanıcı, kullanıcı adını değiştirebilir. Yeni ad ID-15 ve ID-16 kurallarına uymalıdır; bırakılan ad hemen başkası tarafından alınabilir. | Domain |
+| ID-18 | Kullanıcı, kullanıcı adını 7 günde bir kez değiştirebilir; kayıtta seçilen ad bu süreyi başlatmaz. Yeni ad ID-15 ve ID-16 kurallarına uymalıdır; bırakılan ad hemen başkası tarafından alınabilir. | Domain |
 | ID-03 | E-postası doğrulanmamış kullanıcı giriş yapabilir, profilini ve yeteneklerini düzenleyebilir, keşfet ekranını görebilir. | Application |
 | ID-04 | E-postası doğrulanmamış kullanıcı başkalarıyla etkileşime giremez: takas isteği gönderemez veya kabul edemez, mesaj atamaz, oturum planlayamaz, değerlendirme yapamaz, yetenek öneremez, şikâyet edemez. | Application |
 | ID-05 | Refresh token her kullanımda yenilenir. İptal edilmiş bir token yeniden kullanılırsa o token ailesinin tamamı iptal edilir. | Domain |

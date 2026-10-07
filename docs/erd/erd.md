@@ -53,6 +53,7 @@ erDiagram
         uuid id PK
         string email UK
         string username UK
+        timestamp username_changed_at
         string password_hash
         string status
         string role

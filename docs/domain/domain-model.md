@@ -21,6 +21,7 @@ Ortak kurallar:
 | `Status` | `Active`, `Suspended`, `PendingDeletion`, `Deleted` |
 | `Role` | `User`, `Admin`. Admin işlemleri MVP'de arayüzsüz endpoint'lerle yapılır. |
 | `EmailVerifiedAt` | Boşsa e-posta doğrulanmamıştır. |
+| `UsernameChangedAt` | Kullanıcı adının son değiştirildiği an. Sonraki değişiklik 7 gün sonra yapılabilir. |
 | `AgeConfirmedAt` | Kullanıcının 18 yaş ve üstü olduğunu onayladığı an. Kayıtta zorunludur; doğum tarihi tutulmaz. |
 | `CreatedAt` | |
 | `DeletionRequestedAt` | Silme isteğinin zamanı. 30 gün içinde giriş yapılırsa silme geri alınır. |

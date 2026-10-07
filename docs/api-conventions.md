@@ -72,6 +72,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `email_already_registered` | 409 | E-posta kullanımda. |
 | `username_already_taken` | 409 | Kullanıcı adı kullanımda. |
 | `username_reserved` | 409 | Kullanıcı adı ayrılmış bir ad (ör. `admin`). |
+| `username_change_too_soon` | 409 | Kullanıcı adı son 7 gün içinde değiştirilmiş. |
 | `invalid_username` | 409 | Kullanıcı adı biçim kurallarına uymuyor. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `email_recently_deleted` | 409 | Bu e-postaya ait hesap yakın zamanda silindi; bekleme süresi dolmadı. |
 | `email_already_verified` | 409 | E-posta zaten doğrulanmış. |
