@@ -5,7 +5,9 @@ import '../../../core/auth/session_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/api/error_messages.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../auth/presentation/recovery_controller.dart';
 
 /// Placeholder landing screen for a signed-in user until the discovery feature exists.
 class HomeScreen extends ConsumerWidget {
@@ -56,6 +58,7 @@ class HomeScreen extends ConsumerWidget {
                   color: account.emailVerified ? brand.success : brand.warning,
                   text: account.emailVerified ? l10n.homeEmailVerified : l10n.homeEmailNotVerified,
                 ),
+                if (!account.emailVerified) const _ResendVerificationButton(),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
                   l10n.homeComingSoon,
@@ -76,6 +79,36 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ResendVerificationButton extends ConsumerWidget {
+  const _ResendVerificationButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final action = ref.watch(recoveryControllerProvider);
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: action.isLoading
+            ? null
+            : () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final sent = await ref.read(recoveryControllerProvider.notifier).resendVerificationEmail();
+                final error = ref.read(recoveryControllerProvider).error;
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(sent ? l10n.homeVerificationSent : errorMessage(l10n, error ?? Object())),
+                  ),
+                );
+              },
+        icon: const Icon(Icons.send_outlined),
+        label: Text(l10n.homeResendVerification),
       ),
     );
   }

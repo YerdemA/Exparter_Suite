@@ -42,4 +42,27 @@ class ApiAuthRepository implements AuthRepository {
   Future<void> logout({required String refreshToken}) => guardApiCall(
         () => _api.auth.logout(body: RefreshTokenRequest(refreshToken: refreshToken)),
       );
+
+  @override
+  Future<Account> getAccount() => guardApiCall(_api.account.getAccount);
+
+  @override
+  Future<void> requestEmailVerification() => guardApiCall(_api.auth.requestEmailVerification);
+
+  @override
+  Future<void> confirmEmailVerification({required String token}) => guardApiCall(
+        () => _api.auth.confirmEmailVerification(body: OneTimeTokenRequest(token: token)),
+      );
+
+  @override
+  Future<void> requestPasswordReset({required String email}) => guardApiCall(
+        () => _api.auth.requestPasswordReset(body: PasswordResetRequest(email: email)),
+      );
+
+  @override
+  Future<void> confirmPasswordReset({required String token, required String newPassword}) => guardApiCall(
+        () => _api.auth.confirmPasswordReset(
+          body: PasswordResetConfirmRequest(token: token, newPassword: newPassword),
+        ),
+      );
 }

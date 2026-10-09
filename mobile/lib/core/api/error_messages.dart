@@ -20,6 +20,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'email_already_registered' => l10n.errorEmailAlreadyRegistered,
     'username_already_taken' => l10n.errorUsernameTaken,
     'username_reserved' => l10n.errorUsernameReserved,
+    'invalid_token' => l10n.errorInvalidLink,
+    'email_already_verified' => l10n.errorEmailAlreadyVerified,
     _ => l10n.errorUnknown,
   };
 }

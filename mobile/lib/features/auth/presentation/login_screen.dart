@@ -87,11 +87,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 onSubmitted: _submit,
               ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: action.isLoading ? null : () => context.go(AppRoutes.forgotPassword),
+                  child: Text(l10n.loginForgotPassword),
+                ),
+              ),
               if (error != null && !action.isLoading) ...[
                 const SizedBox(height: AppSpacing.md),
                 FormErrorBanner(message: errorMessage(l10n, error)),
               ],
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
               SubmitButton(
                 label: l10n.loginSubmit,
                 isLoading: action.isLoading,
