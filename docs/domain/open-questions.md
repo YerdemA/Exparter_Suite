@@ -62,15 +62,8 @@
 | Gezinme | Alt gezinme çubuğu: Keşfet, Eşleşmeler, Mesajlar, Profil. |
 | Etkileşim koşulu | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir, ama etkileşime giremez, istek gönderemez ve keşfette gösterilmez. Zorunlu profil ekranı yoktur; koşul etkileşim anında uyarıyla devreye girer. |
 | Tamamlanmış profil | Görünen ad, en az bir takas tercihi (yüz yüze ise şehir) ve en az bir sunulan yetenek. |
-
-## Açık soru (2026-10-09)
-
-**Gönderiler.** Kullanıcı ana sayfada başkalarının gönderilerini görmekten, gönderi beğenmekten ve gönderiye yorum yapmaktan söz etti. Brief'te, domain modelinde ve sözleşmede gönderi, beğeni veya yorum yok; MVP kapsamı (Bölüm 7) bunları içermiyor. Karar gereken noktalar:
-
-1. Gönderi akışı (gönderi paylaşma, beğeni, yorum) MVP'ye eklenecek mi, MVP sonrasına mı bırakılacak?
-2. Eklenecekse: gönderi neleri içerir (metin, görsel)? Ana sayfa ayrı bir sekme mi, Keşfet ile aynı ekran mı? Hangi dilimde yapılır?
-
-Eklenirse yeni bir modül, sözleşme değişikliği, moderasyon (şikâyet hedefi olarak gönderi ve yorum) ve brief güncellemesi gerekir.
+| Etkileşim uyarısı | Metin "siz" hitabıyla: "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." |
+| Gönderiler | MVP sonrası. Yapısı aşağıda. |
 
 ## Onaylanan ayrıntılar (2026-10-07)
 
@@ -120,5 +113,6 @@ Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir 
 - Modül başına ayrı `DbContext` ve PostgreSQL şeması kullanımı: Faz 3 (bkz. ADR 0001).
 - Metin alanlarının uzunluk sınırları: Faz 2 (sözleşme).
 - E-posta sağlayıcısı: Faz 3 (ADR).
+- Gönderi akışı: MVP sonrası, takas akışı (Faz 5 dilim 2–8) bittikten sonra ayrı bir dilim olarak. Kullanıcı sunduğu yeteneklerden birini seçer ve o yetenekle ilgili paylaşım yapar. Paylaşım metin, görsel veya video olabilir; metin + görsel ve metin + video birlikte de olabilir. Akış, Keşfet'ten bağımsız ayrı bir ekrandır. Beğeni ve yorum etkileşim sayılır; tamamlanmış profil ve doğrulanmış e-posta gerektirir. Ayrıntılar (video sınırları, moderasyon, sıralama) o dilimin başında netleştirilecek.
 - Reşit olmayan (13–17 yaş) kullanıcılar: MVP sonrası. Yetişkinlerle eşleşme, özel mesajlaşma ve yüz yüze oturum için koruma kuralları, yaş bilgisinin toplanması ve veli onayı o zaman kararlaştırılacak.
 

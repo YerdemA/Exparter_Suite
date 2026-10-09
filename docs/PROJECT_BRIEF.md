@@ -208,6 +208,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 - Gelişmiş öneri algoritması
 - Çoklu dil desteği
 - 18 yaşından küçük kullanıcılar
+- Gönderi akışı (sunulan bir yetenekle ilgili metin/görsel/video paylaşımı, beğeni, yorum)
 
 ---
 

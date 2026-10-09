@@ -125,7 +125,9 @@ void main() {
     await pumpUntilFound(tester, find.text(l10n.profileEditTitle));
     await tester.enterText(field(l10n.profileDisplayNameLabel), 'Uçtan Uca');
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileSave));
-    await pumpUntilFound(tester, find.text('Uçtan Uca'));
+    // The name is also in the form's text field, so wait for the profile screen itself.
+    await pumpUntilFound(tester, find.widgetWithText(FilledButton, l10n.profileEdit));
+    expect(find.text('Uçtan Uca'), findsOneWidget);
     expect(find.text('@$username'), findsOneWidget);
     expect(find.text(l10n.homeEmailNotVerified), findsOneWidget);
 

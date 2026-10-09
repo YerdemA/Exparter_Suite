@@ -116,7 +116,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 - Görünürlük kuralı: profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı başkalarına görünmez (profili 404 döner). Etkileşim denemesindeki uyarı ve "en az bir sunulan yetenek" koşulu ilgili dilimlerde (2 ve 4) uygulanacak.
 - Mobil: profil görüntüleme ve düzenleme, galeriden veya kameradan avatar, alt gezinme çubuğu (Keşfet, Eşleşmeler, Mesajlar "yakında" ekranı gösterir). Zorunlu profil ekranı yok: yeni kullanıcı doğrudan uygulamaya girer; Profil sekmesi etkileşim için eksik olanları (profil bilgileri, e-posta doğrulaması) gösterir.
 - Modüller arası sınır testi eklendi: modüller birbirine yalnızca yayınlanmış sözleşme tipleri üzerinden başvurabilir.
-- Testler (2026-10-09): backend 175 (60 domain, 81 uygulama, 34 entegrasyon; 4'ü gerçek Garage'a karşı), mobil 62. Uçtan uca test emülatörde zorunlu profil ekranlı ilk sürümle geçti (düzenleme, gerçek depolamaya avatar yükleme ve silme, doğrulama, parola sıfırlama); zorunlu ekran kaldırıldıktan sonra **yeniden çalıştırılmadı**.
+- Testler (2026-10-09): backend 175 (60 domain, 81 uygulama, 34 entegrasyon; 4'ü gerçek Garage'a karşı), mobil 62. Uçtan uca test emülatörde geçti: kayıttan sonra doğrudan uygulamaya giriş, Profil sekmesinde eksikler kartı, profili doldurma ve düzenleme, gerçek depolamaya avatar yükleme ve silme, e-posta doğrulama, parola sıfırlama.
 - Android derlemesi için iki ayar: Kotlin artımlı derlemesi kapatıldı (pub önbelleği ile proje farklı sürücülerdeyken derleme hata veriyor) ve Gradle belleği 4 GB'a indirildi.
 - Bilinen sınırlar: fotoğraf kırpma ekranı yok (ortadan kare gösterilir); avatar görselleri önbelleğe alınmıyor.
 

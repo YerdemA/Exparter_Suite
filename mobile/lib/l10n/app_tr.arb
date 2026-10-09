@@ -58,9 +58,9 @@
   "navMessages": "Mesajlar",
   "navProfile": "Profil",
 
-  "interactionRequirements": "Etkileşim için profilini doldurup e-posta doğrulaması yapman gerekiyor.",
-  "requirementProfile": "Profil bilgilerini doldur",
-  "requirementEmail": "E-posta adresini doğrula",
+  "interactionRequirements": "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir.",
+  "requirementProfile": "Profil bilgileri",
+  "requirementEmail": "E-posta doğrulaması",
   "requirementDone": "Tamamlandı",
   "requirementMissing": "Eksik",
   "profileFillIn": "Profilini doldur",
