@@ -8,10 +8,11 @@ public sealed record AccountDto(
     string Username,
     bool EmailVerified,
     UserRole Role,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? UsernameChangeAvailableAt)
 {
     public static AccountDto From(User user) =>
-        new(user.Id, user.Email, user.Username, user.IsEmailVerified, user.Role, user.CreatedAt);
+        new(user.Id, user.Email, user.Username, user.IsEmailVerified, user.Role, user.CreatedAt, user.UsernameChangeAvailableAt);
 }
 
 public sealed record TokenPair(string AccessToken, string RefreshToken, int ExpiresIn);

@@ -171,6 +171,10 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("username");
 
+                    b.Property<DateTimeOffset?>("UsernameChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("username_changed_at");
+
                     b.HasKey("Id")
                         .HasName("pk_users");
 

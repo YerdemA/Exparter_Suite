@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Domain.Common;
 using Exparter.Domain.Identity;
 
 namespace Exparter.Application.Tests.Identity;
@@ -16,7 +17,7 @@ public class GetAccountQueryHandlerTests
         var account = await new GetAccountQueryHandler(_context.Users)
             .Handle(new GetAccountQuery(user.Id), CancellationToken.None);
 
-        Assert.Equal(new AccountDto(user.Id, "ayse@example.com", "ayse", false, UserRole.User, user.CreatedAt), account);
+        Assert.Equal(new AccountDto(user.Id, "ayse@example.com", "ayse", false, UserRole.User, user.CreatedAt, null), account);
     }
 
     [Fact]
@@ -34,7 +35,7 @@ public class ChangeUsernameCommandHandlerTests
 {
     private readonly IdentityTestContext _context = new();
 
-    private ChangeUsernameCommandHandler Handler => new(_context.Users, _context.UnitOfWork);
+    private ChangeUsernameCommandHandler Handler => new(_context.Users, _context.UnitOfWork, _context.Clock);
 
     [Fact]
     public async Task Changes_the_username()
@@ -45,7 +46,24 @@ public class ChangeUsernameCommandHandlerTests
 
         Assert.Equal("ayse.yilmaz", account.Username);
         Assert.Equal("ayse.yilmaz", user.Username);
+        Assert.Equal(_context.Clock.GetUtcNow().AddDays(7), account.UsernameChangeAvailableAt);
         Assert.Equal(1, _context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task Allows_only_one_change_per_week()
+    {
+        var user = _context.AddUser();
+        await Handler.Handle(new ChangeUsernameCommand(user.Id, "ayse.yilmaz"), CancellationToken.None);
+        _context.Clock.Advance(TimeSpan.FromDays(6));
+
+        var exception = await Assert.ThrowsAsync<DomainException>(
+            async () => await Handler.Handle(new ChangeUsernameCommand(user.Id, "ayse.y"), CancellationToken.None));
+        Assert.Equal(IdentityErrors.UsernameChangeTooSoonCode, exception.Code);
+
+        _context.Clock.Advance(TimeSpan.FromDays(1));
+        await Handler.Handle(new ChangeUsernameCommand(user.Id, "ayse.y"), CancellationToken.None);
+        Assert.Equal("ayse.y", user.Username);
     }
 
     [Fact]

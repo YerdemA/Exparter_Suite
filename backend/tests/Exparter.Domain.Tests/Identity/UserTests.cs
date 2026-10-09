@@ -45,12 +45,29 @@ public class UserTests
     {
         var user = NewUser();
 
-        user.ChangeUsername("ayse.yilmaz");
+        Assert.Equal(IdentityErrors.InvalidUsernameCode, Assert.Throws<DomainException>(() => user.ChangeUsername("Ayse", Now)).Code);
+        Assert.Equal(IdentityErrors.UsernameReservedCode, Assert.Throws<DomainException>(() => user.ChangeUsername("admin", Now)).Code);
+        Assert.Equal("ayse", user.Username);
+        Assert.Null(user.UsernameChangeAvailableAt);
+    }
+
+    [Fact]
+    public void ChangeUsername_is_allowed_right_after_registration_and_then_once_a_week()
+    {
+        var user = NewUser();
+
+        user.ChangeUsername("ayse.yilmaz", Now);
 
         Assert.Equal("ayse.yilmaz", user.Username);
-        Assert.Equal(IdentityErrors.InvalidUsernameCode, Assert.Throws<DomainException>(() => user.ChangeUsername("Ayse")).Code);
-        Assert.Equal(IdentityErrors.UsernameReservedCode, Assert.Throws<DomainException>(() => user.ChangeUsername("admin")).Code);
+        Assert.Equal(Now.AddDays(7), user.UsernameChangeAvailableAt);
+        var exception = Assert.Throws<DomainException>(() => user.ChangeUsername("ayse.y", Now.AddDays(7).AddSeconds(-1)));
+        Assert.Equal(IdentityErrors.UsernameChangeTooSoonCode, exception.Code);
         Assert.Equal("ayse.yilmaz", user.Username);
+
+        user.ChangeUsername("ayse.y", Now.AddDays(7));
+
+        Assert.Equal("ayse.y", user.Username);
+        Assert.Equal(Now.AddDays(14), user.UsernameChangeAvailableAt);
     }
 
     [Fact]

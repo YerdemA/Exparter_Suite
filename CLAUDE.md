@@ -49,3 +49,4 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 - Backend komutları `backend/` klasöründen: `dotnet build`, `dotnet test` (Docker gerekir), `dotnet run --project src/Exparter.Api`. Gizli ayarlar user-secrets ile verilir; ayrıntı `docs/roadmap.md` içinde.
 - Migration: `dotnet ef migrations add <Ad> --project src/Exparter.Infrastructure --startup-project src/Exparter.Api --output-dir Persistence/Migrations`.
 - Sözleşme lint'i (kökten): `npx --yes @redocly/cli@2.60.0 lint`.
+- Mobil komutları `mobile/` klasöründen. Üretilen kod repoda yok; önce üret: `flutter pub get`, `dart run swagger_parser`, `dart run build_runner build --delete-conflicting-outputs`. Sonra `flutter analyze`, `flutter test`, `flutter run`. Sözleşme değişince üretimi yeniden çalıştır.

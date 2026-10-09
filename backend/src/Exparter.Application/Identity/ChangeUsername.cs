@@ -15,7 +15,7 @@ public sealed class ChangeUsernameCommandValidator : AbstractValidator<ChangeUse
     }
 }
 
-public sealed class ChangeUsernameCommandHandler(IUserRepository users, IUnitOfWork unitOfWork)
+public sealed class ChangeUsernameCommandHandler(IUserRepository users, IUnitOfWork unitOfWork, TimeProvider timeProvider)
     : ICommandHandler<ChangeUsernameCommand, AccountDto>
 {
     public async ValueTask<AccountDto> Handle(ChangeUsernameCommand command, CancellationToken cancellationToken)
@@ -31,7 +31,7 @@ public sealed class ChangeUsernameCommandHandler(IUserRepository users, IUnitOfW
                 throw IdentityAppErrors.UsernameAlreadyTaken();
             }
 
-            user.ChangeUsername(command.Username);
+            user.ChangeUsername(command.Username, timeProvider.GetUtcNow());
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 

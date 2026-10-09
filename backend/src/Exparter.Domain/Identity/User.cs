@@ -3,6 +3,7 @@ namespace Exparter.Domain.Identity;
 public sealed class User
 {
     public static readonly TimeSpan DeletionGracePeriod = TimeSpan.FromDays(30);
+    public static readonly TimeSpan UsernameChangeInterval = TimeSpan.FromDays(7);
 
     private User()
     {
@@ -18,10 +19,14 @@ public sealed class User
     public DateTimeOffset AgeConfirmedAt { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? DeletionRequestedAt { get; private set; }
+    public DateTimeOffset? UsernameChangedAt { get; private set; }
 
     public bool IsEmailVerified => EmailVerifiedAt is not null;
 
     public DateTimeOffset? PermanentDeletionAt => DeletionRequestedAt + DeletionGracePeriod;
+
+    /// <summary>Earliest time of the next username change; null if it was never changed. Choosing a username at registration does not count.</summary>
+    public DateTimeOffset? UsernameChangeAvailableAt => UsernameChangedAt + UsernameChangeInterval;
 
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
@@ -57,7 +62,17 @@ public sealed class User
 
     public void ChangePassword(string passwordHash) => PasswordHash = passwordHash;
 
-    public void ChangeUsername(string username) => Username = Identity.Username.Parse(username);
+    public void ChangeUsername(string username, DateTimeOffset now)
+    {
+        var parsed = Identity.Username.Parse(username);
+        if (now < UsernameChangeAvailableAt)
+        {
+            throw IdentityErrors.UsernameChangeTooSoon();
+        }
+
+        Username = parsed;
+        UsernameChangedAt = now;
+    }
 
     public void RequestDeletion(DateTimeOffset now)
     {

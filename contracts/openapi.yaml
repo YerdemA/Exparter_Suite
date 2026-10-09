@@ -201,7 +201,9 @@ paths:
       tags: [Account]
       operationId: changeUsername
       summary: Change the signed-in user's username
-      description: Sending the current username succeeds without changing anything.
+      description: |
+        The username can be changed once every 7 days; an earlier attempt is rejected with
+        `username_change_too_soon`. Sending the current username succeeds without changing anything.
       requestBody:
         required: true
         content:
@@ -469,15 +471,12 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
 
   /api/v1/me/skills/{userSkillId}:
-    parameters:
-      - name: userSkillId
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
     patch:
       tags: [Skills]
       operationId: updateOwnSkill
       summary: Change the level of a user skill
+      parameters:
+        - $ref: "#/components/parameters/UserSkillId"
       requestBody:
         required: true
         content:
@@ -498,6 +497,8 @@ paths:
       operationId: removeOwnSkill
       summary: Remove a user skill
       description: An offered skill used by a pending swap request or an active match cannot be removed.
+      parameters:
+        - $ref: "#/components/parameters/UserSkillId"
       responses:
         '204': { description: Skill removed. }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1479,6 +1480,11 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    UserSkillId:
+      name: userSkillId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     SkillId:
       name: skillId
       in: path
@@ -1731,6 +1737,11 @@ components:
         id: { type: string, format: uuid }
         email: { type: string, format: email }
         username: { type: string }
+        usernameChangeAvailableAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Earliest time the username can be changed again. Null if it was never changed; a time in the past means a change is allowed.
         emailVerified: { type: boolean }
         role: { $ref: '#/components/schemas/UserRole' }
         createdAt: { type: string, format: date-time }

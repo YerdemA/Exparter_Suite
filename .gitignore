@@ -21,7 +21,6 @@ coverage/
 .pub-cache/
 .pub/
 mobile/build/
-*.g.dart.bak
 
 # IDE
 .vs/
@@ -39,3 +38,9 @@ Desktop.ini
 # Logs
 *.log
 logs/
+
+# Mobile: generated code (see docs/adr/0008-mobile-api-client-generation.md)
+mobile/lib/core/api/generated/
+mobile/lib/l10n/app_localizations*.dart
+*.g.dart
+*.freezed.dart

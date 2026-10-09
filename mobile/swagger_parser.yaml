@@ -1,0 +1,13 @@
+swagger_parser:
+  # The contract is the single source of truth; never edit the generated files.
+  schema_path: ../contracts/openapi.yaml
+  output_directory: lib/core/api/generated
+  language: dart
+  json_serializer: freezed
+  root_client: true
+  root_client_name: ExparterApi
+  put_clients_in_folder: true
+  # A value added to an enum by a newer backend must not crash an older app.
+  unknown_enum_value: true
+  # Freezed 3+ requires data classes to be declared abstract.
+  use_freezed3: true
