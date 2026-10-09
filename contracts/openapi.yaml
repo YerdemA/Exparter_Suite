@@ -278,7 +278,9 @@ paths:
       tags: [Profiles]
       operationId: createAvatarUploadUrl
       summary: Get a presigned URL to upload an avatar image
-      description: Upload the file with an HTTP PUT to `uploadUrl`, then call `PUT /api/v1/me/avatar` with the returned `objectKey`.
+      description: |
+        Upload the file with an HTTP PUT to `uploadUrl`, sending the same `Content-Type` as
+        requested here, then call `PUT /api/v1/me/avatar` with the returned `objectKey`.
       requestBody:
         required: true
         content:
@@ -298,6 +300,9 @@ paths:
       tags: [Profiles]
       operationId: setAvatar
       summary: Set an uploaded image as the avatar
+      description: |
+        Rejected with `avatar_not_uploaded` if nothing was uploaded under the key, and with
+        `avatar_invalid` if the uploaded file is larger than 5 MB or not an allowed image type.
       requestBody:
         required: true
         content:
@@ -324,6 +329,9 @@ paths:
       tags: [Profiles]
       operationId: getUserProfile
       summary: Get another user's public profile
+      description: |
+        Answers 404 for users who are not visible to others: unknown ids, unverified emails,
+        incomplete profiles and suspended or leaving accounts.
       parameters:
         - $ref: '#/components/parameters/UserId'
       responses:
@@ -1786,19 +1794,36 @@ components:
           description: At least one of `acceptsOnline` and `acceptsInPerson` must be true.
 
     Profile:
-      allOf:
-        - $ref: '#/components/schemas/UpdateProfileRequest'
-        - type: object
-          required: [userId, isComplete, rating, createdAt, updatedAt]
-          properties:
-            userId: { type: string, format: uuid }
-            avatarUrl: { type: string, format: uri, nullable: true }
-            isComplete:
-              type: boolean
-              description: False until the user has saved the profile for the first time after registering.
-            rating: { $ref: '#/components/schemas/RatingSummary' }
-            createdAt: { type: string, format: date-time }
-            updatedAt: { type: string, format: date-time }
+      type: object
+      description: The signed-in user's own profile. A new account starts with a blank one.
+      required: [userId, acceptsOnline, acceptsInPerson, isComplete, rating, createdAt, updatedAt]
+      properties:
+        userId: { type: string, format: uuid }
+        displayName:
+          type: string
+          nullable: true
+          description: Null until the profile is saved for the first time.
+        bio: { type: string, nullable: true }
+        city:
+          type: string
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CityCode'
+        acceptsOnline: { type: boolean }
+        acceptsInPerson: { type: boolean }
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Temporary download address; changes between responses, so do not use it as a cache key.
+        isComplete:
+          type: boolean
+          description: |
+            Whether the profile holds what matching needs. Until it is true, and the email
+            is verified, the user is hidden from other users and cannot interact with them.
+        rating: { $ref: '#/components/schemas/RatingSummary' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
 
     PublicProfile:
       type: object

@@ -1,0 +1,15 @@
+# Garage configuration for local development: one node, no replication.
+# Secrets (RPC secret, default access key) come from environment variables set in
+# docker-compose.yml, never from this file.
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"

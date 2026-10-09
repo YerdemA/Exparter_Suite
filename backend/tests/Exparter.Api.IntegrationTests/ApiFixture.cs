@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -21,6 +22,8 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
     public RecordingEmailSender Emails { get; } = new();
 
+    public InMemoryObjectStorage Storage { get; } = new();
+
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
@@ -40,12 +43,20 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("ConnectionStrings:Database", _postgres.GetConnectionString());
         builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-0123456789abcdef");
         builder.UseSetting("Email:Host", "localhost");
+        builder.UseSetting("Storage:Endpoint", "http://localhost:3900");
+        builder.UseSetting("Storage:AccessKey", "unused");
+        builder.UseSetting("Storage:SecretKey", "unused");
         builder.UseSetting("Email:EmailVerificationUrl", "exparter://app/verify-email?token={token}");
         builder.UseSetting("Email:PasswordResetUrl", "exparter://app/reset-password?token={token}");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender>(Emails);
+
+            // The real S3 client is covered by S3ObjectStorageTests; API tests only need
+            // to control which files "exist".
+            services.RemoveAll<IObjectStorage>();
+            services.AddSingleton<IObjectStorage>(Storage);
         });
     }
 }
@@ -54,6 +65,31 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 public sealed class ApiCollection : ICollectionFixture<ApiFixture>
 {
     public const string Name = "Api";
+}
+
+public sealed class InMemoryObjectStorage : IObjectStorage
+{
+    private readonly ConcurrentDictionary<string, StoredObjectInfo> _objects = new();
+
+    /// <summary>Stands in for a client uploading a file to the presigned URL.</summary>
+    public void Upload(string key, long contentLength, string contentType) =>
+        _objects[key] = new StoredObjectInfo(contentLength, contentType);
+
+    public bool Contains(string key) => _objects.ContainsKey(key);
+
+    public PresignedUpload CreateUploadUrl(string key, string contentType, TimeSpan lifetime) =>
+        new(new Uri($"https://storage.test/upload/{key}"), DateTimeOffset.UtcNow + lifetime);
+
+    public Uri CreateDownloadUrl(string key, TimeSpan lifetime) => new($"https://storage.test/download/{key}");
+
+    public Task<StoredObjectInfo?> GetInfoAsync(string key, CancellationToken cancellationToken) =>
+        Task.FromResult(_objects.GetValueOrDefault(key));
+
+    public Task DeleteAsync(string key, CancellationToken cancellationToken)
+    {
+        _objects.TryRemove(key, out _);
+        return Task.CompletedTask;
+    }
 }
 
 public sealed class RecordingEmailSender : IEmailSender
