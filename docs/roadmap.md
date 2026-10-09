@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Başlamadı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0 tamamlandı, onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -84,6 +84,30 @@ flutter test integration_test -d emulator-5554   # uçtan uca test; emülatör v
 ```
 
 Android emülatörü bilgisayarın `localhost` adresine `10.0.2.2` üzerinden ulaşır; varsayılan API adresi budur. Başka bir adres için `--dart-define=API_BASE_URL=...` verilir.
+
+## Faz 5 — Dikey dilimler
+
+Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e merge edilir.
+
+| Dilim | Konu | Durum |
+|---|---|---|
+| 0 | E-posta doğrulama ve parola sıfırlama | Tamamlandı, onay bekliyor |
+| 1 | Profil ve avatar | Başlamadı |
+| 2 | Yetenek kataloğu ve kullanıcı yetenekleri | Başlamadı |
+| 3 | Keşfet | Başlamadı |
+| 4 | Takas isteği ve eşleşme | Başlamadı |
+| 5 | Gerçek zamanlı mesajlaşma | Başlamadı |
+| 6 | Takas oturumları | Başlamadı |
+| 7 | Değerlendirmeler | Başlamadı |
+| 8 | Bildirimler | Başlamadı |
+
+### Dilim 0 — E-posta doğrulama ve parola sıfırlama
+
+- Backend endpoint'leri Faz 3'te hazırdı; bu dilim mobil taraftır. Backend'de yalnızca e-postadaki bağlantı adresleri değişti (`exparter://app/...`, ADR 0009).
+- Ekranlar: e-posta doğrulama (bağlantıyla açılır), "Şifremi unuttum", yeni parola belirleme; ana ekranda doğrulama e-postasını yeniden gönderme.
+- Parola değişince uygulama yerel oturumu da kapatır (sunucu tüm oturumları iptal eder).
+- Testler (2026-10-09): 46 mobil birim ve widget testi geçiyor. Uçtan uca test emülatörde gerçek backend ve Mailpit ile geçti: kayıt, e-postadaki token ile doğrulama, parola sıfırlama, eski parolanın reddi, yeni parolayla giriş. Gerçek bağlantının kapalı uygulamayı açtığı ayrıca Android intent'i ile doğrulandı.
+- Sonraya bırakılan: e-posta doğrulaması gerektiren yetki kuralı, onu kullanan ilk endpoint ile dilim 2'de gelir. O zaman doğrulamadan sonra access token'ın yenilenmesi de eklenir.
 
 ## Geliştirme ortamı
 

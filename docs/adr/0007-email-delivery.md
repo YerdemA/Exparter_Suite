@@ -18,5 +18,5 @@ E-posta doğrulama ve parola sıfırlama e-posta gönderimi gerektirir. Gelişti
 ## Sonuçlar
 
 - E-posta, isteğin içinde eşzamanlı gönderilir. Gönderim yavaşlarsa veya yeniden deneme gerekirse arka plan kuyruğu ayrı bir ADR ile eklenir.
-- Bağlantı şu an `exparter://` şemalı bir derin bağlantıdır. Mobil uygulamanın bu bağlantıyı nasıl açacağı Faz 4'te netleşir; gerekirse adres yapılandırmadan değiştirilir.
+- Bağlantı `exparter://app/...` biçiminde bir uygulama bağlantısıdır (bkz. ADR 0009).
 - Metinler Türkçe ve kodun içindedir. Çoklu dil desteği gelirse şablonlar ayrıştırılır.

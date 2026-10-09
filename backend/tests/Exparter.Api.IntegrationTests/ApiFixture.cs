@@ -40,8 +40,8 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("ConnectionStrings:Database", _postgres.GetConnectionString());
         builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-0123456789abcdef");
         builder.UseSetting("Email:Host", "localhost");
-        builder.UseSetting("Email:EmailVerificationUrl", "exparter://verify-email?token={token}");
-        builder.UseSetting("Email:PasswordResetUrl", "exparter://reset-password?token={token}");
+        builder.UseSetting("Email:EmailVerificationUrl", "exparter://app/verify-email?token={token}");
+        builder.UseSetting("Email:PasswordResetUrl", "exparter://app/reset-password?token={token}");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IEmailSender>();

@@ -6,6 +6,7 @@
   "loginTitle": "Tekrar hoş geldin",
   "loginIdentifierLabel": "E-posta veya kullanıcı adı",
   "loginSubmit": "Giriş yap",
+  "loginForgotPassword": "Şifremi unuttum",
   "loginNoAccount": "Hesabın yok mu?",
   "loginGoToRegister": "Kayıt ol",
 
@@ -17,6 +18,23 @@
   "registerSubmit": "Kayıt ol",
   "registerHaveAccount": "Zaten hesabın var mı?",
   "registerGoToLogin": "Giriş yap",
+
+  "forgotPasswordTitle": "Şifreni sıfırla",
+  "forgotPasswordHint": "Hesabının e-posta adresini yaz; sana şifreni sıfırlaman için bir bağlantı gönderelim.",
+  "forgotPasswordSubmit": "Bağlantı gönder",
+  "forgotPasswordSent": "Bu adresle bir hesap varsa şifre sıfırlama bağlantısı gönderildi. Gelen kutunu kontrol et.",
+
+  "resetPasswordTitle": "Yeni parola belirle",
+  "resetPasswordHint": "Hesabın için yeni bir parola seç.",
+  "resetPasswordSubmit": "Parolayı değiştir",
+  "resetPasswordSuccess": "Parolan değiştirildi. Yeni parolanla giriş yapabilirsin.",
+
+  "verifyEmailTitle": "E-posta doğrulama",
+  "verifyEmailInProgress": "E-posta adresin doğrulanıyor…",
+  "verifyEmailSuccess": "E-posta adresin doğrulandı. Artık Exparter'ın tüm özelliklerini kullanabilirsin.",
+
+  "actionContinue": "Devam et",
+  "actionBackToLogin": "Giriş ekranına dön",
 
   "passwordLabel": "Parola",
   "passwordShow": "Parolayı göster",
@@ -36,6 +54,8 @@
   },
   "homeEmailNotVerified": "E-posta adresin henüz doğrulanmadı. Gelen kutunu kontrol et.",
   "homeEmailVerified": "E-posta adresin doğrulandı.",
+  "homeResendVerification": "Doğrulama e-postasını yeniden gönder",
+  "homeVerificationSent": "Doğrulama e-postası gönderildi.",
   "homeAccountRestored": "Hesabın yeniden etkinleştirildi; silme isteği iptal edildi.",
   "homeComingSoon": "Keşfet, eşleşmeler ve mesajlar yakında burada olacak.",
   "homeLogout": "Çıkış yap",
@@ -48,6 +68,8 @@
   "errorEmailAlreadyRegistered": "Bu e-posta adresiyle zaten bir hesap var.",
   "errorUsernameTaken": "Bu kullanıcı adı alınmış.",
   "errorUsernameReserved": "Bu kullanıcı adı kullanılamıyor.",
+  "errorInvalidLink": "Bu bağlantı geçersiz veya süresi dolmuş. Yeni bir bağlantı iste.",
+  "errorEmailAlreadyVerified": "E-posta adresin zaten doğrulanmış.",
   "errorSessionExpired": "Oturumun sona erdi. Lütfen yeniden giriş yap.",
   "errorRetry": "Tekrar dene"
 }

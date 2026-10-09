@@ -1,16 +1,23 @@
+import 'package:dio/dio.dart';
 import 'package:exparter/app.dart';
+import 'package:exparter/core/router/app_routes.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:integration_test/integration_test.dart';
 
-/// Runs on a device against the real backend (see docs/roadmap.md for how to start it).
+/// Runs on a device against the real backend and Mailpit (see docs/roadmap.md for how
+/// to start them).
 ///
 ///     flutter test integration_test -d <device>
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   final l10n = AppLocalizationsTr();
+
+  // Mailpit on the host machine, as seen from the Android emulator.
+  final mailpit = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:8025'));
 
   Finder field(String label) => find.widgetWithText(TextFormField, label);
 
@@ -35,10 +42,39 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('register, restart, sign out and sign in with the username', (tester) async {
+  /// Reads the one-time token out of the newest email to [email] with [subject].
+  Future<String> tokenFromEmail(String email, String subject) async {
+    for (var attempt = 0; attempt < 30; attempt++) {
+      final search = await mailpit.get<Map<String, dynamic>>(
+        '/api/v1/search',
+        queryParameters: {'query': 'to:$email subject:"$subject"'},
+      );
+      final messages = search.data!['messages'] as List<dynamic>;
+      if (messages.isNotEmpty) {
+        final id = (messages.first as Map<String, dynamic>)['ID'] as String;
+        final message = await mailpit.get<Map<String, dynamic>>('/api/v1/message/$id');
+        final match = RegExp(r'token=([A-Za-z0-9_%\-]+)').firstMatch(message.data!['Text'] as String);
+        return Uri.decodeComponent(match!.group(1)!);
+      }
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    }
+
+    fail('No "$subject" email arrived for $email.');
+  }
+
+  /// Navigates as an opened email link would: the router receives the link's path and query.
+  void openLink(WidgetTester tester, String path, String token) {
+    final uri = Uri(path: path, queryParameters: {AppRoutes.tokenParameter: token});
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go(uri.toString());
+  }
+
+  testWidgets('account lifecycle against the real backend', (tester) async {
     final id = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
     final username = 'e2e_$id';
+    final email = '$username@example.com';
     const password = 'Passw0rd!x';
+    const newPassword = 'N3w-Passw0rd';
 
     await launchApp(tester);
     await pumpUntilFound(tester, find.text(l10n.loginTitle));
@@ -46,7 +82,7 @@ void main() {
     // Register.
     await tapVisible(tester, find.widgetWithText(TextButton, l10n.loginGoToRegister));
     await pumpUntilFound(tester, find.text(l10n.registerTitle));
-    await tester.enterText(field(l10n.registerEmailLabel), '$username@example.com');
+    await tester.enterText(field(l10n.registerEmailLabel), email);
     await tester.enterText(field(l10n.registerUsernameLabel), username);
     await tester.enterText(field(l10n.passwordLabel), password);
     await tapVisible(tester, find.byType(Checkbox));
@@ -58,19 +94,47 @@ void main() {
     await launchApp(tester);
     await pumpUntilFound(tester, find.text(l10n.homeGreeting(username)));
 
+    // Verify the email address with the link from the email.
+    openLink(tester, AppRoutes.verifyEmail, await tokenFromEmail(email, 'doğrula'));
+    await pumpUntilFound(tester, find.text(l10n.verifyEmailSuccess));
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionContinue));
+    await pumpUntilFound(tester, find.text(l10n.homeEmailVerified));
+    expect(find.text(l10n.homeResendVerification), findsNothing);
+
     // Sign out, and stay signed out after another restart.
     await tapVisible(tester, find.widgetWithText(OutlinedButton, l10n.homeLogout));
     await pumpUntilFound(tester, find.text(l10n.loginTitle));
     await launchApp(tester);
     await pumpUntilFound(tester, find.text(l10n.loginTitle));
 
-    // A wrong password is explained, then the username signs in.
+    // A wrong password is explained.
     await tester.enterText(field(l10n.loginIdentifierLabel), username);
     await tester.enterText(field(l10n.passwordLabel), 'wrong-password');
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
     await pumpUntilFound(tester, find.text(l10n.errorInvalidCredentials));
 
+    // Reset the password with the link from the email.
+    await tapVisible(tester, find.widgetWithText(TextButton, l10n.loginForgotPassword));
+    await pumpUntilFound(tester, find.text(l10n.forgotPasswordTitle));
+    await tester.enterText(field(l10n.registerEmailLabel), email);
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit));
+    await pumpUntilFound(tester, find.text(l10n.forgotPasswordSent));
+
+    openLink(tester, AppRoutes.resetPassword, await tokenFromEmail(email, 'parola'));
+    await pumpUntilFound(tester, find.text(l10n.resetPasswordTitle));
+    await tester.enterText(field(l10n.passwordLabel), newPassword);
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.resetPasswordSubmit));
+    await pumpUntilFound(tester, find.text(l10n.resetPasswordSuccess));
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionBackToLogin));
+    await pumpUntilFound(tester, find.text(l10n.loginTitle));
+
+    // The old password no longer works; the new one signs in by username.
+    await tester.enterText(field(l10n.loginIdentifierLabel), username);
     await tester.enterText(field(l10n.passwordLabel), password);
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
+    await pumpUntilFound(tester, find.text(l10n.errorInvalidCredentials));
+
+    await tester.enterText(field(l10n.passwordLabel), newPassword);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
     await pumpUntilFound(tester, find.text(l10n.homeGreeting(username)));
   });

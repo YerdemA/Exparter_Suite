@@ -29,6 +29,19 @@ class SessionController extends _$SessionController {
     state = AsyncData(response.account);
   }
 
+  /// Replaces the cached account after the server-side account changed, for example
+  /// when the email was verified. Does nothing when signed out.
+  Future<void> updateAccount(Account account) async {
+    final store = ref.read(sessionStoreProvider);
+    final session = store.current;
+    if (session == null) {
+      return;
+    }
+
+    await store.save(session.copyWith(account: account));
+    state = AsyncData(account);
+  }
+
   Future<void> end() async {
     await ref.read(sessionStoreProvider).clear();
     state = const AsyncData(null);

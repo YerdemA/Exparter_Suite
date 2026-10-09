@@ -15,4 +15,16 @@ abstract interface class AuthRepository {
   /// Revokes the refresh token on the server. Signing out locally must not depend on
   /// this succeeding.
   Future<void> logout({required String refreshToken});
+
+  Future<Account> getAccount();
+
+  /// Sends a new verification email to the signed-in user.
+  Future<void> requestEmailVerification();
+
+  Future<void> confirmEmailVerification({required String token});
+
+  /// Succeeds whether or not [email] belongs to an account, so the caller cannot tell.
+  Future<void> requestPasswordReset({required String email});
+
+  Future<void> confirmPasswordReset({required String token, required String newPassword});
 }
