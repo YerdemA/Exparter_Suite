@@ -6,11 +6,14 @@ import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/core/theme/app_theme.dart';
 import 'package:exparter/features/auth/domain/auth_repository.dart';
+import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockProfileRepository extends Mock implements ProfileRepository {}
 
 class InMemorySessionPersistence implements SessionPersistence {
   InMemorySessionPersistence([this.value]);
@@ -35,6 +38,22 @@ Account testAccount({String username = 'ayse', bool emailVerified = false}) => A
       role: UserRole.user,
       createdAt: DateTime.utc(2026, 10, 7),
     );
+
+Profile testProfile({bool complete = true, String? avatarUrl}) => Profile(
+      userId: '01a11705-1f92-7d54-bafb-dfc5049ec2e0',
+      displayName: complete ? 'Ayşe Yılmaz' : null,
+      bio: complete ? 'Gitar çalıyorum.' : null,
+      city: complete ? '34' : null,
+      acceptsOnline: complete,
+      acceptsInPerson: complete,
+      avatarUrl: avatarUrl,
+      isComplete: complete,
+      rating: const RatingSummary(reviewCount: 0),
+      createdAt: DateTime.utc(2026, 10, 7),
+      updatedAt: DateTime.utc(2026, 10, 7),
+    );
+
+const testCities = [City(code: '06', name: 'Ankara'), City(code: '34', name: 'İstanbul')];
 
 AuthResponse testAuthResponse({bool accountRestored = false}) => AuthResponse(
       accessToken: 'access-1',

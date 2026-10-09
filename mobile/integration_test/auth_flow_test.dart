@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:exparter/app.dart';
+import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/router/app_routes.dart';
+import 'package:exparter/features/profile/data/avatar_picker.dart';
+import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:integration_test/integration_test.dart';
 
-/// Runs on a device against the real backend and Mailpit (see docs/roadmap.md for how
-/// to start them).
+/// Runs on a device against the real backend, Mailpit and object storage (see
+/// docs/roadmap.md for how to start them).
 ///
 ///     flutter test integration_test -d <device>
 void main() {
@@ -18,6 +23,15 @@ void main() {
 
   // Mailpit on the host machine, as seen from the Android emulator.
   final mailpit = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:8025'));
+
+  // The system photo picker cannot be driven from a test, so the picker hands over
+  // this 1x1 PNG. Everything after the pick (upload, storage, display) is real.
+  final photo = PickedImage(
+    bytes: base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    ),
+    contentType: AvatarUploadUrlRequestContentType.fromJson('image/png'),
+  );
 
   Finder field(String label) => find.widgetWithText(TextFormField, label);
 
@@ -32,7 +46,13 @@ void main() {
   /// A new ProviderScope has no in-memory state, like a freshly launched process:
   /// whatever it knows must come from secure storage.
   Future<void> launchApp(WidgetTester tester) async {
-    await tester.pumpWidget(ProviderScope(key: UniqueKey(), child: const ExparterApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        key: UniqueKey(),
+        overrides: [avatarPickerProvider.overrideWithValue((_) async => photo)],
+        child: const ExparterApp(),
+      ),
+    );
   }
 
   Future<void> tapVisible(WidgetTester tester, Finder finder) async {
@@ -40,6 +60,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(finder);
     await tester.pump();
+  }
+
+  Future<void> openProfileTab(WidgetTester tester) async {
+    await pumpUntilFound(tester, find.byType(NavigationBar));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navProfile)));
+    await pumpUntilFound(tester, find.text(l10n.profileEdit));
   }
 
   /// Reads the one-time token out of the newest email to [email] with [subject].
@@ -69,7 +95,7 @@ void main() {
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go(uri.toString());
   }
 
-  testWidgets('account lifecycle against the real backend', (tester) async {
+  testWidgets('account and profile lifecycle against the real backend', (tester) async {
     final id = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
     final username = 'e2e_$id';
     final email = '$username@example.com';
@@ -87,18 +113,62 @@ void main() {
     await tester.enterText(field(l10n.passwordLabel), password);
     await tapVisible(tester, find.byType(Checkbox));
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.registerSubmit));
-    await pumpUntilFound(tester, find.text(l10n.homeGreeting(username)));
+
+    // A new account cannot get past profile setup, even after a restart.
+    await pumpUntilFound(tester, find.text(l10n.profileSetupTitle));
+    await launchApp(tester);
+    await pumpUntilFound(tester, find.text(l10n.profileSetupTitle));
+    expect(find.byType(NavigationBar), findsNothing);
+
+    await tester.enterText(field(l10n.profileDisplayNameLabel), 'Uçtan Uca');
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileSetupSubmit));
+    await openProfileTab(tester);
+    expect(find.text('Uçtan Uca'), findsOneWidget);
+    expect(find.text('@$username'), findsOneWidget);
     expect(find.text(l10n.homeEmailNotVerified), findsOneWidget);
 
-    // The session survives a restart.
+    // The session and the completed profile survive a restart.
     await launchApp(tester);
-    await pumpUntilFound(tester, find.text(l10n.homeGreeting(username)));
+    await openProfileTab(tester);
+    expect(find.text('Uçtan Uca'), findsOneWidget);
+
+    // Edit the profile: add a bio and in-person swaps in a city.
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileEdit));
+    await pumpUntilFound(tester, find.text(l10n.profileEditTitle));
+    await tester.enterText(field(l10n.profileBioLabel), 'Gitar çalıyorum.');
+    await tapVisible(tester, find.widgetWithText(SwitchListTile, l10n.profileAcceptsInPerson));
+    await pumpUntilFound(tester, find.byType(DropdownButtonFormField<String>));
+    await tapVisible(tester, find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ankara').last);
+    await tester.pumpAndSettle();
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileSave));
+    await pumpUntilFound(tester, find.text(l10n.profileModeInPersonIn('Ankara')));
+    expect(find.text('Gitar çalıyorum.'), findsOneWidget);
+
+    // Upload a photo to object storage, then remove it.
+    await tapVisible(tester, find.byTooltip(l10n.avatarChange));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.avatarRemove), findsNothing);
+    await tester.tap(find.text(l10n.avatarFromGallery));
+    await pumpUntilFound(tester, find.byType(Image));
+    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byTooltip(l10n.avatarChange));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.avatarRemove));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 50 && find.byType(Image).evaluate().isNotEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    expect(find.byType(Image), findsNothing);
 
     // Verify the email address with the link from the email.
     openLink(tester, AppRoutes.verifyEmail, await tokenFromEmail(email, 'doğrula'));
     await pumpUntilFound(tester, find.text(l10n.verifyEmailSuccess));
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionContinue));
-    await pumpUntilFound(tester, find.text(l10n.homeEmailVerified));
+    await openProfileTab(tester);
+    expect(find.text(l10n.homeEmailVerified), findsOneWidget);
     expect(find.text(l10n.homeResendVerification), findsNothing);
 
     // Sign out, and stay signed out after another restart.
@@ -128,7 +198,8 @@ void main() {
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionBackToLogin));
     await pumpUntilFound(tester, find.text(l10n.loginTitle));
 
-    // The old password no longer works; the new one signs in by username.
+    // The old password no longer works; the new one signs in by username, straight
+    // into the app because the profile is already complete.
     await tester.enterText(field(l10n.loginIdentifierLabel), username);
     await tester.enterText(field(l10n.passwordLabel), password);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
@@ -136,6 +207,7 @@ void main() {
 
     await tester.enterText(field(l10n.passwordLabel), newPassword);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
-    await pumpUntilFound(tester, find.text(l10n.homeGreeting(username)));
+    await openProfileTab(tester);
+    expect(find.text('@$username'), findsOneWidget);
   });
 }

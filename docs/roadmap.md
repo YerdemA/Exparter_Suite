@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0 tamamlandı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0 tamamlandı; dilim 1 onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -92,7 +92,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | Dilim | Konu | Durum |
 |---|---|---|
 | 0 | E-posta doğrulama ve parola sıfırlama | Tamamlandı (2026-10-09) |
-| 1 | Profil ve avatar | Başlamadı |
+| 1 | Profil ve avatar | Tamamlandı, onay bekliyor |
 | 2 | Yetenek kataloğu ve kullanıcı yetenekleri | Başlamadı |
 | 3 | Keşfet | Başlamadı |
 | 4 | Takas isteği ve eşleşme | Başlamadı |
@@ -109,6 +109,24 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 - Testler (2026-10-09): 46 mobil birim ve widget testi geçiyor. Uçtan uca test emülatörde gerçek backend ve Mailpit ile geçti: kayıt, e-postadaki token ile doğrulama, parola sıfırlama, eski parolanın reddi, yeni parolayla giriş. Gerçek bağlantının kapalı uygulamayı açtığı ayrıca Android intent'i ile doğrulandı.
 - Sonraya bırakılan: e-posta doğrulaması gerektiren yetki kuralı, onu kullanan ilk endpoint ile dilim 2'de gelir. O zaman doğrulamadan sonra access token'ın yenilenmesi de eklenir.
 
+### Dilim 1 — Profil ve avatar
+
+- Nesne depolama: kod S3 API'sine yazıldı, lokalde Garage (ADR 0010). `docker-compose.yml` içine eklendi; ayarları `.env` dosyasında.
+- Backend: Profiles modülü (profil okuma/güncelleme, avatar yükleme adresi, avatar ayarlama/silme, başkasının profili), 81 il listesi. Kayıtta boş profil hesapla aynı transaction'da oluşur.
+- Görünürlük kuralı: profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı başkalarına görünmez (profili 404 döner). Etkileşim ve keşfet tarafı ilgili dilimlerde uygulanacak.
+- Mobil: kayıttan sonra atlanamayan "Profilini oluştur" ekranı, profil görüntüleme ve düzenleme, galeriden veya kameradan avatar, alt gezinme çubuğu (Keşfet, Eşleşmeler, Mesajlar "yakında" ekranı gösterir).
+- Modüller arası sınır testi eklendi: modüller birbirine yalnızca yayınlanmış sözleşme tipleri üzerinden başvurabilir.
+- Testler (2026-10-09): backend 175 (60 domain, 81 uygulama, 34 entegrasyon; 4'ü gerçek Garage'a karşı), mobil 62. Uçtan uca test emülatörde geçti: zorunlu profil kurulumu, düzenleme, gerçek depolamaya avatar yükleme ve silme, doğrulama, parola sıfırlama.
+- Android derlemesi için iki ayar: Kotlin artımlı derlemesi kapatıldı (pub önbelleği ile proje farklı sürücülerdeyken derleme hata veriyor) ve Gradle belleği 4 GB'a indirildi.
+- Bilinen sınırlar: fotoğraf kırpma ekranı yok (ortadan kare gösterilir); avatar görselleri önbelleğe alınmıyor.
+
+#### Depolama için ek lokal ayar
+
+```powershell
+dotnet user-secrets set --project src/Exparter.Api "Storage:AccessKey" "<.env içindeki STORAGE_ACCESS_KEY>"
+dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env içindeki STORAGE_SECRET_KEY>"
+```
+
 ## Geliştirme ortamı
 
 2026-10-06 tarihinde ölçülen sürümler:
@@ -124,6 +142,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | Git | 2.55.0.windows.3 |
 | PostgreSQL imajı | `postgres:18.6-alpine` |
 | Mailpit imajı | `axllent/mailpit:v1.31.4` |
+| Garage imajı | `dxflrs/garage:v2.4.1` |
 | Node.js (lint için) | 24.14.0 |
 
 Notlar:

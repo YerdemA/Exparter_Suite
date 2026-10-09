@@ -83,7 +83,7 @@ Kurulumdan önce her paketin **güncel kararlı sürümünü** kontrol et. Sür�
 | Gerçek zamanlı | SignalR |
 | Push bildirim | Firebase Cloud Messaging |
 | E-posta | Lokalde yakalayıcı bir SMTP sunucusu; gerçek sağlayıcı Faz 3'te ADR ile seçilecek |
-| Dosya depolama | S3 uyumlu object storage, istemciye presigned URL ile. Ürün seçimi Faz 5.1'de ADR ile yapılacak. |
+| Dosya depolama | S3 uyumlu object storage, istemciye presigned URL ile. Lokalde Garage; canlı ortam Faz 6'da seçilecek (ADR 0010). |
 | Loglama | Serilog, yapılandırılmış log |
 | Test | xUnit, Testcontainers (gerçek PostgreSQL ile entegrasyon testi) |
 | API dokümanı | OpenAPI (sözleşmeyle uyumu CI'da kontrol edilir) |
@@ -135,7 +135,7 @@ Exparter_Suite/
 │       └── Exparter.Api.IntegrationTests/
 ├── mobile/                    # Flutter projesi
 ├── web/                       # Faz 7'ye kadar boş
-├── docker-compose.yml         # postgres (nesne depolama Faz 5.1'de eklenecek)
+├── docker-compose.yml         # postgres, mailpit, garage
 ├── .editorconfig
 ├── .gitignore
 └── .github/workflows/         # backend-ci.yml, mobile-ci.yml

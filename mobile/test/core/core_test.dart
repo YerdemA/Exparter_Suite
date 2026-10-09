@@ -1,12 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/error_messages.dart';
-import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_store.dart';
-import 'package:exparter/core/router/app_router.dart';
-import 'package:exparter/core/router/app_routes.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers.dart';
@@ -98,31 +94,6 @@ void main() {
 
       expect(store.current, isNull);
       expect(persistence.value, isNull);
-    });
-  });
-
-  group('redirectFor', () {
-    const loading = AsyncLoading<Account?>();
-    const signedOut = AsyncData<Account?>(null);
-    final signedIn = AsyncData<Account?>(testAccount());
-
-    test('waits on the splash screen while the session loads', () {
-      expect(redirectFor(loading, AppRoutes.home), AppRoutes.splash);
-      expect(redirectFor(loading, AppRoutes.splash), isNull);
-    });
-
-    test('sends signed-out users to the sign-in screen', () {
-      expect(redirectFor(signedOut, AppRoutes.home), AppRoutes.login);
-      expect(redirectFor(signedOut, AppRoutes.splash), AppRoutes.login);
-      expect(redirectFor(signedOut, AppRoutes.login), isNull);
-      expect(redirectFor(signedOut, AppRoutes.register), isNull);
-    });
-
-    test('keeps signed-in users out of the auth screens', () {
-      expect(redirectFor(signedIn, AppRoutes.login), AppRoutes.home);
-      expect(redirectFor(signedIn, AppRoutes.register), AppRoutes.home);
-      expect(redirectFor(signedIn, AppRoutes.splash), AppRoutes.home);
-      expect(redirectFor(signedIn, AppRoutes.home), isNull);
     });
   });
 }

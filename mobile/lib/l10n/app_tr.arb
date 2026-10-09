@@ -46,18 +46,50 @@
   "validationPassword": "Parola en az 8 karakter olmalı.",
   "validationAgeConfirmation": "Devam etmek için 18 yaşından büyük olduğunu onaylamalısın.",
 
-  "homeGreeting": "Merhaba, @{username}",
-  "@homeGreeting": {
-    "placeholders": {
-      "username": { "type": "String" }
-    }
-  },
   "homeEmailNotVerified": "E-posta adresin henüz doğrulanmadı. Gelen kutunu kontrol et.",
   "homeEmailVerified": "E-posta adresin doğrulandı.",
   "homeResendVerification": "Doğrulama e-postasını yeniden gönder",
   "homeVerificationSent": "Doğrulama e-postası gönderildi.",
   "homeAccountRestored": "Hesabın yeniden etkinleştirildi; silme isteği iptal edildi.",
-  "homeComingSoon": "Keşfet, eşleşmeler ve mesajlar yakında burada olacak.",
+  "comingSoon": "Bu bölüm yakında burada olacak.",
+
+  "navDiscover": "Keşfet",
+  "navMatches": "Eşleşmeler",
+  "navMessages": "Mesajlar",
+  "navProfile": "Profil",
+
+  "profileSetupTitle": "Profilini oluştur",
+  "profileSetupHint": "Başkalarıyla eşleşebilmen için önce kendini tanıt. Bu bilgileri sonra değiştirebilirsin.",
+  "profileSetupSubmit": "Devam et",
+  "profileEditTitle": "Profili düzenle",
+  "profileEdit": "Profili düzenle",
+  "profileSave": "Kaydet",
+  "profileDisplayNameLabel": "Görünen ad",
+  "profileDisplayNameHelper": "Diğer kullanıcılar seni bu adla görür.",
+  "profileBioLabel": "Hakkında",
+  "profileBioHint": "Neler biliyorsun, neler öğrenmek istiyorsun?",
+  "profileModesTitle": "Takasları nasıl yapmak istersin?",
+  "profileAcceptsOnline": "Çevrimiçi",
+  "profileAcceptsInPerson": "Yüz yüze",
+  "profileCityLabel": "Şehir",
+  "profileCityHelper": "Yüz yüze takaslar için gerekli. Yalnızca şehrin görünür.",
+  "profileModeOnline": "Çevrimiçi",
+  "profileModeInPerson": "Yüz yüze",
+  "profileModeInPersonIn": "Yüz yüze · {city}",
+  "@profileModeInPersonIn": {
+    "placeholders": {
+      "city": { "type": "String" }
+    }
+  },
+
+  "avatarChange": "Fotoğrafı değiştir",
+  "avatarFromGallery": "Galeriden seç",
+  "avatarFromCamera": "Fotoğraf çek",
+  "avatarRemove": "Fotoğrafı kaldır",
+
+  "validationDisplayName": "Görünen ad en az 2 karakter olmalı.",
+  "validationSwapMode": "Çevrimiçi veya yüz yüze seçeneklerinden en az birini seç.",
+  "validationCity": "Yüz yüze takas için şehir seçmelisin.",
   "homeLogout": "Çıkış yap",
 
   "errorNetwork": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.",
@@ -70,6 +102,7 @@
   "errorUsernameReserved": "Bu kullanıcı adı kullanılamıyor.",
   "errorInvalidLink": "Bu bağlantı geçersiz veya süresi dolmuş. Yeni bir bağlantı iste.",
   "errorEmailAlreadyVerified": "E-posta adresin zaten doğrulanmış.",
+  "errorAvatarInvalid": "Bu fotoğraf kullanılamıyor. JPEG, PNG veya WebP biçiminde ve en fazla 5 MB olmalı.",
   "errorSessionExpired": "Oturumun sona erdi. Lütfen yeniden giriş yap.",
   "errorRetry": "Tekrar dene"
 }

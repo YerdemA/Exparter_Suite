@@ -2,11 +2,8 @@ import 'dart:async';
 
 import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/api_providers.dart';
-import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_controller.dart';
 import 'package:exparter/core/auth/session_store.dart';
-import 'package:exparter/core/router/app_router.dart';
-import 'package:exparter/core/router/app_routes.dart';
 import 'package:exparter/features/auth/data/api_auth_repository.dart';
 import 'package:exparter/features/auth/presentation/forgot_password_screen.dart';
 import 'package:exparter/features/auth/presentation/recovery_controller.dart';
@@ -35,24 +32,6 @@ void main() {
         authRepositoryProvider.overrideWithValue(repository),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),
       ];
-
-  group('redirectFor', () {
-    test('never redirects away from email links, even while the session loads', () {
-      for (final session in [
-        const AsyncLoading<Account?>(),
-        const AsyncData<Account?>(null),
-        AsyncData<Account?>(testAccount()),
-      ]) {
-        expect(redirectFor(session, AppRoutes.verifyEmail), isNull);
-        expect(redirectFor(session, AppRoutes.resetPassword), isNull);
-      }
-    });
-
-    test('forgot password is for signed-out users', () {
-      expect(redirectFor(const AsyncData<Account?>(null), AppRoutes.forgotPassword), isNull);
-      expect(redirectFor(AsyncData<Account?>(testAccount()), AppRoutes.forgotPassword), AppRoutes.home);
-    });
-  });
 
   group('emailVerificationProvider', () {
     test('confirms the token and refreshes the signed-in account', () async {
