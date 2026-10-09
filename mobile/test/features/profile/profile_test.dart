@@ -156,7 +156,7 @@ void main() {
     tester.view.physicalSize = const Size(1080, 3200);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(overrides: overrides(picker: picker), child: localized(screen)));
+    await tester.pumpWidget(ProviderScope(overrides: overrides(picker: picker), child: routed(screen)));
     await tester.pumpAndSettle();
   }
 
@@ -173,14 +173,13 @@ void main() {
           ),
         ).thenAnswer((_) async => testProfile());
 
-    testWidgets('setup requires a name and at least one way to swap', (tester) async {
+    testWidgets('a blank profile requires a name and at least one way to swap', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile(complete: false));
-      await pumpScreen(tester, const ProfileFormScreen(isSetup: true));
+      await pumpScreen(tester, const ProfileFormScreen());
 
-      expect(find.text(l10n.profileSetupTitle), findsOneWidget);
       await tester.tap(find.widgetWithText(SwitchListTile, l10n.profileAcceptsOnline));
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSetupSubmit));
+      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSave));
       await tester.pump();
 
       expect(find.text(l10n.validationRequired), findsOneWidget);
@@ -199,13 +198,13 @@ void main() {
     testWidgets('in-person swaps require a city, chosen from the list', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile(complete: false));
       stubSave();
-      await pumpScreen(tester, const ProfileFormScreen(isSetup: true));
+      await pumpScreen(tester, const ProfileFormScreen());
 
       expect(find.text(l10n.profileCityLabel), findsNothing);
       await tester.enterText(field(l10n.profileDisplayNameLabel), 'Ayşe');
       await tester.tap(find.widgetWithText(SwitchListTile, l10n.profileAcceptsInPerson));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSetupSubmit));
+      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSave));
       await tester.pump();
       expect(find.text(l10n.validationCity), findsOneWidget);
 
@@ -213,7 +212,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('İstanbul').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSetupSubmit));
+      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSave));
       await tester.pumpAndSettle();
 
       verify(
@@ -225,22 +224,22 @@ void main() {
           acceptsInPerson: true,
         ),
       ).called(1);
+      expect(find.text('route:/profile'), findsOneWidget);
     });
 
     testWidgets('editing starts from the saved profile', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
-      await pumpScreen(tester, const ProfileFormScreen(isSetup: false));
+      await pumpScreen(tester, const ProfileFormScreen());
 
       expect(find.text(l10n.profileEditTitle), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Ayşe Yılmaz'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Gitar çalıyorum.'), findsOneWidget);
       expect(find.text('İstanbul'), findsOneWidget);
-      expect(find.text(l10n.homeLogout), findsNothing);
     });
 
     testWidgets('shows a readable error with a retry when the profile cannot be loaded', (tester) async {
       when(() => repository.getOwnProfile()).thenThrow(const ApiException(code: ApiException.networkCode));
-      await pumpScreen(tester, const ProfileFormScreen(isSetup: false));
+      await pumpScreen(tester, const ProfileFormScreen());
 
       expect(find.text(l10n.errorNetwork), findsOneWidget);
 
@@ -264,6 +263,34 @@ void main() {
       expect(find.text(l10n.profileModeInPersonIn('İstanbul')), findsOneWidget);
       expect(find.text(l10n.homeEmailNotVerified), findsOneWidget);
       expect(find.text(l10n.homeResendVerification), findsOneWidget);
+
+      // The profile is filled in; only the email is still missing.
+      expect(find.text(l10n.interactionRequirements), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+      expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
+    });
+
+    testWidgets('a complete, verified user sees no requirements', (tester) async {
+      await SessionStore(persistence).save(
+        StoredSession(accessToken: 'a', refreshToken: 'r', account: testAccount(emailVerified: true)),
+      );
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
+      await pumpScreen(tester, const ProfileScreen());
+
+      expect(find.text(l10n.interactionRequirements), findsNothing);
+      expect(find.widgetWithText(FilledButton, l10n.profileEdit), findsOneWidget);
+    });
+
+    testWidgets('a new user is told what is missing before they can interact', (tester) async {
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile(complete: false));
+      await pumpScreen(tester, const ProfileScreen());
+
+      expect(find.text(l10n.interactionRequirements), findsOneWidget);
+      expect(find.text(l10n.requirementProfile), findsOneWidget);
+      expect(find.text(l10n.requirementEmail), findsOneWidget);
+      expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(2));
+      expect(find.text('@ayse'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, l10n.profileFillIn), findsOneWidget);
     });
 
     testWidgets('uploads a photo picked from the gallery', (tester) async {

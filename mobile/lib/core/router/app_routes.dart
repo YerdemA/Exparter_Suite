@@ -8,7 +8,6 @@ abstract final class AppRoutes {
   static const profile = '/profile';
   static const profileEditSegment = 'edit';
   static const profileEdit = '$profile/$profileEditSegment';
-  static const profileSetup = '/profile-setup';
 
   // Reached from links in emails, so these paths are part of the email contract
   // (see Email:EmailVerificationUrl and Email:PasswordResetUrl on the backend).

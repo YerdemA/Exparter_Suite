@@ -58,7 +58,7 @@ Ortak kurallar:
 | `AvatarKey` | Nesne depolamadaki anahtar. URL saklanmaz, istek anında presigned URL üretilir. |
 | `City` | Koordinat tutulmaz. 81 ilden biri. Boş olabilir. |
 | `AcceptsOnline`, `AcceptsInPerson` | Takas tercihi; en az biri seçili olmalı. |
-| `IsComplete` (türetilmiş) | Görünen ad ve en az bir takas tercihi girilmişse doğrudur. Tamamlanmamış profil başkalarına görünmez. |
+| `IsComplete` (türetilmiş) | Profil bilgileri (görünen ad ve en az bir takas tercihi) girilmişse doğrudur. Etkileşim için ayrıca en az bir sunulan yetenek ve doğrulanmış e-posta gerekir; bu birleşik koşul dilim 2'de modellenir. |
 | `CreatedAt`, `UpdatedAt` | |
 
 ## 3. Skills

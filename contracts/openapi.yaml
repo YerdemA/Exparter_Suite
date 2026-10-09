@@ -1819,8 +1819,9 @@ components:
         isComplete:
           type: boolean
           description: |
-            Whether the profile holds what matching needs. Until it is true, and the email
-            is verified, the user is hidden from other users and cannot interact with them.
+            Whether the profile details (display name and swap modes) are filled in.
+            Interacting with other users additionally needs a verified email and at least
+            one offered skill; until then the user can browse but is hidden from others.
         rating: { $ref: '#/components/schemas/RatingSummary' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }

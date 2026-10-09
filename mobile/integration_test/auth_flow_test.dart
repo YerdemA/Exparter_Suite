@@ -114,20 +114,22 @@ void main() {
     await tapVisible(tester, find.byType(Checkbox));
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.registerSubmit));
 
-    // A new account cannot get past profile setup, even after a restart.
-    await pumpUntilFound(tester, find.text(l10n.profileSetupTitle));
-    await launchApp(tester);
-    await pumpUntilFound(tester, find.text(l10n.profileSetupTitle));
-    expect(find.byType(NavigationBar), findsNothing);
+    // A new account goes straight into the app and can browse it. Its profile tab
+    // says what is missing before it can interact with others.
+    await pumpUntilFound(tester, find.byType(NavigationBar));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navProfile)));
+    await pumpUntilFound(tester, find.text(l10n.interactionRequirements));
+    expect(find.text(l10n.requirementProfile), findsOneWidget);
 
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileFillIn));
+    await pumpUntilFound(tester, find.text(l10n.profileEditTitle));
     await tester.enterText(field(l10n.profileDisplayNameLabel), 'Uçtan Uca');
-    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileSetupSubmit));
-    await openProfileTab(tester);
-    expect(find.text('Uçtan Uca'), findsOneWidget);
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileSave));
+    await pumpUntilFound(tester, find.text('Uçtan Uca'));
     expect(find.text('@$username'), findsOneWidget);
     expect(find.text(l10n.homeEmailNotVerified), findsOneWidget);
 
-    // The session and the completed profile survive a restart.
+    // The session and the saved profile survive a restart.
     await launchApp(tester);
     await openProfileTab(tester);
     expect(find.text('Uçtan Uca'), findsOneWidget);
@@ -170,6 +172,7 @@ void main() {
     await openProfileTab(tester);
     expect(find.text(l10n.homeEmailVerified), findsOneWidget);
     expect(find.text(l10n.homeResendVerification), findsNothing);
+    expect(find.text(l10n.interactionRequirements), findsNothing);
 
     // Sign out, and stay signed out after another restart.
     await tapVisible(tester, find.widgetWithText(OutlinedButton, l10n.homeLogout));
@@ -198,8 +201,7 @@ void main() {
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionBackToLogin));
     await pumpUntilFound(tester, find.text(l10n.loginTitle));
 
-    // The old password no longer works; the new one signs in by username, straight
-    // into the app because the profile is already complete.
+    // The old password no longer works; the new one signs in by username.
     await tester.enterText(field(l10n.loginIdentifierLabel), username);
     await tester.enterText(field(l10n.passwordLabel), password);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));

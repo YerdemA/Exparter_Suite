@@ -151,11 +151,12 @@ class _ProfileBody extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Text(
-              profile.displayName ?? '',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineMedium,
-            ),
+            if (profile.displayName != null)
+              Text(
+                profile.displayName!,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineMedium,
+              ),
             if (account != null)
               Text(
                 '@${account.username}',
@@ -182,10 +183,17 @@ class _ProfileBody extends ConsumerWidget {
               Text(profile.bio!, style: theme.textTheme.bodyLarge),
             ],
             const SizedBox(height: AppSpacing.lg),
+            if (!profile.isComplete || !(account?.emailVerified ?? true)) ...[
+              _RequirementsCard(
+                profileFilled: profile.isComplete,
+                emailVerified: account?.emailVerified ?? true,
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
             FilledButton.icon(
               onPressed: () => context.go(AppRoutes.profileEdit),
               icon: const Icon(Icons.edit_outlined),
-              label: Text(l10n.profileEdit),
+              label: Text(profile.isComplete ? l10n.profileEdit : l10n.profileFillIn),
             ),
             const SizedBox(height: AppSpacing.lg),
             if (restored) ...[
@@ -219,6 +227,52 @@ class _ProfileBody extends ConsumerWidget {
 }
 
 enum _AvatarChoice { gallery, camera, remove }
+
+/// Tells a user who cannot interact with others yet what is still missing.
+class _RequirementsCard extends StatelessWidget {
+  const _RequirementsCard({required this.profileFilled, required this.emailVerified});
+
+  final bool profileFilled;
+  final bool emailVerified;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final brand = context.brand;
+
+    Widget row(bool done, String text) => Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Row(
+            children: [
+              Icon(
+                done ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: done ? brand.success : theme.colorScheme.onSurfaceVariant,
+                semanticLabel: done ? l10n.requirementDone : l10n.requirementMissing,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(text)),
+            ],
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: brand.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.interactionRequirements, style: theme.textTheme.titleMedium),
+          row(profileFilled, l10n.requirementProfile),
+          row(emailVerified, l10n.requirementEmail),
+        ],
+      ),
+    );
+  }
+}
 
 class _ResendVerificationButton extends ConsumerWidget {
   const _ResendVerificationButton();

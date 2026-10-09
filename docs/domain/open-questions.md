@@ -52,6 +52,26 @@
 
 **Brief ile çelişen ikinci karar:** Brief Bölüm 6'da "mesajlaşma yalnızca eşleşmiş kullanıcılar arasında mümkündür" kuralı vardı. Yeni karara göre sohbet eşleşme ile başlar ama eşleşme sona erdikten sonra da sürebilir. Brief buna göre güncellendi.
 
+## Verilen kararlar (2026-10-09)
+
+| Konu | Karar |
+|---|---|
+| E-posta bağlantıları | MVP'de `exparter://app/...` özel şeması; alan adı olduğunda `https://` (ADR 0009). |
+| Nesne depolama | Kod S3 API'sine yazılır; lokalde Garage; canlı ortam Faz 6'da seçilir (ADR 0010). |
+| Avatar | Galeriden veya kameradan; kırpma ekranı yok. |
+| Gezinme | Alt gezinme çubuğu: Keşfet, Eşleşmeler, Mesajlar, Profil. |
+| Etkileşim koşulu | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir, ama etkileşime giremez, istek gönderemez ve keşfette gösterilmez. Zorunlu profil ekranı yoktur; koşul etkileşim anında uyarıyla devreye girer. |
+| Tamamlanmış profil | Görünen ad, en az bir takas tercihi (yüz yüze ise şehir) ve en az bir sunulan yetenek. |
+
+## Açık soru (2026-10-09)
+
+**Gönderiler.** Kullanıcı ana sayfada başkalarının gönderilerini görmekten, gönderi beğenmekten ve gönderiye yorum yapmaktan söz etti. Brief'te, domain modelinde ve sözleşmede gönderi, beğeni veya yorum yok; MVP kapsamı (Bölüm 7) bunları içermiyor. Karar gereken noktalar:
+
+1. Gönderi akışı (gönderi paylaşma, beğeni, yorum) MVP'ye eklenecek mi, MVP sonrasına mı bırakılacak?
+2. Eklenecekse: gönderi neleri içerir (metin, görsel)? Ana sayfa ayrı bir sekme mi, Keşfet ile aynı ekran mı? Hangi dilimde yapılır?
+
+Eklenirse yeni bir modül, sözleşme değişikliği, moderasyon (şikâyet hedefi olarak gönderi ve yorum) ve brief güncellemesi gerekir.
+
 ## Onaylanan ayrıntılar (2026-10-07)
 
 ### Ö1 — Eşleşmenin 7 gün sonunda kendiliğinden sonlanması

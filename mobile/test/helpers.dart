@@ -9,6 +9,7 @@ import 'package:exparter/features/auth/domain/auth_repository.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -103,6 +104,25 @@ ResponseBody problemResponse(int statusCode, String code) => jsonResponse(status
       'status': statusCode,
       'code': code,
     });
+
+/// Like [localized], for screens that navigate: [child] is the first route and every
+/// other location shows its own path, so tests can assert where a screen went.
+Widget routed(Widget child) => MaterialApp.router(
+      theme: AppTheme.light(),
+      locale: const Locale('tr'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: GoRouter(
+        initialLocation: '/under-test',
+        routes: [
+          GoRoute(path: '/under-test', builder: (context, state) => child),
+          GoRoute(
+            path: '/:rest(.*)',
+            builder: (context, state) => Scaffold(body: Text('route:${state.uri.path}')),
+          ),
+        ],
+      ),
+    );
 
 /// Wraps a widget with what screens expect from the app: its theme and localizations.
 Widget localized(Widget child) => MaterialApp(

@@ -46,8 +46,8 @@ public sealed class Profile
     public DateTimeOffset UpdatedAt { get; private set; }
 
     /// <summary>
-    /// Whether the profile holds what matching needs. An incomplete profile is not shown
-    /// to other users and its owner cannot interact with them.
+    /// Whether the profile details are filled in. It is one of the conditions for being
+    /// shown to other users and interacting with them.
     /// </summary>
     public bool IsComplete => DisplayName is not null && (AcceptsOnline || AcceptsInPerson);
 

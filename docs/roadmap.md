@@ -113,10 +113,10 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 
 - Nesne depolama: kod S3 API'sine yazıldı, lokalde Garage (ADR 0010). `docker-compose.yml` içine eklendi; ayarları `.env` dosyasında.
 - Backend: Profiles modülü (profil okuma/güncelleme, avatar yükleme adresi, avatar ayarlama/silme, başkasının profili), 81 il listesi. Kayıtta boş profil hesapla aynı transaction'da oluşur.
-- Görünürlük kuralı: profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı başkalarına görünmez (profili 404 döner). Etkileşim ve keşfet tarafı ilgili dilimlerde uygulanacak.
-- Mobil: kayıttan sonra atlanamayan "Profilini oluştur" ekranı, profil görüntüleme ve düzenleme, galeriden veya kameradan avatar, alt gezinme çubuğu (Keşfet, Eşleşmeler, Mesajlar "yakında" ekranı gösterir).
+- Görünürlük kuralı: profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı başkalarına görünmez (profili 404 döner). Etkileşim denemesindeki uyarı ve "en az bir sunulan yetenek" koşulu ilgili dilimlerde (2 ve 4) uygulanacak.
+- Mobil: profil görüntüleme ve düzenleme, galeriden veya kameradan avatar, alt gezinme çubuğu (Keşfet, Eşleşmeler, Mesajlar "yakında" ekranı gösterir). Zorunlu profil ekranı yok: yeni kullanıcı doğrudan uygulamaya girer; Profil sekmesi etkileşim için eksik olanları (profil bilgileri, e-posta doğrulaması) gösterir.
 - Modüller arası sınır testi eklendi: modüller birbirine yalnızca yayınlanmış sözleşme tipleri üzerinden başvurabilir.
-- Testler (2026-10-09): backend 175 (60 domain, 81 uygulama, 34 entegrasyon; 4'ü gerçek Garage'a karşı), mobil 62. Uçtan uca test emülatörde geçti: zorunlu profil kurulumu, düzenleme, gerçek depolamaya avatar yükleme ve silme, doğrulama, parola sıfırlama.
+- Testler (2026-10-09): backend 175 (60 domain, 81 uygulama, 34 entegrasyon; 4'ü gerçek Garage'a karşı), mobil 62. Uçtan uca test emülatörde zorunlu profil ekranlı ilk sürümle geçti (düzenleme, gerçek depolamaya avatar yükleme ve silme, doğrulama, parola sıfırlama); zorunlu ekran kaldırıldıktan sonra **yeniden çalıştırılmadı**.
 - Android derlemesi için iki ayar: Kotlin artımlı derlemesi kapatıldı (pub önbelleği ile proje farklı sürücülerdeyken derleme hata veriyor) ve Gradle belleği 4 GB'a indirildi.
 - Bilinen sınırlar: fotoğraf kırpma ekranı yok (ortadan kare gösterilir); avatar görselleri önbelleğe alınmıyor.
 

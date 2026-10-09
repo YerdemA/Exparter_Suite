@@ -7,7 +7,6 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/verify_email_screen.dart';
-import '../../features/profile/presentation/profile_controller.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
@@ -18,9 +17,13 @@ import 'app_routes.dart';
 
 part 'app_router.g.dart';
 
-/// Decides where a navigation may go for the given session and profile state. Returns
-/// null to allow [location] as is.
-String? redirectFor(AsyncValue<Account?> session, AsyncValue<Profile?> profile, String location) {
+/// Decides where a navigation may go for the given session state. Returns null to
+/// allow [location] as is.
+///
+/// An incomplete profile or unverified email does not restrict navigation: such a user
+/// may browse the whole app. The restriction applies where they try to interact with
+/// others, and is enforced by the backend.
+String? redirectFor(AsyncValue<Account?> session, String location) {
   // Email links work signed in or out, and must not be lost to the splash screen
   // when they are what launched the app.
   if (location == AppRoutes.verifyEmail || location == AppRoutes.resetPassword) {
@@ -40,21 +43,7 @@ String? redirectFor(AsyncValue<Account?> session, AsyncValue<Profile?> profile, 
     return onAuthScreen ? null : AppRoutes.login;
   }
 
-  // Signed in, but not yet known whether the profile is complete. A null value is
-  // what the provider held while signed out, so it counts as "not loaded yet" too.
-  if (profile.value == null && !profile.hasError) {
-    return location == AppRoutes.splash ? null : AppRoutes.splash;
-  }
-
-  // The app stays closed until the profile holds what matching needs. If the profile
-  // could not be loaded this is skipped: the backend enforces the rule anyway, and
-  // an offline user should still reach the app.
-  if (profile.value case final loaded? when !loaded.isComplete) {
-    return location == AppRoutes.profileSetup ? null : AppRoutes.profileSetup;
-  }
-
-  final onEntryScreen = onAuthScreen || location == AppRoutes.splash || location == AppRoutes.profileSetup;
-  return onEntryScreen ? AppRoutes.home : null;
+  return (onAuthScreen || location == AppRoutes.splash) ? AppRoutes.home : null;
 }
 
 @Riverpod(keepAlive: true)
@@ -63,17 +52,13 @@ GoRouter appRouter(Ref ref) {
   // watching would rebuild it and reset the navigation stack on every sign-in.
   final changes = ValueNotifier<int>(0);
   ref.listen(sessionControllerProvider, (_, _) => changes.value++);
-  ref.listen(ownProfileProvider, (_, _) => changes.value++);
   ref.onDispose(changes.dispose);
 
   final router = GoRouter(
     initialLocation: AppRoutes.splash,
     refreshListenable: changes,
-    redirect: (context, state) => redirectFor(
-      ref.read(sessionControllerProvider),
-      ref.read(ownProfileProvider),
-      state.matchedLocation,
-    ),
+    redirect: (context, state) =>
+        redirectFor(ref.read(sessionControllerProvider), state.matchedLocation),
     routes: [
       GoRoute(
         path: AppRoutes.splash,
@@ -94,10 +79,6 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.resetPassword,
         builder: (context, state) =>
             ResetPasswordScreen(token: state.uri.queryParameters[AppRoutes.tokenParameter]),
-      ),
-      GoRoute(
-        path: AppRoutes.profileSetup,
-        builder: (context, state) => const ProfileFormScreen(isSetup: true),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),
@@ -143,7 +124,7 @@ GoRouter appRouter(Ref ref) {
                 routes: [
                   GoRoute(
                     path: AppRoutes.profileEditSegment,
-                    builder: (context, state) => const ProfileFormScreen(isSetup: false),
+                    builder: (context, state) => const ProfileFormScreen(),
                   ),
                 ],
               ),

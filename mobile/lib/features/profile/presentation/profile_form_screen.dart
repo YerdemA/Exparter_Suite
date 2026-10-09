@@ -7,19 +7,13 @@ import '../../../core/api/generated/export.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/widgets/auth_scaffold.dart';
 import '../data/api_profile_repository.dart';
 import 'profile_controller.dart';
 
-/// Creates the profile right after sign-up ([isSetup]) and edits it later.
-///
-/// During setup there is no way back: the rest of the app is closed until the profile
-/// holds what matching needs. Signing out is the only other exit.
+/// Fills in the profile for the first time and edits it later.
 class ProfileFormScreen extends ConsumerStatefulWidget {
-  const ProfileFormScreen({required this.isSetup, super.key});
-
-  final bool isSetup;
+  const ProfileFormScreen({super.key});
 
   @override
   ConsumerState<ProfileFormScreen> createState() => _ProfileFormScreenState();
@@ -74,8 +68,7 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
           acceptsInPerson: _acceptsInPerson,
         );
 
-    // After setup the router leaves on its own, because the profile is now complete.
-    if (saved && mounted && !widget.isSetup) {
+    if (saved && mounted) {
       context.go(AppRoutes.profile);
     }
   }
@@ -84,7 +77,6 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final profile = ref.watch(ownProfileProvider);
-    final title = widget.isSetup ? l10n.profileSetupTitle : l10n.profileEditTitle;
 
     final Widget body;
     switch (profile) {
@@ -103,12 +95,8 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
         );
     }
 
-    if (widget.isSetup) {
-      return AuthScaffold(title: title, child: body);
-    }
-
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(title: Text(l10n.profileEditTitle)),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -134,10 +122,6 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (widget.isSetup) ...[
-            Text(l10n.profileSetupHint, style: theme.textTheme.bodyLarge),
-            const SizedBox(height: AppSpacing.md),
-          ],
           TextFormField(
             controller: _displayName,
             textCapitalization: TextCapitalization.words,
@@ -229,19 +213,10 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
           ],
           const SizedBox(height: AppSpacing.lg),
           SubmitButton(
-            label: widget.isSetup ? l10n.profileSetupSubmit : l10n.profileSave,
+            label: l10n.profileSave,
             isLoading: action.isLoading,
             onPressed: _submit,
           ),
-          if (widget.isSetup) ...[
-            const SizedBox(height: AppSpacing.sm),
-            TextButton(
-              onPressed: action.isLoading
-                  ? null
-                  : () => ref.read(authControllerProvider.notifier).logout(),
-              child: Text(l10n.homeLogout),
-            ),
-          ],
         ],
       ),
     );
