@@ -10,7 +10,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 1 | Domain ve veri tasarımı | Tamamlandı (2026-10-07) |
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
-| 4 | Mobil iskelet | Kod ve testler hazır; emülatörde uçtan uca doğrulama bekliyor |
+| 4 | Mobil iskelet | Tamamlandı, onay bekliyor |
 | 5 | Dikey dilimler | Başlamadı |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
@@ -67,7 +67,7 @@ API `http://localhost:5244` adresinde açılır ve Development ortamında migrat
 - API client sözleşmeden üretilir (swagger_parser, ADR 0008). Üretilen kod repoya girmez.
 - Oturum: token'lar ve hesap güvenli depolamada; süresi dolan access token tek seferde yenilenir, bekleyen istekler yeniden denenir; refresh token reddedilirse kullanıcı giriş ekranına döner.
 - Ekranlar: kayıt (kullanıcı adı ve 18 yaş onayıyla), giriş (e-posta veya kullanıcı adı), çıkışlı geçici ana ekran. Hata kodları Türkçe mesajlara eşlenir.
-- Testler (2026-10-07): 32 birim ve widget testi geçiyor. `integration_test/auth_flow_test.dart` gerçek backend'e karşı kayıt, yeniden açılışta oturumun korunması, çıkış ve kullanıcı adıyla girişi dener; **henüz çalıştırılamadı** (emülatör derlemesi sırasında makinenin belleği tükendi).
+- Testler: 32 birim ve widget testi geçiyor. Uçtan uca test (`integration_test/auth_flow_test.dart`) 2026-10-09'da Pixel 6 emülatöründe gerçek backend'e karşı geçti: kayıt, yeniden açılışta oturumun korunması, çıkış, hatalı parola mesajı ve kullanıcı adıyla giriş.
 - CI: `.github/workflows/mobile-ci.yml` kodu üretir, analiz eder ve testleri çalıştırır.
 - Faz 5'in ilk dilimine bırakılanlar: e-posta doğrulama ve parola sıfırlama ekranları ile derin bağlantı.
 - Identity'ye bu fazda eklenen: kullanıcı adı 7 günde bir kez değiştirilebilir.
@@ -80,7 +80,7 @@ flutter pub get
 dart run swagger_parser
 dart run build_runner build --delete-conflicting-outputs
 flutter run                                   # backend http://localhost:5244 adresinde çalışıyor olmalı
-flutter test integration_test -d emulator-5554   # uçtan uca test
+flutter test integration_test -d emulator-5554   # uçtan uca test; emülatör ve backend açık olmalı
 ```
 
 Android emülatörü bilgisayarın `localhost` adresine `10.0.2.2` üzerinden ulaşır; varsayılan API adresi budur. Başka bir adres için `--dart-define=API_BASE_URL=...` verilir.
