@@ -165,6 +165,127 @@
   "errorSessionExpired": "Oturumunuz sona erdi. Lütfen yeniden giriş yapın.",
   "errorNotFound": "Aradığınız içerik bulunamadı.",
   "errorRetry": "Tekrar dene",
+  "notificationsTitle": "Bildirimler",
+  "notificationsEmpty": "Henüz bildiriminiz yok.",
+  "notificationsMarkAllRead": "Tümünü okundu say",
+  "notificationSomeone": "Bir kullanıcı",
+  "notificationUnknown": "Yeni bir bildiriminiz var.",
+  "notificationSwapRequestReceived": "{name} size takas isteği gönderdi.",
+  "@notificationSwapRequestReceived": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSwapRequestAccepted": "{name} takas isteğinizi kabul etti. Artık eşleştiniz.",
+  "@notificationSwapRequestAccepted": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSwapRequestDeclined": "{name} takas isteğinizi reddetti.",
+  "@notificationSwapRequestDeclined": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSwapRequestCancelled": "{name} takas isteğini geri çekti.",
+  "@notificationSwapRequestCancelled": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSwapRequestExpired": "Takas isteğiniz cevaplanmadığı için süresi doldu.",
+  "notificationMatchEndRequested": "{name} eşleşmeyi sonlandırmak istiyor.",
+  "@notificationMatchEndRequested": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationMatchEndRequestRejected": "{name} sonlandırma isteğinizi reddetti; eşleşme sürüyor.",
+  "@notificationMatchEndRequestRejected": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationMatchEndRequestWithdrawn": "{name} sonlandırma isteğini geri çekti.",
+  "@notificationMatchEndRequestWithdrawn": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationMatchEndReminder": "{name} eşleşmeyi sonlandırmak istiyor. Cevap vermezseniz eşleşme yakında sona erecek.",
+  "@notificationMatchEndReminder": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationMatchEnded": "{name} ile eşleşmeniz sona erdi.",
+  "@notificationMatchEnded": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationMatchEndedByDeadline": "Sonlandırma isteği cevaplanmadığı için bir eşleşmeniz sona erdi.",
+  "notificationSessionProposed": "{name} bir çevrimiçi oturum önerdi.",
+  "@notificationSessionProposed": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSessionAccepted": "{name} oturum önerinizi kabul etti.",
+  "@notificationSessionAccepted": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSessionDeclined": "{name} oturum önerinizi reddetti.",
+  "@notificationSessionDeclined": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSessionProposalLapsed": "Oturum öneriniz cevaplanmadığı için geçersiz oldu.",
+  "notificationSessionCancelled": "{name} oturumu iptal etti.",
+  "@notificationSessionCancelled": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSessionCancelledBecause": "{name} oturumu iptal etti: {reason}",
+  "@notificationSessionCancelledBecause": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "reason": { "type": "String" }
+    }
+  },
+  "notificationSessionStartingSoon": "Çevrimiçi oturumunuz yaklaşıyor: {when}",
+  "@notificationSessionStartingSoon": {
+    "placeholders": {
+      "when": { "type": "String" }
+    }
+  },
+  "notificationSessionCompletionMarked": "{name} oturumu tamamlandı olarak işaretledi. Onayınız bekleniyor.",
+  "@notificationSessionCompletionMarked": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSessionCompletionReminder": "Tamamlandı işaretine cevap vermezseniz oturum yakında tamamlanmış sayılacak.",
+  "notificationSessionCompleted": "{name} oturumun tamamlandığını onayladı.",
+  "@notificationSessionCompleted": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSessionCompletedByDeadline": "Bir oturumunuz, süre dolduğu için tamamlanmış sayıldı.",
+  "notificationReviewReceived": "{name} sizi değerlendirdi.",
+  "@notificationReviewReceived": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationSkillProposalApproved": "Önerdiğiniz yetenek onaylandı.",
+  "notificationSkillProposalRejected": "Önerdiğiniz yetenek reddedildi.",
   "errorReviewAlreadyExists": "Bu kullanıcıyı daha önce değerlendirdiniz.",
   "errorSessionNotCompleted": "Değerlendirme için bu kullanıcıyla tamamlanmış bir oturumunuz olmalı.",
   "reviewsTitle": "Değerlendirmeler",

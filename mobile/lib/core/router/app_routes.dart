@@ -5,6 +5,8 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const home = '/';
+  static const notificationsSegment = 'notifications';
+  static const notifications = '/$notificationsSegment';
   static const userProfileSegment = 'users/:$userIdParameter';
   static const userIdParameter = 'userId';
   static const sendRequestSegment = 'request';

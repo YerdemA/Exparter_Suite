@@ -37,6 +37,12 @@ class ConversationUpdated extends RealtimeEvent {
   final Conversation conversation;
 }
 
+class NotificationReceived extends RealtimeEvent {
+  const NotificationReceived(this.notification);
+
+  final Notification notification;
+}
+
 /// The connection came back after a gap. Events may have been missed meanwhile, so
 /// whatever is on screen should be reloaded.
 class RealtimeReconnected extends RealtimeEvent {
@@ -138,6 +144,10 @@ class SignalRRealtimeClient implements RealtimeClient {
       ..on(
         'ConversationUpdated',
         (arguments) => _emit(arguments, (json) => ConversationUpdated(Conversation.fromJson(json))),
+      )
+      ..on(
+        'NotificationReceived',
+        (arguments) => _emit(arguments, (json) => NotificationReceived(Notification.fromJson(json))),
       )
       ..onreconnected(({connectionId}) => _events.add(const RealtimeReconnected()))
       ..onclose(({error}) {

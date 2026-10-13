@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/realtime/realtime_client.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../messages/presentation/message_controller.dart';
+import '../../notifications/presentation/notification_controller.dart';
 
 /// The frame of the signed-in app: the current tab above a bottom navigation bar.
 class AppShell extends ConsumerWidget {
@@ -19,6 +20,9 @@ class AppShell extends ConsumerWidget {
 
     // Being here means someone is signed in: keep the real-time connection open.
     ref.watch(realtimeSessionProvider);
+
+    // And keep what is on screen in step with what the server reports.
+    ref.watch(notificationSyncProvider);
 
     return Scaffold(
       body: navigationShell,

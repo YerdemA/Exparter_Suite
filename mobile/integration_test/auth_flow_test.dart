@@ -5,6 +5,7 @@ import 'package:exparter/app.dart';
 import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/config/app_config.dart';
 import 'package:exparter/core/router/app_routes.dart';
+import 'package:exparter/features/notifications/presentation/notifications_screen.dart';
 import 'package:exparter/features/profile/data/avatar_picker.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
@@ -291,6 +292,21 @@ void main() {
       '/api/v1/swap-requests/${(incoming.data!['items'] as List<dynamic>).first['id']}/accept',
       options: peerAuth,
     );
+    // The acceptance arrives as a notification over the open connection: the bell
+    // counts it, and tapping it opens the new match.
+    final discoverTab = find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navDiscover));
+    await tester.tap(discoverTab);
+    await tester.pumpAndSettle();
+    await tester.tap(discoverTab);
+    await pumpUntilFound(tester, find.descendant(of: find.byType(NotificationBell), matching: find.text('1')));
+    await tester.tap(find.byType(NotificationBell));
+    final acceptedNotice = find.text(l10n.notificationSwapRequestAccepted('Keşif Arkadaşı'));
+    await pumpUntilFound(tester, acceptedNotice);
+    await tester.tap(acceptedNotice);
+    await pumpUntilFound(tester, find.text(l10n.matchSendMessage));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navMatches)));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.widgetWithText(Tab, l10n.matchesTabMatches));
     await tester.pumpAndSettle();
     // Coming back to the tab reloads it; if it still shows the old answer, pull to refresh.
