@@ -29,11 +29,11 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 
 - **Backend:** .NET 10, ASP.NET Core Web API, Clean Architecture, PostgreSQL + EF Core, `Mediator` (martinothamar; **MediatR kullanma**), FluentValidation, ProblemDetails (RFC 9457), JWT + rotasyonlu refresh token, Serilog, xUnit + Testcontainers.
 - **Mobil:** Flutter, feature-first (`data/`, `domain/`, `presentation/`), Riverpod (codegen), go_router, dio + üretilmiş client, freezed, flutter_secure_storage.
-- **Nesne depolama:** S3 uyumlu; ürün Faz 5.1'de ADR ile seçilecek.
+- **Nesne depolama:** S3 API'si (`IObjectStorage`); lokalde Garage, canlı ortam Faz 6'da seçilecek (ADR 0010).
 
 ## Kodlama kuralları
 
-- Arayüz dili Türkçe; kod, adlandırma, yorumlar ve commit mesajları İngilizce.
+- Arayüz dili Türkçe ve "siz" hitabıyla (e-postalar dahil); düğme etiketleri kısa emir kipinde ("Giriş yap", "Kaydet"). Kod, adlandırma, yorumlar ve commit mesajları İngilizce.
 - Conventional Commits. Her faz ayrı branch'te (`phase-N/...`), tamamlanınca `main`'e merge.
 - Gizli bilgiler repoya girmez: lokalde `.env` veya user-secrets, repoda yalnızca `.env.example`.
 - Domain katmanının dış bağımlılığı olmaz. Entity'ler zengin modeldir, setter'lar kapalıdır. Validation Application'da, iş kuralları Domain'de.
@@ -45,7 +45,7 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 ## Ortam
 
 - Windows 11, PowerShell. Altyapı Docker Desktop üzerinde.
-- Altyapıyı başlatma: `.env.example` dosyasını `.env` olarak kopyala, sonra `docker compose up -d --wait` (PostgreSQL ve Mailpit).
+- Altyapıyı başlatma: `.env.example` dosyasını `.env` olarak kopyala, sonra `docker compose up -d --wait` (PostgreSQL, Mailpit ve Garage).
 - Backend komutları `backend/` klasöründen: `dotnet build`, `dotnet test` (Docker gerekir), `dotnet run --project src/Exparter.Api`. Gizli ayarlar user-secrets ile verilir; ayrıntı `docs/roadmap.md` içinde.
 - Migration: `dotnet ef migrations add <Ad> --project src/Exparter.Infrastructure --startup-project src/Exparter.Api --output-dir Persistence/Migrations`.
 - Sözleşme lint'i (kökten): `npx --yes @redocly/cli@2.60.0 lint`.

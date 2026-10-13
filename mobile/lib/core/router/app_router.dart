@@ -7,7 +7,10 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/verify_email_screen.dart';
-import '../../features/home/presentation/home_screen.dart';
+import '../../features/profile/presentation/profile_form_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/shell/presentation/app_shell.dart';
+import '../../l10n/app_localizations.dart';
 import '../api/generated/export.dart';
 import '../auth/session_controller.dart';
 import 'app_routes.dart';
@@ -16,6 +19,10 @@ part 'app_router.g.dart';
 
 /// Decides where a navigation may go for the given session state. Returns null to
 /// allow [location] as is.
+///
+/// An incomplete profile or unverified email does not restrict navigation: such a user
+/// may browse the whole app. The restriction applies where they try to interact with
+/// others, and is enforced by the backend.
 String? redirectFor(AsyncValue<Account?> session, String location) {
   // Email links work signed in or out, and must not be lost to the splash screen
   // when they are what launched the app.
@@ -29,11 +36,10 @@ String? redirectFor(AsyncValue<Account?> session, String location) {
     return location == AppRoutes.splash ? null : AppRoutes.splash;
   }
 
-  final signedIn = session.value != null;
   final onAuthScreen = location == AppRoutes.login ||
       location == AppRoutes.register ||
       location == AppRoutes.forgotPassword;
-  if (!signedIn) {
+  if (session.value == null) {
     return onAuthScreen ? null : AppRoutes.login;
   }
 
@@ -44,13 +50,13 @@ String? redirectFor(AsyncValue<Account?> session, String location) {
 GoRouter appRouter(Ref ref) {
   // The router must outlive session changes, so it listens instead of watching:
   // watching would rebuild it and reset the navigation stack on every sign-in.
-  final sessionChanges = ValueNotifier<int>(0);
-  ref.listen(sessionControllerProvider, (_, _) => sessionChanges.value++);
-  ref.onDispose(sessionChanges.dispose);
+  final changes = ValueNotifier<int>(0);
+  ref.listen(sessionControllerProvider, (_, _) => changes.value++);
+  ref.onDispose(changes.dispose);
 
   final router = GoRouter(
     initialLocation: AppRoutes.splash,
-    refreshListenable: sessionChanges,
+    refreshListenable: changes,
     redirect: (context, state) =>
         redirectFor(ref.read(sessionControllerProvider), state.matchedLocation),
     routes: [
@@ -60,7 +66,6 @@ GoRouter appRouter(Ref ref) {
       ),
       GoRoute(path: AppRoutes.login, builder: (context, state) => const LoginScreen()),
       GoRoute(path: AppRoutes.register, builder: (context, state) => const RegisterScreen()),
-      GoRoute(path: AppRoutes.home, builder: (context, state) => const HomeScreen()),
       GoRoute(
         path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
@@ -74,6 +79,58 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.resetPassword,
         builder: (context, state) =>
             ResetPasswordScreen(token: state.uri.queryParameters[AppRoutes.tokenParameter]),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => ComingSoonScreen(
+                  title: AppLocalizations.of(context).navDiscover,
+                  icon: Icons.explore_outlined,
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.matches,
+                builder: (context, state) => ComingSoonScreen(
+                  title: AppLocalizations.of(context).navMatches,
+                  icon: Icons.handshake_outlined,
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.messages,
+                builder: (context, state) => ComingSoonScreen(
+                  title: AppLocalizations.of(context).navMessages,
+                  icon: Icons.chat_bubble_outline,
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: AppRoutes.profileEditSegment,
+                    builder: (context, state) => const ProfileFormScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );

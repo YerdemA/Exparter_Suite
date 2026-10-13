@@ -18,6 +18,7 @@ internal sealed class IdentityTestContext
     public FakeTokenService Tokens { get; } = new();
     public RecordingEmailSender Emails { get; } = new();
     public CountingUnitOfWork UnitOfWork { get; } = new();
+    public RecordingPublisher Publisher { get; } = new();
 
     public TokenIssuer TokenIssuer => new(Tokens, RefreshTokens, Clock);
 
@@ -150,6 +151,24 @@ internal sealed class RecordingEmailSender : IEmailSender
     {
         PasswordResets.Add((email, token));
         return Task.CompletedTask;
+    }
+}
+
+internal sealed class RecordingPublisher : Mediator.IPublisher
+{
+    public List<object> Published { get; } = [];
+
+    public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+        where TNotification : Mediator.INotification
+    {
+        Published.Add(notification);
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask Publish(object notification, CancellationToken cancellationToken = default)
+    {
+        Published.Add(notification);
+        return ValueTask.CompletedTask;
     }
 }
 

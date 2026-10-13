@@ -16,6 +16,7 @@ public class RegisterCommandHandlerTests
         _context.Tokens,
         _context.TokenIssuer,
         _context.Emails,
+        _context.Publisher,
         _context.UnitOfWork,
         _context.Clock);
 
@@ -36,6 +37,7 @@ public class RegisterCommandHandlerTests
         Assert.False(result.AccountRestored);
         Assert.Single(_context.RefreshTokens.Items);
         Assert.Equal(1, _context.UnitOfWork.SaveCount);
+        Assert.Equal(new UserRegistered(user.Id), Assert.Single(_context.Publisher.Published));
 
         var email = Assert.Single(_context.Emails.Verifications);
         Assert.Equal("ayse@example.com", email.Email);

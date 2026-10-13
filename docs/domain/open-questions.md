@@ -52,6 +52,19 @@
 
 **Brief ile çelişen ikinci karar:** Brief Bölüm 6'da "mesajlaşma yalnızca eşleşmiş kullanıcılar arasında mümkündür" kuralı vardı. Yeni karara göre sohbet eşleşme ile başlar ama eşleşme sona erdikten sonra da sürebilir. Brief buna göre güncellendi.
 
+## Verilen kararlar (2026-10-09)
+
+| Konu | Karar |
+|---|---|
+| E-posta bağlantıları | MVP'de `exparter://app/...` özel şeması; alan adı olduğunda `https://` (ADR 0009). |
+| Nesne depolama | Kod S3 API'sine yazılır; lokalde Garage; canlı ortam Faz 6'da seçilir (ADR 0010). |
+| Avatar | Galeriden veya kameradan; kırpma ekranı yok. |
+| Gezinme | Alt gezinme çubuğu: Keşfet, Eşleşmeler, Mesajlar, Profil. |
+| Etkileşim koşulu | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir, ama etkileşime giremez, istek gönderemez ve keşfette gösterilmez. Zorunlu profil ekranı yoktur; koşul etkileşim anında uyarıyla devreye girer. |
+| Tamamlanmış profil | Görünen ad, en az bir takas tercihi (yüz yüze ise şehir) ve en az bir sunulan yetenek. |
+| Hitap | Uygulamanın tamamında ve e-postalarda "siz" hitabı kullanılır. Düğme etiketleri kısa emir kipinde kalır ("Giriş yap", "Kaydet"). Etkileşim uyarısı: "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." |
+| Gönderiler | MVP sonrası. Yapısı aşağıda. |
+
 ## Onaylanan ayrıntılar (2026-10-07)
 
 ### Ö1 — Eşleşmenin 7 gün sonunda kendiliğinden sonlanması
@@ -100,5 +113,6 @@ Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir 
 - Modül başına ayrı `DbContext` ve PostgreSQL şeması kullanımı: Faz 3 (bkz. ADR 0001).
 - Metin alanlarının uzunluk sınırları: Faz 2 (sözleşme).
 - E-posta sağlayıcısı: Faz 3 (ADR).
+- Gönderi akışı: MVP sonrası, takas akışı (Faz 5 dilim 2–8) bittikten sonra ayrı bir dilim olarak. Kullanıcı sunduğu yeteneklerden birini seçer ve o yetenekle ilgili paylaşım yapar. Paylaşım metin, görsel veya video olabilir; metin + görsel ve metin + video birlikte de olabilir. Akış, Keşfet'ten bağımsız ayrı bir ekrandır. Beğeni ve yorum etkileşim sayılır; tamamlanmış profil ve doğrulanmış e-posta gerektirir. Ayrıntılar (video sınırları, moderasyon, sıralama) o dilimin başında netleştirilecek.
 - Reşit olmayan (13–17 yaş) kullanıcılar: MVP sonrası. Yetişkinlerle eşleşme, özel mesajlaşma ve yüz yüze oturum için koruma kuralları, yaş bilgisinin toplanması ve veli onayı o zaman kararlaştırılacak.
 

@@ -1,9 +1,12 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Profiles;
 using Exparter.Infrastructure.Email;
 using Exparter.Infrastructure.Identity;
 using Exparter.Infrastructure.Persistence;
 using Exparter.Infrastructure.Persistence.Identity;
+using Exparter.Infrastructure.Persistence.Profiles;
+using Exparter.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +43,14 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
+
+        services.AddScoped<IProfileRepository, ProfileRepository>();
+
+        services.AddOptions<StorageOptions>()
+            .Bind(configuration.GetSection(StorageOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddSingleton<IObjectStorage, S3ObjectStorage>();
 
         return services;
     }

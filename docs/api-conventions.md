@@ -58,6 +58,8 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 |---|---|---|
 | `validation_failed` | 400 | Doğrulama hatası; ayrıntılar `errors` alanında. |
 | `invalid_token` | 400 | Tek kullanımlık token geçersiz, kullanılmış veya süresi dolmuş. |
+| `avatar_not_uploaded` | 400 | Verilen anahtar altında yüklenmiş dosya yok. |
+| `avatar_invalid` | 400 | Yüklenen dosya izin verilen bir görsel değil veya 5 MB'tan büyük. |
 | `invalid_password` | 400 | Hesap silme gibi parola onayı isteyen işlemde parola hatalı. |
 | `invalid_credentials` | 401 | E-posta/kullanıcı adı veya parola hatalı. |
 | `unauthorized` | 401 | Access token yok veya geçersiz. |
@@ -65,6 +67,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `refresh_token_invalid` | 401 | Refresh token geçersiz, iptal edilmiş veya süresi dolmuş; kullanıcı yeniden giriş yapmalıdır. |
 | `account_suspended` | 403 | Hesap askıya alınmış. |
 | `email_not_verified` | 403 | İşlem doğrulanmış e-posta gerektiriyor. |
+| `profile_incomplete` | 403 | İşlem tamamlanmış profil gerektiriyor. |
 | `admin_required` | 403 | İşlem admin yetkisi gerektiriyor. |
 | `not_participant` | 403 | Çağıran bu işlemi yapabilecek taraf değil (ör. isteği gönderen kabul edemez). |
 | `forbidden` | 403 | Çağıranın rolü bu işleme izin vermiyor. |

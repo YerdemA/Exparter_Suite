@@ -189,6 +189,55 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.ToTable("users", "identity");
                 });
 
+            modelBuilder.Entity("Exparter.Domain.Profiles.Profile", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<bool>("AcceptsInPerson")
+                        .HasColumnType("boolean")
+                        .HasColumnName("accepts_in_person");
+
+                    b.Property<bool>("AcceptsOnline")
+                        .HasColumnType("boolean")
+                        .HasColumnName("accepts_online");
+
+                    b.Property<string>("AvatarKey")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("avatar_key");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("bio");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(2)
+                        .HasColumnType("character(2)")
+                        .HasColumnName("city")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("display_name");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_profiles");
+
+                    b.ToTable("profiles", "profiles");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Identity.OneTimeToken", b =>
                 {
                     b.HasOne("Exparter.Domain.Identity.User", null)

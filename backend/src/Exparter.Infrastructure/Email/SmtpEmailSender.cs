@@ -44,14 +44,14 @@ internal sealed class SmtpEmailSender(IOptions<EmailOptions> options, ILogger<Sm
     public Task SendEmailVerificationAsync(string email, string token, CancellationToken cancellationToken) =>
         SendAsync(
             email,
-            "Exparter e-posta adresini doğrula",
+            "Exparter e-posta doğrulama",
             $"""
              Merhaba,
 
-             Exparter hesabını kullanmaya başlamak için e-posta adresini doğrula:
+             Exparter hesabınızı kullanmaya başlamak için e-posta adresinizi doğrulayın:
              {Link(_options.EmailVerificationUrl, token)}
 
-             Bağlantı 24 saat geçerlidir. Bu hesabı sen oluşturmadıysan bu e-postayı yok sayabilirsin.
+             Bağlantı 24 saat geçerlidir. Bu hesabı siz oluşturmadıysanız bu e-postayı yok sayabilirsiniz.
              """,
             cancellationToken);
 
@@ -62,10 +62,10 @@ internal sealed class SmtpEmailSender(IOptions<EmailOptions> options, ILogger<Sm
             $"""
              Merhaba,
 
-             Parolanı sıfırlamak için aşağıdaki bağlantıyı kullan:
+             Parolanızı sıfırlamak için aşağıdaki bağlantıyı kullanın:
              {Link(_options.PasswordResetUrl, token)}
 
-             Bağlantı 1 saat geçerlidir. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin; parolan değişmez.
+             Bağlantı 1 saat geçerlidir. Bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz; parolanız değişmez.
              """,
             cancellationToken);
 

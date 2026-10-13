@@ -21,6 +21,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'username_already_taken' => l10n.errorUsernameTaken,
     'username_reserved' => l10n.errorUsernameReserved,
     'invalid_token' => l10n.errorInvalidLink,
+    'avatar_invalid' || 'avatar_not_uploaded' => l10n.errorAvatarInvalid,
     'email_already_verified' => l10n.errorEmailAlreadyVerified,
     _ => l10n.errorUnknown,
   };

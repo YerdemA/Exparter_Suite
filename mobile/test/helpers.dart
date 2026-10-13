@@ -6,11 +6,15 @@ import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/core/theme/app_theme.dart';
 import 'package:exparter/features/auth/domain/auth_repository.dart';
+import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockProfileRepository extends Mock implements ProfileRepository {}
 
 class InMemorySessionPersistence implements SessionPersistence {
   InMemorySessionPersistence([this.value]);
@@ -35,6 +39,22 @@ Account testAccount({String username = 'ayse', bool emailVerified = false}) => A
       role: UserRole.user,
       createdAt: DateTime.utc(2026, 10, 7),
     );
+
+Profile testProfile({bool complete = true, String? avatarUrl}) => Profile(
+      userId: '01a11705-1f92-7d54-bafb-dfc5049ec2e0',
+      displayName: complete ? 'Ayşe Yılmaz' : null,
+      bio: complete ? 'Gitar çalıyorum.' : null,
+      city: complete ? '34' : null,
+      acceptsOnline: complete,
+      acceptsInPerson: complete,
+      avatarUrl: avatarUrl,
+      isComplete: complete,
+      rating: const RatingSummary(reviewCount: 0),
+      createdAt: DateTime.utc(2026, 10, 7),
+      updatedAt: DateTime.utc(2026, 10, 7),
+    );
+
+const testCities = [City(code: '06', name: 'Ankara'), City(code: '34', name: 'İstanbul')];
 
 AuthResponse testAuthResponse({bool accountRestored = false}) => AuthResponse(
       accessToken: 'access-1',
@@ -84,6 +104,25 @@ ResponseBody problemResponse(int statusCode, String code) => jsonResponse(status
       'status': statusCode,
       'code': code,
     });
+
+/// Like [localized], for screens that navigate: [child] is the first route and every
+/// other location shows its own path, so tests can assert where a screen went.
+Widget routed(Widget child) => MaterialApp.router(
+      theme: AppTheme.light(),
+      locale: const Locale('tr'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: GoRouter(
+        initialLocation: '/under-test',
+        routes: [
+          GoRoute(path: '/under-test', builder: (context, state) => child),
+          GoRoute(
+            path: '/:rest(.*)',
+            builder: (context, state) => Scaffold(body: Text('route:${state.uri.path}')),
+          ),
+        ],
+      ),
+    );
 
 /// Wraps a widget with what screens expect from the app: its theme and localizations.
 Widget localized(Widget child) => MaterialApp(

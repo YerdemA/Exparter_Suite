@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Domain.Identity;
+using Exparter.Domain.Profiles;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -12,6 +13,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     public DbSet<OneTimeToken> OneTimeTokens => Set<OneTimeToken>();
+
+    public DbSet<Profile> Profiles => Set<Profile>();
 
     async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {

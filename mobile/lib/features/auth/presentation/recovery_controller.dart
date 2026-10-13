@@ -1,19 +1,16 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/auth/session_controller.dart';
+import '../../../core/riverpod.dart';
 import '../data/api_auth_repository.dart';
 
 part 'recovery_controller.g.dart';
-
-/// Riverpod retries a failed provider by default. Confirming a token must run exactly
-/// once: a rejected token stays rejected, and retrying would only hammer the API.
-Duration? _noRetry(int retryCount, Object error) => null;
 
 /// Confirms the email address for [token] as soon as it is first watched.
 ///
 /// If the user is signed in, their cached account is refreshed so the rest of the app
 /// sees the verified state immediately.
-@Riverpod(retry: _noRetry)
+@Riverpod(retry: noRetry)
 Future<void> emailVerification(Ref ref, String token) async {
   final repository = ref.watch(authRepositoryProvider);
   final session = ref.read(sessionControllerProvider.notifier);

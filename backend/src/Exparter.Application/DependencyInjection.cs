@@ -14,6 +14,7 @@ public static class DependencyInjection
         ValidatorOptions.Global.LanguageManager.Culture = CultureInfo.GetCultureInfo("en");
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         services.AddScoped<TokenIssuer>();
+        services.AddScoped<IUserDirectory, UserDirectory>();
         return services;
     }
 }

@@ -26,6 +26,7 @@ public sealed class RegisterCommandHandler(
     ITokenService tokenService,
     TokenIssuer tokenIssuer,
     IEmailSender emailSender,
+    IPublisher publisher,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<RegisterCommand, AuthResult>
 {
@@ -54,6 +55,10 @@ public sealed class RegisterCommandHandler(
         oneTimeTokens.Add(OneTimeToken.Issue(user.Id, OneTimeTokenPurpose.EmailVerification, verification.Hash, now));
 
         var tokens = tokenIssuer.IssueForSignIn(user);
+
+        // Published before saving: whatever other modules add for the new user is committed
+        // together with the account, or not at all.
+        await publisher.Publish(new UserRegistered(user.Id), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await emailSender.SendEmailVerificationAsync(user.Email, verification.Value, cancellationToken);

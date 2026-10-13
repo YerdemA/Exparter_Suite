@@ -58,6 +58,7 @@ Ortak kurallar:
 | `AvatarKey` | Nesne depolamadaki anahtar. URL saklanmaz, istek anında presigned URL üretilir. |
 | `City` | Koordinat tutulmaz. 81 ilden biri. Boş olabilir. |
 | `AcceptsOnline`, `AcceptsInPerson` | Takas tercihi; en az biri seçili olmalı. |
+| `IsComplete` (türetilmiş) | Profil bilgileri (görünen ad ve en az bir takas tercihi) girilmişse doğrudur. Etkileşim için ayrıca en az bir sunulan yetenek ve doğrulanmış e-posta gerekir; bu birleşik koşul dilim 2'de modellenir. |
 | `CreatedAt`, `UpdatedAt` | |
 
 ## 3. Skills
@@ -222,7 +223,7 @@ Dokuzuncu modül olarak 2026-10-07'de onaylandı (bkz. ADR 0001).
 
 | Event | Yayınlayan | Dinleyen ve etkisi |
 |---|---|---|
-| `UserRegistered` | Identity | Profiles: boş profil oluşturur. |
+| `UserRegistered` | Identity | Profiles: boş profil oluşturur. Kayıt kaydedilmeden önce yayınlanır; profil hesapla aynı transaction'da oluşur. |
 | `SkillProposalReviewed` | Skills | Notifications: öneren kullanıcıya sonuç bildirilir. |
 | `SwapRequestSent` / `Accepted` / `Declined` / `Cancelled` / `Expired` | Matching | Notifications: ilgili tarafa bildirim. |
 | `MatchCreated` | Matching | Messaging: çiftin sohbetini açar, kapalıysa yeniden açar. Notifications: iki tarafa bildirim. |
