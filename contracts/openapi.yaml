@@ -196,6 +196,23 @@ paths:
               schema: { $ref: '#/components/schemas/Account' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /api/v1/me/interaction-requirements:
+    get:
+      tags: [Account]
+      operationId: getInteractionRequirements
+      summary: Get what the signed-in user still needs before interacting with others
+      description: |
+        A user can browse the app at any time, but can interact with other users (send swap
+        requests and the like) and is shown to them only once every requirement is met.
+        Interaction endpoints answer 403 `interaction_requirements_not_met` until then.
+      responses:
+        '200':
+          description: The state of each requirement.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InteractionRequirements' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /api/v1/me/username:
     put:
       tags: [Account]
@@ -330,8 +347,8 @@ paths:
       operationId: getUserProfile
       summary: Get another user's public profile
       description: |
-        Answers 404 for users who are not visible to others: unknown ids, unverified emails,
-        incomplete profiles and suspended or leaving accounts.
+        Answers 404 for users who are not visible to others: unknown ids, users who do not
+        meet the interaction requirements yet, and suspended or leaving accounts.
       parameters:
         - $ref: '#/components/parameters/UserId'
       responses:
@@ -407,7 +424,10 @@ paths:
       tags: [Skills]
       operationId: proposeSkill
       summary: Propose a skill that is missing from the catalog
-      description: The skill stays hidden and unusable until an administrator approves it. Requires a verified email.
+      description: |
+        The skill stays hidden and unusable until an administrator approves it. Requires a
+        verified email, but not the other interaction requirements: a user whose skill is
+        missing from the catalog must be able to propose it before they can offer anything.
       requestBody:
         required: true
         content:
@@ -461,8 +481,8 @@ paths:
       operationId: addOwnSkill
       summary: Add an offered or wanted skill
       description: |
-        The same skill may be both offered and wanted only if the wanted level is
-        higher than the offered level.
+        A user can have at most 5 offered and 5 wanted skills. The same skill may be both
+        offered and wanted only if the wanted level is higher than the offered level.
       requestBody:
         required: true
         content:
@@ -1339,7 +1359,7 @@ paths:
   # --------------------------------------------------------------- Admin
   /api/v1/admin/skill-proposals:
     get:
-      tags: [Admin]
+      tags: [Admin, Skills]
       operationId: adminListSkillProposals
       summary: List skill proposals
       parameters:
@@ -1359,7 +1379,7 @@ paths:
 
   /api/v1/admin/skill-proposals/{skillId}/approve:
     post:
-      tags: [Admin]
+      tags: [Admin, Skills]
       operationId: adminApproveSkillProposal
       summary: Approve a skill proposal
       parameters:
@@ -1377,7 +1397,7 @@ paths:
 
   /api/v1/admin/skill-proposals/{skillId}/reject:
     post:
-      tags: [Admin]
+      tags: [Admin, Skills]
       operationId: adminRejectSkillProposal
       summary: Reject a skill proposal
       parameters:
@@ -1753,6 +1773,21 @@ components:
         emailVerified: { type: boolean }
         role: { $ref: '#/components/schemas/UserRole' }
         createdAt: { type: string, format: date-time }
+
+    InteractionRequirements:
+      type: object
+      required: [emailVerified, profileCompleted, hasOfferedSkill, canInteract]
+      properties:
+        emailVerified: { type: boolean }
+        profileCompleted:
+          type: boolean
+          description: Display name and at least one swap mode are set.
+        hasOfferedSkill:
+          type: boolean
+          description: The user offers at least one skill.
+        canInteract:
+          type: boolean
+          description: True when every requirement is met and the account is active.
 
     ChangeUsernameRequest:
       type: object

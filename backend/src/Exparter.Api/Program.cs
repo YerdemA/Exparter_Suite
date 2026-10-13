@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Exparter.Api.Common;
 using Exparter.Api.Identity;
 using Exparter.Api.Profiles;
+using Exparter.Api.Skills;
 using Exparter.Application;
 using Exparter.Application.Common;
 using Exparter.Infrastructure;
@@ -49,6 +50,7 @@ app.MapHealthChecks("/health").AllowAnonymous();
 var api = app.MapGroup("/api/v1");
 api.MapIdentityEndpoints();
 api.MapProfileEndpoints();
+api.MapSkillEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

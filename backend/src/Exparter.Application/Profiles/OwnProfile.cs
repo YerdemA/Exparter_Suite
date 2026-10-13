@@ -99,6 +99,7 @@ public sealed record GetUserProfileQuery(Guid UserId) : IQuery<PublicProfileDto>
 public sealed class GetUserProfileQueryHandler(
     IProfileRepository profiles,
     IUserDirectory users,
+    IInteractionRequirements requirements,
     IObjectStorage storage) : IQueryHandler<GetUserProfileQuery, PublicProfileDto>
 {
     public async ValueTask<PublicProfileDto> Handle(GetUserProfileQuery query, CancellationToken cancellationToken)
@@ -106,9 +107,9 @@ public sealed class GetUserProfileQueryHandler(
         var user = await users.FindAsync(query.UserId, cancellationToken);
         var profile = user is null ? null : await profiles.GetByUserIdAsync(query.UserId, cancellationToken);
 
-        // A user who cannot interact yet (unverified email, incomplete profile, suspended
-        // or leaving) is invisible to others: the same answer as for an unknown id.
-        if (user is null || profile is null || !user.CanInteract || !profile.IsComplete)
+        // A user who cannot interact yet is invisible to others: the same answer as for
+        // an unknown id.
+        if (user is null || profile is null || !(await requirements.GetAsync(query.UserId, cancellationToken)).CanInteract)
         {
             throw ProfileAppErrors.ProfileNotFound();
         }

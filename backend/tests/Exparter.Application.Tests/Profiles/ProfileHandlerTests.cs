@@ -35,6 +35,22 @@ internal sealed class FakeObjectStorage : IObjectStorage
     }
 }
 
+internal sealed class FakeInteractionRequirements : IInteractionRequirements
+{
+    public Dictionary<Guid, InteractionStatus> Statuses { get; } = [];
+
+    public Task<InteractionStatus> GetAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult(Statuses.GetValueOrDefault(userId, InteractionStatus.None));
+
+    public async Task EnsureCanInteractAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (!(await GetAsync(userId, cancellationToken)).CanInteract)
+        {
+            throw AppException.Forbidden("interaction_requirements_not_met", "Not met.");
+        }
+    }
+}
+
 internal sealed class FakeUserDirectory : IUserDirectory
 {
     public Dictionary<Guid, UserInfo> Users { get; } = [];
@@ -49,6 +65,7 @@ public class ProfileHandlerTests
     private readonly InMemoryProfiles _profiles = new();
     private readonly FakeObjectStorage _storage = new();
     private readonly FakeUserDirectory _users = new();
+    private readonly FakeInteractionRequirements _requirements = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
 
@@ -135,19 +152,16 @@ public class ProfileHandlerTests
         Assert.True(new UpdateOwnProfileCommandValidator().Validate(UpdateCommand(city: null, acceptsInPerson: false)).IsValid);
 
     [Theory]
-    [InlineData(true, true, true)]
-    [InlineData(false, true, false)]
-    [InlineData(true, false, false)]
-    public async Task Public_profile_is_visible_only_for_complete_profiles_of_users_who_can_interact(
-        bool canInteract,
-        bool complete,
-        bool visible)
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Public_profile_is_visible_only_for_users_who_can_interact(bool canInteract)
     {
-        AddProfile(complete);
-        _users.Users[_userId] = new UserInfo(_userId, "ayse", canInteract);
-        var handler = new GetUserProfileQueryHandler(_profiles, _users, _storage);
+        AddProfile(complete: true);
+        _users.Users[_userId] = new UserInfo(_userId, "ayse", IsActive: true, IsEmailVerified: true);
+        _requirements.Statuses[_userId] = new InteractionStatus(true, true, canInteract, canInteract);
+        var handler = new GetUserProfileQueryHandler(_profiles, _users, _requirements, _storage);
 
-        if (visible)
+        if (canInteract)
         {
             var dto = await handler.Handle(new GetUserProfileQuery(_userId), CancellationToken.None);
             Assert.Equal("ayse", dto.Username);
@@ -165,7 +179,7 @@ public class ProfileHandlerTests
     public async Task Public_profile_of_an_unknown_user_is_not_found()
     {
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage)
+            async () => await new GetUserProfileQueryHandler(_profiles, _users, _requirements, _storage)
                 .Handle(new GetUserProfileQuery(Guid.NewGuid()), CancellationToken.None));
 
         Assert.Equal(AppErrorKind.NotFound, exception.Kind);

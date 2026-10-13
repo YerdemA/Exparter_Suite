@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Exparter.Domain.Identity;
 using Exparter.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,8 @@ namespace Exparter.Api.Common;
 
 internal static class Authentication
 {
+    public const string AdminPolicy = "Admin";
+
     public static IServiceCollection AddApiAuthentication(this IServiceCollection services)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
@@ -37,10 +40,11 @@ internal static class Authentication
                         await ApiProblem.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, code);
                     },
                     OnForbidden = context =>
-                        ApiProblem.WriteAsync(context.HttpContext, StatusCodes.Status403Forbidden, "forbidden"),
+                        ApiProblem.WriteAsync(context.HttpContext, StatusCodes.Status403Forbidden, "admin_required"),
                 };
             });
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder()
+            .AddPolicy(AdminPolicy, policy => policy.RequireRole(nameof(UserRole.Admin)));
         return services;
     }
 

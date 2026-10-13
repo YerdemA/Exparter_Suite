@@ -7,6 +7,7 @@ import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/core/theme/app_theme.dart';
 import 'package:exparter/features/auth/domain/auth_repository.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
+import 'package:exparter/features/skills/domain/skill_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,8 @@ import 'package:mocktail/mocktail.dart';
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockProfileRepository extends Mock implements ProfileRepository {}
+
+class MockSkillRepository extends Mock implements SkillRepository {}
 
 class InMemorySessionPersistence implements SessionPersistence {
   InMemorySessionPersistence([this.value]);
@@ -52,6 +55,47 @@ Profile testProfile({bool complete = true, String? avatarUrl}) => Profile(
       rating: const RatingSummary(reviewCount: 0),
       createdAt: DateTime.utc(2026, 10, 7),
       updatedAt: DateTime.utc(2026, 10, 7),
+    );
+
+const testCategories = [
+  SkillCategory(id: 'category-music', name: 'Müzik', slug: 'muzik'),
+  SkillCategory(id: 'category-languages', name: 'Diller', slug: 'diller'),
+];
+
+Skill testSkill(String name, {SkillStatus status = SkillStatus.approved}) => Skill(
+      id: 'skill-${name.toLowerCase()}',
+      categoryId: 'category-music',
+      name: name,
+      slug: name.toLowerCase(),
+      status: status,
+    );
+
+UserSkill testUserSkill(
+  String name, {
+  UserSkillType type = UserSkillType.offered,
+  SkillLevel level = SkillLevel.intermediate,
+}) =>
+    UserSkill(
+      id: 'user-skill-${name.toLowerCase()}-${type.json}',
+      skill: testSkill(name),
+      type: type,
+      level: level,
+      createdAt: DateTime.utc(2026, 10, 13),
+    );
+
+SkillPage testSkillPage(List<Skill> items, {int? totalCount}) =>
+    SkillPage(page: 1, pageSize: 50, totalCount: totalCount ?? items.length, items: items);
+
+InteractionRequirements testRequirements({
+  bool emailVerified = true,
+  bool profileCompleted = true,
+  bool hasOfferedSkill = true,
+}) =>
+    InteractionRequirements(
+      emailVerified: emailVerified,
+      profileCompleted: profileCompleted,
+      hasOfferedSkill: hasOfferedSkill,
+      canInteract: emailVerified && profileCompleted && hasOfferedSkill,
     );
 
 const testCities = [City(code: '06', name: 'Ankara'), City(code: '34', name: 'İstanbul')];

@@ -37,6 +37,14 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         await _postgres.DisposeAsync();
     }
 
+    /// <summary>There is no endpoint for granting the admin role; an operator does it in the database.</summary>
+    public async Task MakeAdminAsync(Guid userId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE identity.users SET role = 'Admin' WHERE id = {userId}");
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");

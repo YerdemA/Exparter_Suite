@@ -38,8 +38,8 @@
 
 **Yetkilendirme**
 
-- E-posta doğrulama durumu access token'da bir claim olarak taşınır; etkileşim endpoint'leri bu claim'i bir policy ile zorunlu kılar.
-- Doğrulama tamamlandığında istemci token'ını yeniler; böylece claim güncellenir.
+- E-posta doğrulama durumu access token'da bir claim olarak taşınır, ama yetki kararı ona dayanmaz: etkileşim koşulları (doğrulanmış e-posta, tamamlanmış profil, en az bir sunulan yetenek) her istekte veritabanından denetlenir. Böylece doğrulamadan veya profil değişikliğinden sonra token yenilemek gerekmez ve karar hiçbir zaman eski bilgiye dayanmaz. (2026-10-13'te güncellendi; ilk karar claim tabanlı policy idi.)
+- Admin yetkisi token'daki `role` claim'i ile denetlenir; rol değişince kullanıcı yeniden giriş yapmalıdır.
 
 ## Sonuçlar
 

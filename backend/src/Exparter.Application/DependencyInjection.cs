@@ -1,5 +1,8 @@
 using System.Globalization;
+using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Profiles;
+using Exparter.Application.Skills;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +18,9 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         services.AddScoped<TokenIssuer>();
         services.AddScoped<IUserDirectory, UserDirectory>();
+        services.AddScoped<IProfileDirectory, ProfileDirectory>();
+        services.AddScoped<IUserSkillDirectory, UserSkillDirectory>();
+        services.AddScoped<IInteractionRequirements, InteractionRequirements>();
         return services;
     }
 }

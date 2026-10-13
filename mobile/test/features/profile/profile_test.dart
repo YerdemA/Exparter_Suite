@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/api_providers.dart';
 import 'package:exparter/core/api/generated/export.dart';
+import 'package:exparter/core/auth/interaction_requirements.dart';
 import 'package:exparter/core/auth/session_controller.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/features/auth/data/api_auth_repository.dart';
@@ -12,6 +13,7 @@ import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/features/profile/presentation/profile_controller.dart';
 import 'package:exparter/features/profile/presentation/profile_form_screen.dart';
 import 'package:exparter/features/profile/presentation/profile_screen.dart';
+import 'package:exparter/features/skills/data/api_skill_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,19 +30,24 @@ void main() {
     contentType: AvatarUploadUrlRequestContentType.fromJson('image/jpeg'),
   );
   late MockProfileRepository repository;
+  late MockSkillRepository skillRepository;
   late InMemorySessionPersistence persistence;
 
   setUpAll(() => registerFallbackValue(jpeg));
 
   setUp(() async {
     repository = MockProfileRepository();
+    skillRepository = MockSkillRepository();
+    when(() => skillRepository.listOwnSkills()).thenAnswer((_) async => [testUserSkill('Gitar')]);
     persistence = InMemorySessionPersistence();
     await SessionStore(persistence).save(testSession());
     when(() => repository.listCities()).thenAnswer((_) async => testCities);
   });
 
-  List<Override> overrides({AvatarPicker? picker}) => [
+  List<Override> overrides({AvatarPicker? picker, InteractionRequirements? requirements}) => [
         profileRepositoryProvider.overrideWithValue(repository),
+        skillRepositoryProvider.overrideWithValue(skillRepository),
+        interactionRequirementsProvider.overrideWith((ref) async => requirements ?? testRequirements()),
         authRepositoryProvider.overrideWithValue(MockAuthRepository()),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),
         if (picker != null) avatarPickerProvider.overrideWithValue(picker),
@@ -152,11 +159,21 @@ void main() {
     });
   });
 
-  Future<void> pumpScreen(WidgetTester tester, Widget screen, {AvatarPicker? picker}) async {
+  Future<void> pumpScreen(
+    WidgetTester tester,
+    Widget screen, {
+    AvatarPicker? picker,
+    InteractionRequirements? requirements,
+  }) async {
     tester.view.physicalSize = const Size(1080, 3200);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(overrides: overrides(picker: picker), child: routed(screen)));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides(picker: picker, requirements: requirements),
+        child: routed(screen),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -254,7 +271,7 @@ void main() {
   group('ProfileScreen', () {
     testWidgets('shows the profile, the username and the email status', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
-      await pumpScreen(tester, const ProfileScreen());
+      await pumpScreen(tester, const ProfileScreen(), requirements: testRequirements(emailVerified: false));
 
       expect(find.text('Ayşe Yılmaz'), findsOneWidget);
       expect(find.text('@ayse'), findsOneWidget);
@@ -264,10 +281,11 @@ void main() {
       expect(find.text(l10n.homeEmailNotVerified), findsOneWidget);
       expect(find.text(l10n.homeResendVerification), findsOneWidget);
 
-      // The profile is filled in; only the email is still missing.
+      // The profile and a skill are there; only the email is still missing.
       expect(find.text(l10n.interactionRequirements), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
       expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
+      expect(find.textContaining('Gitar ·'), findsOneWidget);
     });
 
     testWidgets('a complete, verified user sees no requirements', (tester) async {
@@ -283,12 +301,19 @@ void main() {
 
     testWidgets('a new user is told what is missing before they can interact', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile(complete: false));
-      await pumpScreen(tester, const ProfileScreen());
+      when(() => skillRepository.listOwnSkills()).thenAnswer((_) async => []);
+      await pumpScreen(
+        tester,
+        const ProfileScreen(),
+        requirements: testRequirements(emailVerified: false, profileCompleted: false, hasOfferedSkill: false),
+      );
 
       expect(find.text(l10n.interactionRequirements), findsOneWidget);
       expect(find.text(l10n.requirementProfile), findsOneWidget);
+      expect(find.text(l10n.requirementSkill), findsOneWidget);
       expect(find.text(l10n.requirementEmail), findsOneWidget);
-      expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(2));
+      expect(find.byIcon(Icons.radio_button_unchecked), findsNWidgets(3));
+      expect(find.text(l10n.skillsOfferedEmpty), findsOneWidget);
       expect(find.text('@ayse'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, l10n.profileFillIn), findsOneWidget);
     });
