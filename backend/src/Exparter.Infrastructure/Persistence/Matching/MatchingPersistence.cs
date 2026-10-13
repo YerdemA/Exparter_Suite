@@ -149,5 +149,19 @@ internal sealed class MatchRepository(AppDbContext dbContext) : IMatchRepository
                     || (x.UserBId == userId && x.SkillTaughtByBId == skillId)),
             cancellationToken);
 
+    public async Task<IReadOnlySet<Guid>> ListOpenPartnersAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> otherUserIds,
+        CancellationToken cancellationToken)
+    {
+        var partners = await dbContext.Matches.AsNoTracking()
+            .Where(x => x.Status != MatchStatus.Ended
+                && ((x.UserAId == userId && otherUserIds.Contains(x.UserBId))
+                    || (x.UserBId == userId && otherUserIds.Contains(x.UserAId))))
+            .Select(x => x.UserAId == userId ? x.UserBId : x.UserAId)
+            .ToListAsync(cancellationToken);
+        return partners.ToHashSet();
+    }
+
     public void Add(Match match) => dbContext.Matches.Add(match);
 }

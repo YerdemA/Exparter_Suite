@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_tokens.dart';
+import '../../../core/realtime/realtime_client.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../messages/presentation/message_controller.dart';
 
 /// The frame of the signed-in app: the current tab above a bottom navigation bar.
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final unread = ref.watch(unreadMessageCountProvider);
+
+    // Being here means someone is signed in: keep the real-time connection open.
+    ref.watch(realtimeSessionProvider);
 
     return Scaffold(
       body: navigationShell,
@@ -35,8 +41,16 @@ class AppShell extends StatelessWidget {
             label: l10n.navMatches,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.chat_bubble_outline),
-            selectedIcon: const Icon(Icons.chat_bubble),
+            icon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text('$unread'),
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text('$unread'),
+              child: const Icon(Icons.chat_bubble),
+            ),
             label: l10n.navMessages,
           ),
           NavigationDestination(
@@ -45,40 +59,6 @@ class AppShell extends StatelessWidget {
             label: l10n.navProfile,
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Stands in for a tab whose feature is not built yet.
-class ComingSoonScreen extends StatelessWidget {
-  const ComingSoonScreen({required this.title, required this.icon, super.key});
-
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: AppSpacing.xxl * 1.5, color: theme.colorScheme.primary),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                AppLocalizations.of(context).comingSoon,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

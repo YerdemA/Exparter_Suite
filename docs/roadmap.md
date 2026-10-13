@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0–4 tamamlandı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0–5 tamamlandı |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -96,7 +96,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 2 | Yetenek kataloğu ve kullanıcı yetenekleri | Tamamlandı (2026-10-13) |
 | 3 | Keşfet | Tamamlandı (2026-10-13) |
 | 4 | Takas isteği ve eşleşme | Tamamlandı (2026-10-13) |
-| 5 | Gerçek zamanlı mesajlaşma | Başlamadı |
+| 5 | Gerçek zamanlı mesajlaşma | Tamamlandı (2026-10-13) |
 | 6 | Takas oturumları | Başlamadı |
 | 7 | Değerlendirmeler | Başlamadı |
 | 8 | Bildirimler | Başlamadı |
@@ -159,6 +159,17 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 - Mobil: başka kullanıcının profilinde "İstek gönder"; istek formu; Eşleşmeler sekmesinde eşleşmeler, gelen ve gönderilen istekler (kabul, ret, geri çekme); eşleşme ayrıntısı ve sonlandırma akışı.
 - Testler (2026-10-13): backend 331 (110 domain, 154 uygulama, 67 entegrasyon), mobil 118. Uçtan uca test emülatörde geçti: istek gönderme, karşı tarafın kabulü, eşleşmenin görünmesi ve sonlandırma isteği.
 - Sonraya bırakılan: eşleşme kabulünde sohbetin açılması ve `conversationId` (dilim 5); yeni istek ve sonlandırma hatırlatması bildirimleri (dilim 8); engelleme ile eşleşmenin sonlanması (moderasyon); listelerde yalnızca ilk 50 kayıt gösterilir.
+
+### Dilim 5 — Mesajlaşma
+
+- Sohbet: bir çiftin ilk eşleşmesiyle açılır, çift başına tektir; yeniden eşleşince aynı sohbet geçmişiyle sürer. Eşleşme artık sohbetin kimliğini taşır. Daha önce oluşmuş eşleşmelerin sohbetleri migration ile açıldı.
+- Mesaj: yalnızca metin, en fazla 2000 karakter; düzenlenemez ve silinemez. Aynı `clientMessageId` ile yinelenen gönderim tek mesaj olarak saklanır.
+- Okundu bilgisi: her taraf için son okuma anı saklanır; okunmamış sayısı ve "Görüldü" bundan türetilir.
+- Kapatma: sona ermemiş eşleşme yokken taraflardan biri sohbeti kapatabilir; kapalı sohbet salt okunurdur.
+- Gerçek zamanlı: `/hubs/realtime` SignalR hub'ı; `MessageReceived`, `ConversationRead`, `ConversationUpdated` olayları (docs/realtime.md). İstemci yalnızca dinler, yazma REST'ten yapılır.
+- Mobil: Mesajlar sekmesi (son mesaj, okunmamış sayısı), sohbet ekranı (iyimser gönderim, başarısız mesajı yeniden deneme, eskiye doğru sayfalama, "Görüldü", sohbeti kapatma), alt çubukta okunmamış rozeti, eşleşme ayrıntısında "Mesaj gönder". Bağlantı koparsa yeniden kurulur ve ekrandaki veriler yenilenir.
+- Testler (2026-10-13): backend 366 (119 domain, 171 uygulama, 76 entegrasyon; hub gerçek SignalR istemcisiyle sınanır), mobil 143. Uçtan uca test emülatörde geçti: eşleşmeden sohbete geçiş, mesaj gönderme ve karşı tarafın cevabının gerçek bağlantı üzerinden anında gelmesi.
+- Sonraya bırakılan: uygulama kapalıyken telefon bildirimi (dilim 8, FCM); engelleme ve hesap silmenin sohbeti kapatması (moderasyon ve dilim 8); sohbet listesinde yalnızca ilk 50 sohbet.
 
 ## Geliştirme ortamı
 

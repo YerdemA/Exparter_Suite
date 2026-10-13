@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Messaging;
 using Exparter.Application.Skills;
 using Exparter.Domain.Matching;
 
@@ -61,7 +62,38 @@ public interface IMatchRepository
     /// <summary>Whether a match that has not ended relies on the user teaching this skill.</summary>
     Task<bool> UsesOfferedSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken);
 
+    /// <summary>Those of the other users with whom the user has a match that has not ended.</summary>
+    Task<IReadOnlySet<Guid>> ListOpenPartnersAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> otherUserIds,
+        CancellationToken cancellationToken);
+
     void Add(Match match);
+}
+
+/// <summary>
+/// Published while a new match is being saved, so that handlers in other modules take
+/// part in the same transaction.
+/// </summary>
+public sealed record MatchCreated(Guid MatchId, Guid UserAId, Guid UserBId) : Mediator.INotification;
+
+/// <summary>What other modules may know about matches.</summary>
+public interface IMatchDirectory
+{
+    /// <summary>Those of the other users with whom the user has a match that has not ended.</summary>
+    Task<IReadOnlySet<Guid>> GetUsersWithOpenMatchAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> otherUserIds,
+        CancellationToken cancellationToken);
+}
+
+internal sealed class MatchDirectory(IMatchRepository matches) : IMatchDirectory
+{
+    public Task<IReadOnlySet<Guid>> GetUsersWithOpenMatchAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> otherUserIds,
+        CancellationToken cancellationToken) =>
+        matches.ListOpenPartnersAsync(userId, otherUserIds, cancellationToken);
 }
 
 /// <summary>What other modules may know about how skills are used in requests and matches.</summary>
@@ -90,7 +122,7 @@ public sealed record SwapRequestDto(
     DateTimeOffset ExpiresAt,
     DateTimeOffset? RespondedAt);
 
-/// <param name="ConversationId">Null until the two users have a conversation.</param>
+/// <param name="ConversationId">The conversation between the two users; every match has one.</param>
 public sealed record MatchDto(
     Guid Id,
     Guid SwapRequestId,
@@ -108,7 +140,11 @@ public sealed record MatchDto(
     DateTimeOffset? EndedAt);
 
 /// <summary>Turns requests and matches into what the API returns, looking up the users and skills they refer to.</summary>
-public sealed class MatchingDtoFactory(IUserSummaries users, IUserSkillDirectory skills, TimeProvider timeProvider)
+public sealed class MatchingDtoFactory(
+    IUserSummaries users,
+    IUserSkillDirectory skills,
+    IConversationDirectory conversations,
+    TimeProvider timeProvider)
 {
     private const string UnknownSkillName = "";
 
@@ -141,11 +177,22 @@ public sealed class MatchingDtoFactory(IUserSummaries users, IUserSkillDirectory
             .ToList();
     }
 
-    public async Task<MatchDto> ToDtoAsync(Match match, CancellationToken cancellationToken) =>
-        (await ToDtosAsync([match], cancellationToken))[0];
+    /// <param name="viewerId">One of the match's two users.</param>
+    public async Task<MatchDto> ToDtoAsync(Match match, Guid viewerId, CancellationToken cancellationToken) =>
+        (await ToDtosAsync([match], viewerId, cancellationToken))[0];
 
-    public async Task<IReadOnlyList<MatchDto>> ToDtosAsync(IReadOnlyList<Match> matches, CancellationToken cancellationToken)
+    /// <param name="viewerId">A user who is part of every one of the matches.</param>
+    public async Task<IReadOnlyList<MatchDto>> ToDtosAsync(
+        IReadOnlyList<Match> matches,
+        Guid viewerId,
+        CancellationToken cancellationToken)
     {
+        static Guid Other(Match match, Guid viewerId) => match.UserAId == viewerId ? match.UserBId : match.UserAId;
+
+        var conversationIds = await conversations.FindIdsByOtherUserAsync(
+            viewerId,
+            matches.Select(match => Other(match, viewerId)).Distinct().ToList(),
+            cancellationToken);
         var summaries = await users.GetAsync(
             matches.SelectMany(match => new[] { match.UserAId, match.UserBId }).ToList(),
             cancellationToken);
@@ -161,7 +208,7 @@ public sealed class MatchingDtoFactory(IUserSummaries users, IUserSkillDirectory
                 Skill(names, match.SkillTaughtByAId),
                 Skill(names, match.SkillTaughtByBId),
                 match.Status,
-                ConversationId: null,
+                conversationIds.TryGetValue(Other(match, viewerId), out var conversationId) ? conversationId : null,
                 match.EndRequestedByUserId,
                 match.EndRequestedAt,
                 match.EndRequestExpiresAt,

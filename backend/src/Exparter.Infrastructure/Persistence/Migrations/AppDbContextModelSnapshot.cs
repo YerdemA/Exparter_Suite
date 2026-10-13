@@ -327,6 +327,105 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.ToTable("swap_requests", "matching");
                 });
 
+            modelBuilder.Entity("Exparter.Domain.Messaging.Conversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<Guid?>("ClosedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("closed_by_user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("LastActivityAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_activity_at");
+
+                    b.Property<Guid?>("LastMessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("last_message_id");
+
+                    b.Property<Guid>("UserHighId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_high_id");
+
+                    b.Property<DateTimeOffset?>("UserHighLastReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("user_high_last_read_at");
+
+                    b.Property<Guid>("UserLowId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_low_id");
+
+                    b.Property<DateTimeOffset?>("UserLowLastReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("user_low_last_read_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_conversations");
+
+                    b.HasIndex("UserHighId", "LastActivityAt")
+                        .HasDatabaseName("ix_conversations_user_high_id_last_activity_at");
+
+                    b.HasIndex("UserLowId", "LastActivityAt")
+                        .HasDatabaseName("ix_conversations_user_low_id_last_activity_at");
+
+                    b.HasIndex("UserLowId", "UserHighId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_conversations_pair");
+
+                    b.ToTable("conversations", "messaging");
+                });
+
+            modelBuilder.Entity("Exparter.Domain.Messaging.Message", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("body");
+
+                    b.Property<Guid?>("ClientMessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_message_id");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sender_id");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_messages");
+
+                    b.HasIndex("ConversationId", "SenderId", "ClientMessageId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_messages_client_id");
+
+                    b.HasIndex("ConversationId", "SentAt", "Id")
+                        .HasDatabaseName("ix_messages_conversation_id_sent_at_id");
+
+                    b.ToTable("messages", "messaging");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Profiles.Profile", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1246,6 +1345,16 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_matches_swap_requests_swap_request_id");
+                });
+
+            modelBuilder.Entity("Exparter.Domain.Messaging.Message", b =>
+                {
+                    b.HasOne("Exparter.Domain.Messaging.Conversation", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_messages_conversations_conversation_id");
                 });
 
             modelBuilder.Entity("Exparter.Domain.Skills.Skill", b =>

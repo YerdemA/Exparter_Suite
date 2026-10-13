@@ -12,11 +12,12 @@ import '../../features/discovery/presentation/user_profile_screen.dart';
 import '../../features/matches/presentation/match_detail_screen.dart';
 import '../../features/matches/presentation/matches_screen.dart';
 import '../../features/matches/presentation/send_request_screen.dart';
+import '../../features/messages/presentation/conversation_screen.dart';
+import '../../features/messages/presentation/conversations_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/skills/presentation/skill_picker_screen.dart';
-import '../../l10n/app_localizations.dart';
 import '../api/generated/export.dart';
 import '../auth/session_controller.dart';
 import 'app_routes.dart';
@@ -130,10 +131,15 @@ GoRouter appRouter(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.messages,
-                builder: (context, state) => ComingSoonScreen(
-                  title: AppLocalizations.of(context).navMessages,
-                  icon: Icons.chat_bubble_outline,
-                ),
+                builder: (context, state) => const ConversationsScreen(),
+                routes: [
+                  GoRoute(
+                    path: AppRoutes.conversationSegment,
+                    builder: (context, state) => ConversationScreen(
+                      conversationId: state.pathParameters[AppRoutes.conversationIdParameter]!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_store.dart';
+import 'package:exparter/core/realtime/realtime_client.dart';
 import 'package:exparter/core/theme/app_theme.dart';
 import 'package:exparter/features/auth/domain/auth_repository.dart';
 import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/matches/domain/match_repository.dart';
+import 'package:exparter/features/messages/domain/message_repository.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/features/skills/domain/skill_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
@@ -24,6 +27,26 @@ class MockSkillRepository extends Mock implements SkillRepository {}
 class MockDiscoveryRepository extends Mock implements DiscoveryRepository {}
 
 class MockMatchRepository extends Mock implements MatchRepository {}
+
+class MockMessageRepository extends Mock implements MessageRepository {}
+
+/// A real-time connection that tests drive by hand.
+class FakeRealtimeClient implements RealtimeClient {
+  final _events = StreamController<RealtimeEvent>.broadcast();
+
+  bool started = false;
+
+  @override
+  Stream<RealtimeEvent> get events => _events.stream;
+
+  void emit(RealtimeEvent event) => _events.add(event);
+
+  @override
+  Future<void> start() async => started = true;
+
+  @override
+  Future<void> stop() async => started = false;
+}
 
 class InMemorySessionPersistence implements SessionPersistence {
   InMemorySessionPersistence([this.value]);

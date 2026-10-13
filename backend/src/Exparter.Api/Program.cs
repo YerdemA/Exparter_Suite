@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Exparter.Api.Common;
 using Exparter.Api.Identity;
 using Exparter.Api.Matching;
+using Exparter.Api.Messaging;
 using Exparter.Api.Profiles;
 using Exparter.Api.Skills;
 using Exparter.Application;
@@ -38,6 +39,10 @@ builder.Services.AddApiAuthentication();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddHostedService<MatchingDeadlineWorker>();
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, SubjectUserIdProvider>();
+builder.Services.AddSingleton<IRealtimeNotifier, SignalRRealtimeNotifier>();
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
 var app = builder.Build();
@@ -55,6 +60,8 @@ api.MapProfileEndpoints();
 api.MapSkillEndpoints();
 api.MapDiscoveryEndpoints();
 api.MapSwapEndpoints();
+api.MapConversationEndpoints();
+app.MapHub<RealtimeHub>(RealtimeHub.Path);
 
 if (app.Environment.IsDevelopment())
 {

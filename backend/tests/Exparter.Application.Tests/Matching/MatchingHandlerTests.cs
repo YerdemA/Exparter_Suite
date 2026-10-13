@@ -1,6 +1,8 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Matching;
+using Exparter.Application.Messaging;
+using Exparter.Application.Tests.Messaging;
 using Exparter.Application.Skills;
 using Exparter.Application.Tests.Identity;
 using Exparter.Application.Tests.Profiles;
@@ -81,7 +83,35 @@ internal sealed class InMemoryMatches : IMatchRepository
         Task.FromResult(Items.Any(x => x.Status != MatchStatus.Ended
             && ((x.UserAId == userId && x.SkillTaughtByAId == skillId) || (x.UserBId == userId && x.SkillTaughtByBId == skillId))));
 
+    public Task<IReadOnlySet<Guid>> ListOpenPartnersAsync(
+        Guid userId,
+        IReadOnlyCollection<Guid> otherUserIds,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlySet<Guid>>(Items
+            .Where(x => x.Status != MatchStatus.Ended && x.IsParticipant(userId))
+            .Select(x => x.UserAId == userId ? x.UserBId : x.UserAId)
+            .Where(otherUserIds.Contains)
+            .ToHashSet());
+
     public void Add(Match match) => Items.Add(match);
+}
+
+internal sealed class RecordingPublisher : Mediator.IPublisher
+{
+    public List<object> Published { get; } = [];
+
+    public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+        where TNotification : Mediator.INotification
+    {
+        Published.Add(notification);
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask Publish(object notification, CancellationToken cancellationToken = default)
+    {
+        Published.Add(notification);
+        return ValueTask.CompletedTask;
+    }
 }
 
 internal sealed class FakeInteractionRequirements : IInteractionRequirements
@@ -137,6 +167,8 @@ public class MatchingHandlerTests
     private readonly FakeInteractionRequirements _requirements = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
+    private readonly InMemoryConversations _conversations = new();
+    private readonly RecordingPublisher _publisher = new();
     private readonly MatchingDtoFactory _dtos;
 
     public MatchingHandlerTests()
@@ -147,7 +179,7 @@ public class MatchingHandlerTests
         _skills.Offered.Add((_ayse, _spanish));
         _skills.Names[_guitar] = "Gitar";
         _skills.Names[_spanish] = "İspanyolca";
-        _dtos = new MatchingDtoFactory(new FakeUserSummaries(_users), _skills, _clock);
+        _dtos = new MatchingDtoFactory(new FakeUserSummaries(_users), _skills, new ConversationDirectory(_conversations), _clock);
     }
 
     private SendSwapRequestCommandHandler SendHandler =>
@@ -161,7 +193,7 @@ public class MatchingHandlerTests
         SendHandler.Handle(new SendSwapRequestCommand(_ayse, _ali, _spanish, _guitar, null), CancellationToken.None).AsTask();
 
     private Task<MatchDto> AcceptAsync(Guid requestId, Guid? userId = null) =>
-        new AcceptSwapRequestCommandHandler(_requirements, _requests, _matches, _dtos, _unitOfWork, _clock)
+        new AcceptSwapRequestCommandHandler(_requirements, _requests, _matches, _dtos, _publisher, _unitOfWork, _clock)
             .Handle(new AcceptSwapRequestCommand(userId ?? _ayse, requestId), CancellationToken.None).AsTask();
 
     private Task<SwapRequestDto> DeclineAsync(Guid requestId, Guid? userId = null) =>
@@ -325,9 +357,37 @@ public class MatchingHandlerTests
         Assert.Equal(request.Id, match.SwapRequestId);
         Assert.Equal(("ali", "ayse"), (match.UserA.Username, match.UserB.Username));
         Assert.Equal(("Gitar", "İspanyolca"), (match.SkillTaughtByA.Name, match.SkillTaughtByB.Name));
-        Assert.Null(match.ConversationId);
+        var created = Assert.IsType<MatchCreated>(Assert.Single(_publisher.Published));
+        Assert.Equal((match.Id, _ali, _ayse), (created.MatchId, created.UserAId, created.UserBId));
         Assert.Equal(SwapRequestStatus.Accepted, Assert.Single(_requests.Items).Status);
         Assert.Single(_matches.Items);
+    }
+
+    [Fact]
+    public async Task A_match_carries_the_id_of_the_pairs_conversation_for_either_viewer()
+    {
+        var conversation = Exparter.Domain.Messaging.Conversation.Open(_ayse, _ali, _clock.GetUtcNow());
+        _conversations.Add(conversation);
+        var match = await AcceptAsync((await SendAsync()).Id);
+        var handler = new GetMatchQueryHandler(_matches, _dtos);
+
+        Assert.Equal(conversation.Id, match.ConversationId);
+        Assert.Equal(conversation.Id, (await handler.Handle(new GetMatchQuery(_ali, match.Id), CancellationToken.None)).ConversationId);
+        Assert.Equal(conversation.Id, (await handler.Handle(new GetMatchQuery(_ayse, match.Id), CancellationToken.None)).ConversationId);
+    }
+
+    [Fact]
+    public async Task The_match_directory_names_the_users_someone_is_still_matched_with()
+    {
+        var directory = new MatchDirectory(_matches);
+        var match = await AcceptAsync((await SendAsync()).Id);
+
+        Assert.Equal([_ayse], await directory.GetUsersWithOpenMatchAsync(_ali, [_ayse, Guid.NewGuid()], CancellationToken.None));
+        Assert.Equal([_ali], await directory.GetUsersWithOpenMatchAsync(_ayse, [_ali], CancellationToken.None));
+
+        await ChangeEndAsync(match.Id, _ali, MatchEndAction.Request);
+        await ChangeEndAsync(match.Id, _ayse, MatchEndAction.Accept);
+        Assert.Empty(await directory.GetUsersWithOpenMatchAsync(_ali, [_ayse], CancellationToken.None));
     }
 
     [Fact]

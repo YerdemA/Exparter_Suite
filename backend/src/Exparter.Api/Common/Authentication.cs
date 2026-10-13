@@ -31,6 +31,18 @@ internal static class Authentication
                 };
                 bearer.Events = new JwtBearerEvents
                 {
+                    // Browsers cannot set headers on a WebSocket, so the real-time hub takes the
+                    // token from the query string instead (the standard SignalR arrangement).
+                    OnMessageReceived = context =>
+                    {
+                        if (context.HttpContext.Request.Path.StartsWithSegments(Exparter.Api.Messaging.RealtimeHub.Path)
+                            && context.Request.Query.TryGetValue("access_token", out var token))
+                        {
+                            context.Token = token;
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     OnChallenge = async context =>
                     {
                         context.HandleResponse();

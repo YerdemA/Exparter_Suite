@@ -136,7 +136,15 @@ class _Content extends ConsumerWidget {
                 leading: const Icon(Icons.south_west),
                 title: Text(l10n.swapYouLearn(view.learned.name)),
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
+              if (match.conversationId case final conversationId?) ...[
+                FilledButton.icon(
+                  onPressed: () => context.go(AppRoutes.conversation(conversationId)),
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: Text(l10n.matchSendMessage),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
               if (busy) const LinearProgressIndicator(),
               ...switch (match.status) {
                 MatchStatus.active => [
