@@ -55,6 +55,15 @@ public sealed class SwapSession
     /// <summary>How long the other user has to confirm or dispute a completion mark before it stands.</summary>
     public static readonly TimeSpan ConfirmationPeriod = TimeSpan.FromHours(72);
 
+    /// <summary>How long before a completion mark stands the other user is reminded of it.</summary>
+    public static readonly TimeSpan CompletionReminderLeadTime = TimeSpan.FromHours(24);
+
+    /// <summary>How long before a scheduled session starts its two users are reminded: a day and an hour ahead.</summary>
+    public static readonly TimeSpan DayReminderLeadTime = TimeSpan.FromHours(24);
+
+    /// <inheritdoc cref="DayReminderLeadTime"/>
+    public static readonly TimeSpan HourReminderLeadTime = TimeSpan.FromHours(1);
+
     private SwapSession()
     {
     }
@@ -95,6 +104,9 @@ public sealed class SwapSession
     public string? CancelReason { get; private set; }
     public DateTimeOffset? CancelledAt { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset? DayReminderSentAt { get; private set; }
+    public DateTimeOffset? HourReminderSentAt { get; private set; }
+    public DateTimeOffset? CompletionReminderSentAt { get; private set; }
 
     public static SwapSession ProposeOnline(
         Guid matchId,
@@ -154,6 +166,8 @@ public sealed class SwapSession
 
     public bool IsParticipant(Guid userId) => userId == ProposedByUserId || userId == OtherUserId;
 
+    public Guid OtherThan(Guid userId) => userId == ProposedByUserId ? OtherUserId : ProposedByUserId;
+
     public SwapSessionStatus StatusAt(DateTimeOffset now) => Status switch
     {
         SwapSessionStatus.Proposed when now >= ScheduledAt => SwapSessionStatus.Declined,
@@ -165,6 +179,18 @@ public sealed class SwapSession
     {
         EnsureAnswersProposal(userId, now);
         Status = SwapSessionStatus.Scheduled;
+
+        // Accepted inside a reminder's lead time: the acceptance itself is the news, and
+        // a reminder right after it would only repeat it.
+        if (ScheduledAt - now <= DayReminderLeadTime)
+        {
+            DayReminderSentAt = now;
+        }
+
+        if (ScheduledAt - now <= HourReminderLeadTime)
+        {
+            HourReminderSentAt = now;
+        }
     }
 
     public void Decline(Guid userId, DateTimeOffset now)
@@ -223,6 +249,52 @@ public sealed class SwapSession
         CompletionMarkedByUserId = userId;
         CompletionMarkedAt = now;
         CompletionConfirmDeadline = now + ConfirmationPeriod;
+    }
+
+    /// <summary>
+    /// Says, once for each of the two lead times, that the users of a scheduled session
+    /// should be reminded of its start.
+    /// </summary>
+    public bool TakeDueStartReminder(DateTimeOffset now)
+    {
+        if (Status != SwapSessionStatus.Scheduled || now >= ScheduledAt)
+        {
+            return false;
+        }
+
+        if (HourReminderSentAt is null && now >= ScheduledAt - HourReminderLeadTime)
+        {
+            // The hour reminder also stands in for a day reminder that was never sent.
+            HourReminderSentAt = now;
+            DayReminderSentAt ??= now;
+            return true;
+        }
+
+        if (DayReminderSentAt is null && now >= ScheduledAt - DayReminderLeadTime)
+        {
+            DayReminderSentAt = now;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Says, once and only in the last day before a completion mark stands, that the
+    /// user who has not answered it should be reminded.
+    /// </summary>
+    public bool TakeDueCompletionReminder(DateTimeOffset now)
+    {
+        if (Status != SwapSessionStatus.CompletionPending
+            || CompletionReminderSentAt is not null
+            || now >= CompletionConfirmDeadline
+            || now < CompletionConfirmDeadline - CompletionReminderLeadTime)
+        {
+            return false;
+        }
+
+        CompletionReminderSentAt = now;
+        return true;
     }
 
     public void ConfirmCompleted(Guid userId, DateTimeOffset now)

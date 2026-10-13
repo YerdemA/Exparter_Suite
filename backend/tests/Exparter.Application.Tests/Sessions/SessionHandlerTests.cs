@@ -3,8 +3,10 @@ using Exparter.Application.Identity;
 using Exparter.Application.Matching;
 using Exparter.Application.Sessions;
 using Exparter.Application.Tests.Identity;
+using Exparter.Application.Tests.Matching;
 using Exparter.Application.Tests.Profiles;
 using Exparter.Domain.Common;
+using Exparter.Domain.Notifications;
 using Exparter.Domain.Sessions;
 
 namespace Exparter.Application.Tests.Sessions;
@@ -41,6 +43,12 @@ internal sealed class InMemorySessions : ISessionRepository
 
     public Task<IReadOnlyList<SwapSession>> ListOverdueAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<SwapSession>>(Items.Where(x => x.Status != x.StatusAt(now)).Take(limit).ToList());
+
+    public Task<IReadOnlyList<SwapSession>> ListDueForReminderAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<SwapSession>>(Items
+            .Where(x => x.Status is SwapSessionStatus.Scheduled or SwapSessionStatus.CompletionPending)
+            .Take(limit)
+            .ToList());
 
     public Task<int> CountCompletedForUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken) =>
         Task.FromResult(Items.Count(x => x.IsParticipant(userId) && x.StatusAt(now) == SwapSessionStatus.Completed));
@@ -104,6 +112,7 @@ public class SessionHandlerTests
     private readonly Guid _matchId = Guid.NewGuid();
     private readonly InMemorySessions _sessions = new();
     private readonly FakeMatches _matches = new();
+    private readonly RecordingNotifier _notifier = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
 
@@ -115,19 +124,19 @@ public class SessionHandlerTests
     private DateTimeOffset Tomorrow => _clock.GetUtcNow().AddDays(1);
 
     private Task<SwapSessionDto> ProposeAsync(Guid? userId = null, Guid? matchId = null, string? note = null) =>
-        new ProposeSessionCommandHandler(_matches, _sessions, _unitOfWork, _clock)
+        new ProposeSessionCommandHandler(_matches, _sessions, _notifier, _unitOfWork, _clock)
             .Handle(new ProposeSessionCommand(userId ?? _ali, matchId ?? _matchId, Tomorrow, 60, note), CancellationToken.None).AsTask();
 
     private Task<SwapSessionDto> ReportAsync(Guid? userId = null) =>
-        new ReportInPersonSessionCommandHandler(_matches, _sessions, _unitOfWork, _clock)
+        new ReportInPersonSessionCommandHandler(_matches, _sessions, _notifier, _unitOfWork, _clock)
             .Handle(new ReportInPersonSessionCommand(userId ?? _ali, _matchId), CancellationToken.None).AsTask();
 
     private Task<SwapSessionDto> ChangeAsync(Guid sessionId, Guid userId, SessionAction action) =>
-        new ChangeSessionCommandHandler(_sessions, _unitOfWork, _clock)
+        new ChangeSessionCommandHandler(_sessions, _notifier, _unitOfWork, _clock)
             .Handle(new ChangeSessionCommand(userId, sessionId, action), CancellationToken.None).AsTask();
 
     private Task<SwapSessionDto> CancelAsync(Guid sessionId, Guid userId, string reason = "Uygun değilim") =>
-        new CancelSessionCommandHandler(_sessions, _unitOfWork, _clock)
+        new CancelSessionCommandHandler(_sessions, _notifier, _unitOfWork, _clock)
             .Handle(new CancelSessionCommand(userId, sessionId, reason), CancellationToken.None).AsTask();
 
     private Task<SwapSessionDto> GetAsync(Guid sessionId, Guid userId) =>
@@ -248,7 +257,7 @@ public class SessionHandlerTests
         _matches.Items[rematch] = new MatchInfo(rematch, _ayse, _ali, true, false);
         Assert.Equal(
             "in_person_already_reported",
-            await AppCodeOfAsync(() => new ReportInPersonSessionCommandHandler(_matches, _sessions, _unitOfWork, _clock)
+            await AppCodeOfAsync(() => new ReportInPersonSessionCommandHandler(_matches, _sessions, _notifier, _unitOfWork, _clock)
                 .Handle(new ReportInPersonSessionCommand(_ali, rematch), CancellationToken.None).AsTask()));
         Assert.Equal(2, _sessions.Items.Count);
     }
@@ -269,7 +278,7 @@ public class SessionHandlerTests
     {
         var ignored = await ProposeAsync();
         var reported = await ReportAsync();
-        var handler = new ProcessSessionDeadlinesCommandHandler(_sessions, _unitOfWork, _clock);
+        var handler = new ProcessSessionDeadlinesCommandHandler(_sessions, _notifier, _unitOfWork, _clock);
         Assert.Equal(0, await handler.Handle(new ProcessSessionDeadlinesCommand(), CancellationToken.None));
 
         _clock.Advance(TimeSpan.FromHours(72));
@@ -306,6 +315,87 @@ public class SessionHandlerTests
         Assert.Equal(SwapSessionStatus.Cancelled, cancelled.Status);
         Assert.Null(cancelled.CancelledByUserId);
         Assert.Equal(SwapSessionStatus.CompletionPending, (await GetAsync(reported.Id, _ali)).Status);
+    }
+
+    [Fact]
+    public async Task Each_step_of_a_session_tells_the_other_user()
+    {
+        var session = await ProposeAsync();
+        var proposed = Assert.Single(_notifier.Sent);
+        Assert.Equal((_ayse, NotificationType.SessionProposed), (proposed.UserId, proposed.Type));
+        Assert.Equal((_ali, _matchId, session.Id), (proposed.Data.ActorUserId, proposed.Data.MatchId, proposed.Data.SessionId));
+        Assert.Equal(Tomorrow, proposed.Data.Deadline);
+        _notifier.Take();
+
+        await ChangeAsync(session.Id, _ayse, SessionAction.Accept);
+        _clock.Advance(TimeSpan.FromDays(1));
+        await ChangeAsync(session.Id, _ayse, SessionAction.MarkCompleted);
+        Assert.Equal(_clock.GetUtcNow() + SwapSession.ConfirmationPeriod, _notifier.Sent[^1].Data.Deadline);
+        await ChangeAsync(session.Id, _ali, SessionAction.ConfirmCompleted);
+
+        var declined = await ProposeAsync(_ayse);
+        await ChangeAsync(declined.Id, _ali, SessionAction.Decline);
+        var cancelled = await ProposeAsync();
+        await CancelAsync(cancelled.Id, _ali, "Planım değişti.");
+        Assert.Equal("Planım değişti.", _notifier.Sent[^1].Data.Reason);
+        await ReportAsync(_ayse);
+
+        Assert.Equal(
+            [
+                (_ali, NotificationType.SessionAccepted),
+                (_ali, NotificationType.SessionCompletionMarked),
+                (_ayse, NotificationType.SessionCompleted),
+                (_ali, NotificationType.SessionProposed),
+                (_ayse, NotificationType.SessionDeclined),
+                (_ayse, NotificationType.SessionProposed),
+                (_ayse, NotificationType.SessionCancelled),
+                (_ali, NotificationType.SessionCompletionMarked),
+            ],
+            _notifier.Take());
+    }
+
+    [Fact]
+    public async Task Deadline_processing_reminds_of_sessions_about_to_start_and_of_marks_about_to_stand()
+    {
+        var handler = new ProcessSessionDeadlinesCommandHandler(_sessions, _notifier, _unitOfWork, _clock);
+        Task<int> RunAsync() => handler.Handle(new ProcessSessionDeadlinesCommand(), CancellationToken.None).AsTask();
+        var session = SwapSession.ProposeOnline(_matchId, _ali, _ayse, _clock.GetUtcNow().AddDays(3), 60, null, _clock.GetUtcNow());
+        session.Accept(_ayse, _clock.GetUtcNow());
+        _sessions.Items.Add(session);
+
+        Assert.Equal(0, await RunAsync());
+
+        _clock.Advance(TimeSpan.FromDays(2));
+        Assert.Equal(1, await RunAsync());
+        Assert.Equal(0, await RunAsync());
+        Assert.Equal([(_ali, NotificationType.SessionStartingSoon), (_ayse, NotificationType.SessionStartingSoon)], _notifier.Take());
+
+        _clock.Advance(TimeSpan.FromHours(23.5));
+        Assert.Equal(1, await RunAsync());
+        Assert.Equal(session.ScheduledAt, _notifier.Sent[0].Data.Deadline);
+        Assert.Equal(2, _notifier.Take().Count);
+
+        // Marked as completed; nobody answers, so the other user is reminded and then it stands.
+        _clock.Advance(TimeSpan.FromHours(1));
+        session.MarkCompleted(_ali, _clock.GetUtcNow());
+        _clock.Advance(TimeSpan.FromHours(50));
+        Assert.Equal(1, await RunAsync());
+        Assert.Equal(0, await RunAsync());
+        var reminder = Assert.Single(_notifier.Sent);
+        Assert.Equal((_ayse, NotificationType.SessionCompletionReminder), (reminder.UserId, reminder.Type));
+        Assert.Equal(_ali, reminder.Data.ActorUserId);
+        _notifier.Take();
+
+        _clock.Advance(TimeSpan.FromHours(22));
+        Assert.Equal(1, await RunAsync());
+        Assert.Equal([(_ali, NotificationType.SessionCompleted), (_ayse, NotificationType.SessionCompleted)], _notifier.Take());
+
+        // A proposal nobody answered: its author is told when it lapses.
+        await ProposeAsync();
+        _notifier.Take();
+        _clock.Advance(TimeSpan.FromDays(1));
+        Assert.Equal(1, await RunAsync());
+        Assert.Equal([(_ali, NotificationType.SessionDeclined)], _notifier.Take());
     }
 
     [Fact]

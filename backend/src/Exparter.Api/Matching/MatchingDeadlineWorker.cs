@@ -1,12 +1,14 @@
 using Exparter.Application.Matching;
+using Exparter.Application.Notifications;
 using Exparter.Application.Sessions;
 using Mediator;
 
 namespace Exparter.Api.Matching;
 
 /// <summary>
-/// Periodically records the deadlines that have passed: swap requests, match end
-/// requests, session proposals and session completion marks.
+/// Periodically records the deadlines that have passed (swap requests, match end
+/// requests, session proposals and session completion marks), sends the reminders that
+/// are due and removes notifications past their retention period.
 /// Reads never depend on it having run (they compare deadlines with the clock); it only
 /// makes the stored state catch up.
 /// </summary>
@@ -30,8 +32,10 @@ internal sealed class MatchingDeadlineWorker(
                     + await sender.Send(new ProcessSessionDeadlinesCommand(), stoppingToken);
                 if (processed > 0)
                 {
-                    logger.LogInformation("Recorded {Count} passed deadlines", processed);
+                    logger.LogInformation("Recorded {Count} passed deadlines and reminders", processed);
                 }
+
+                await sender.Send(new PurgeOldNotificationsCommand(), stoppingToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {

@@ -91,6 +91,25 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
             .Take(limit)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<SwapSession>> ListDueForReminderAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken)
+    {
+        var inAnHour = now + SwapSession.HourReminderLeadTime;
+        var inADay = now + SwapSession.DayReminderLeadTime;
+        var markHorizon = now + SwapSession.CompletionReminderLeadTime;
+        return await dbContext.SwapSessions
+            .Where(x => (x.Status == SwapSessionStatus.Scheduled
+                    && x.ScheduledAt > now
+                    && ((x.HourReminderSentAt == null && x.ScheduledAt <= inAnHour)
+                        || (x.DayReminderSentAt == null && x.ScheduledAt <= inADay)))
+                || (x.Status == SwapSessionStatus.CompletionPending
+                    && x.CompletionReminderSentAt == null
+                    && x.CompletionConfirmDeadline > now
+                    && x.CompletionConfirmDeadline <= markHorizon))
+            .OrderBy(x => x.CreatedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<int> CountCompletedForUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken) =>
         Completed(dbContext.SwapSessions.Where(x => x.ProposedByUserId == userId || x.OtherUserId == userId), now)
             .CountAsync(cancellationToken);

@@ -145,6 +145,19 @@ internal sealed class MatchRepository(AppDbContext dbContext) : IMatchRepository
             .Take(limit)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Match>> ListDueForEndReminderAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken)
+    {
+        var horizon = now + Match.EndReminderLeadTime;
+        return await dbContext.Matches
+            .Where(x => x.Status == MatchStatus.EndRequested
+                && x.EndReminderSentAt == null
+                && x.EndRequestExpiresAt > now
+                && x.EndRequestExpiresAt <= horizon)
+            .OrderBy(x => x.EndRequestExpiresAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> UsesOfferedSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) =>
         dbContext.Matches.AnyAsync(
             x => x.Status != MatchStatus.Ended

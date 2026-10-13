@@ -1,7 +1,9 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Notifications;
 using Exparter.Application.Skills;
 using Exparter.Domain.Matching;
+using Exparter.Domain.Notifications;
 using FluentValidation;
 using Mediator;
 
@@ -32,6 +34,7 @@ public sealed class SendSwapRequestCommandHandler(
     ISwapRequestRepository requests,
     IMatchRepository matches,
     MatchingDtoFactory dtos,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<SendSwapRequestCommand, SwapRequestDto>
 {
@@ -72,6 +75,7 @@ public sealed class SendSwapRequestCommandHandler(
             // own: the database allows one pending request per pair, so the old one has to
             // stop being pending before the new one is stored.
             pending.ExpireIfOverdue(now);
+            notifier.Notify(pending.RequesterId, NotificationType.SwapRequestExpired, new NotificationData(SwapRequestId: pending.Id));
             await unitOfWork.SaveChangesAsync(cancellationToken);
             if (pending.RequesterId == command.UserId)
             {
@@ -88,6 +92,10 @@ public sealed class SendSwapRequestCommandHandler(
             lastRefused,
             now);
         requests.Add(request);
+        notifier.Notify(
+            request.RecipientId,
+            NotificationType.SwapRequestReceived,
+            new NotificationData(ActorUserId: command.UserId, SwapRequestId: request.Id));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtos.ToDtoAsync(request, cancellationToken);
     }
@@ -148,6 +156,7 @@ public sealed class AcceptSwapRequestCommandHandler(
     IMatchRepository matches,
     MatchingDtoFactory dtos,
     IPublisher publisher,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<AcceptSwapRequestCommand, MatchDto>
 {
@@ -159,6 +168,10 @@ public sealed class AcceptSwapRequestCommandHandler(
         var match = request.Accept(command.UserId, timeProvider.GetUtcNow());
         matches.Add(match);
         await publisher.Publish(new MatchCreated(match.Id, match.UserAId, match.UserBId), cancellationToken);
+        notifier.Notify(
+            request.RequesterId,
+            NotificationType.SwapRequestAccepted,
+            new NotificationData(ActorUserId: command.UserId, SwapRequestId: request.Id, MatchId: match.Id));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtos.ToDtoAsync(match, command.UserId, cancellationToken);
     }
@@ -169,6 +182,7 @@ public sealed record DeclineSwapRequestCommand(Guid UserId, Guid SwapRequestId) 
 public sealed class DeclineSwapRequestCommandHandler(
     ISwapRequestRepository requests,
     MatchingDtoFactory dtos,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<DeclineSwapRequestCommand, SwapRequestDto>
 {
@@ -176,6 +190,10 @@ public sealed class DeclineSwapRequestCommandHandler(
     {
         var request = await requests.GetForParticipantAsync(command.SwapRequestId, command.UserId, cancellationToken);
         request.Decline(command.UserId, timeProvider.GetUtcNow());
+        notifier.Notify(
+            request.RequesterId,
+            NotificationType.SwapRequestDeclined,
+            new NotificationData(ActorUserId: command.UserId, SwapRequestId: request.Id));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtos.ToDtoAsync(request, cancellationToken);
     }
@@ -186,6 +204,7 @@ public sealed record CancelSwapRequestCommand(Guid UserId, Guid SwapRequestId) :
 public sealed class CancelSwapRequestCommandHandler(
     ISwapRequestRepository requests,
     MatchingDtoFactory dtos,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<CancelSwapRequestCommand, SwapRequestDto>
 {
@@ -193,6 +212,10 @@ public sealed class CancelSwapRequestCommandHandler(
     {
         var request = await requests.GetForParticipantAsync(command.SwapRequestId, command.UserId, cancellationToken);
         request.Cancel(command.UserId, timeProvider.GetUtcNow());
+        notifier.Notify(
+            request.RecipientId,
+            NotificationType.SwapRequestCancelled,
+            new NotificationData(ActorUserId: command.UserId, SwapRequestId: request.Id));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtos.ToDtoAsync(request, cancellationToken);
     }

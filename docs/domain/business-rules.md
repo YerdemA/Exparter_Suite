@@ -158,6 +158,21 @@ Durum: **Onaylandı (2026-10-07).**
 | RV-09 | Değerlendirilen kullanıcı değerlendirmeye cevap yazamaz (MVP). | — |
 | RV-10 | Değerlendirme yazmak için etkileşim koşulu aranır (bkz. ID-04). | Application |
 
+## Bildirim
+
+| No | Kural | Katman |
+|---|---|---|
+| NT-01 | Bir kullanıcının işlemi karşı tarafı ilgilendiriyorsa karşı tarafa bildirim üretilir: istek (geldi, kabul, ret, geri çekme, süre dolması), sonlandırma isteği ve cevabı, eşleşmenin bitmesi, oturum (öneri, kabul, ret, iptal ve sebebi, tamamlandı işareti, tamamlanma), değerlendirme, yetenek önerisinin sonucu. İşlemi yapan kişiye kendi işlemi için bildirim gitmez. | Application |
+| NT-02 | Bildirim, onu doğuran işlemle aynı işlemde (transaction) kaydedilir; işlem başarısız olursa bildirim de oluşmaz. Açık bağlantılara `NotificationReceived` olayı işlem başarıyla bittikten sonra gider. | Application |
+| NT-03 | Kabul edilen istek için istek sahibine tek bildirim gider (`SwapRequestAccepted`, eşleşmenin kimliğiyle); ayrıca "eşleşme oluştu" bildirimi yoktur. | Application |
+| NT-04 | Hatırlatmalar: cevaplanmamış sonlandırma isteği ve onaylanmamış tamamlandı işareti için, süre dolmadan 24 saat önce cevap vermesi gereken tarafa bir kez. Planlanmış çevrimiçi oturum için başlangıçtan 24 saat ve 1 saat önce iki tarafa. Hatırlatma süresinin içinde kabul edilen oturum için o hatırlatma atlanır. | Domain |
+| NT-05 | Kendiliğinden sonuçlanan süreler de bildirilir: süresi dolan istek sahibine, cevaplanmayan oturum önerisi öneren kişiye, kendiliğinden biten eşleşme ve kendiliğinden tamamlanan oturum iki tarafa. | Application |
+| NT-06 | Yeni mesaj bildirim listesine yazılmaz; okunmamış mesaj sayısı sohbet listesinde ve Mesajlar rozetinde görünür. | — |
+| NT-07 | Bildirimler 90 gün saklanır, sonra silinir. | Application |
+| NT-08 | Bildirimin metni sunucuda üretilmez: sunucu tür ile ilgili kimlikleri verir, metni istemci kendi dil dosyasından kurar. | — |
+| NT-09 | Tür bazında bildirim tercihi ve e-posta bildirimi MVP'de yoktur. | — |
+| NT-10 | Bir cihaz kaydı tek bir FCM token'ına karşılık gelir; aynı token'la yeniden kayıt, cihazı o an giriş yapmış kullanıcıya taşır. | Domain, DB |
+
 ## Moderasyon
 
 | No | Kural | Katman |

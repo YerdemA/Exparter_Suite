@@ -3,6 +3,8 @@ using Exparter.Api.Common;
 using Exparter.Api.Identity;
 using Exparter.Api.Matching;
 using Exparter.Api.Messaging;
+using Exparter.Api.Notifications;
+using Exparter.Application.Notifications;
 using Exparter.Api.Reviews;
 using Exparter.Api.Sessions;
 using Exparter.Api.Profiles;
@@ -28,7 +30,7 @@ builder.Services.AddMediator(options =>
     // Handlers depend on the scoped DbContext, so they cannot use the default singleton lifetime.
     options.ServiceLifetime = ServiceLifetime.Scoped;
     options.Assemblies = [typeof(Exparter.Application.DependencyInjection)];
-    options.PipelineBehaviors = [typeof(ValidationBehavior<,>)];
+    options.PipelineBehaviors = [typeof(ValidationBehavior<,>), typeof(NotificationDeliveryBehavior<,>)];
 });
 
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = ApiProblem.EnsureCode);
@@ -65,6 +67,7 @@ api.MapSwapEndpoints();
 api.MapConversationEndpoints();
 api.MapSessionEndpoints();
 api.MapReviewEndpoints();
+api.MapNotificationEndpoints();
 app.MapHub<RealtimeHub>(RealtimeHub.Path);
 
 if (app.Environment.IsDevelopment())

@@ -7,6 +7,7 @@ using Exparter.Application.Tests.Matching;
 using Exparter.Application.Tests.Profiles;
 using Exparter.Application.Tests.Sessions;
 using Exparter.Domain.Common;
+using Exparter.Domain.Notifications;
 using Exparter.Domain.Reviews;
 using Exparter.Domain.Sessions;
 
@@ -54,6 +55,7 @@ public class ReviewHandlerTests
     private readonly InMemorySessions _sessions = new();
     private readonly FakeUserDirectory _users = new();
     private readonly FakeInteractionRequirements _requirements = new();
+    private readonly RecordingNotifier _notifier = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
 
@@ -79,7 +81,7 @@ public class ReviewHandlerTests
     }
 
     private Task<ReviewDto> CreateAsync(Guid reviewer, Guid reviewee, int rating = 8, string? comment = null) =>
-        new CreateReviewCommandHandler(_requirements, _users, SessionDirectory, _reviews, DtoFactory, _unitOfWork, _clock)
+        new CreateReviewCommandHandler(_requirements, _users, SessionDirectory, _reviews, DtoFactory, _notifier, _unitOfWork, _clock)
             .Handle(new CreateReviewCommand(reviewer, reviewee, rating, comment), CancellationToken.None).AsTask();
 
     private Task DeleteAsync(Guid userId, Guid reviewId) =>
@@ -111,6 +113,9 @@ public class ReviewHandlerTests
         Assert.Equal((_ayse, session.Id, 9, "Harika anlatıyor."), (dto.RevieweeId, dto.SessionId, dto.Rating, dto.Comment));
         Assert.Equal((_ali, "ali"), (dto.Reviewer.UserId, dto.Reviewer.Username));
         Assert.Equal(_clock.GetUtcNow(), dto.CreatedAt);
+        var (recipient, type, data) = Assert.Single(_notifier.Sent);
+        Assert.Equal((_ayse, NotificationType.ReviewReceived), (recipient, type));
+        Assert.Equal((_ali, dto.Id), (data.ActorUserId, data.ReviewId));
         Assert.Equal(1, _unitOfWork.SaveCount);
     }
 

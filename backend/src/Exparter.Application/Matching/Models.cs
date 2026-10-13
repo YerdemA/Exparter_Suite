@@ -62,6 +62,9 @@ public interface IMatchRepository
     /// <summary>Matches whose end request was not answered in time, oldest first.</summary>
     Task<IReadOnlyList<Match>> ListWithOverdueEndRequestAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
 
+    /// <summary>Matches with an end request in its last day that nobody was reminded of yet.</summary>
+    Task<IReadOnlyList<Match>> ListDueForEndReminderAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
+
     /// <summary>Whether a match that has not ended relies on the user teaching this skill.</summary>
     Task<bool> UsesOfferedSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken);
 

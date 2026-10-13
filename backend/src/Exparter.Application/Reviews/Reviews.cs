@@ -1,6 +1,8 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Notifications;
 using Exparter.Application.Sessions;
+using Exparter.Domain.Notifications;
 using Exparter.Domain.Reviews;
 using FluentValidation;
 using Mediator;
@@ -104,6 +106,7 @@ public sealed class CreateReviewCommandHandler(
     ISessionDirectory sessions,
     IReviewRepository reviews,
     ReviewDtoFactory dtoFactory,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<CreateReviewCommand, ReviewDto>
 {
@@ -128,6 +131,10 @@ public sealed class CreateReviewCommandHandler(
 
         var review = Review.Create(command.UserId, command.RevieweeId, sessionId, command.Rating, command.Comment, timeProvider.GetUtcNow());
         reviews.Add(review);
+        notifier.Notify(
+            review.RevieweeId,
+            NotificationType.ReviewReceived,
+            new NotificationData(ActorUserId: command.UserId, ReviewId: review.Id));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtoFactory.CreateAsync(review, cancellationToken);
     }

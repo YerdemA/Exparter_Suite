@@ -1,5 +1,7 @@
 using Exparter.Application.Common;
 using Exparter.Application.Matching;
+using Exparter.Application.Notifications;
+using Exparter.Domain.Notifications;
 using Exparter.Domain.Sessions;
 using FluentValidation;
 using Mediator;
@@ -32,6 +34,12 @@ public interface ISessionRepository
 
     /// <summary>Sessions whose stored status is behind a passed deadline, oldest first.</summary>
     Task<IReadOnlyList<SwapSession>> ListOverdueAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sessions that may be due a reminder: scheduled ones starting within a day, and
+    /// completion marks in their last day.
+    /// </summary>
+    Task<IReadOnlyList<SwapSession>> ListDueForReminderAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
 
     Task<int> CountCompletedForUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken);
 
@@ -147,6 +155,18 @@ internal static class SessionExtensions
             ? session
             : throw AppException.NotFound("The session was not found.");
 
+    /// <summary>
+    /// What a notification about the session carries. Its deadline is whichever moment
+    /// the session is waiting for: the answer to a completion mark, or else its start.
+    /// </summary>
+    public static NotificationData NotificationData(this SwapSession session, Guid? actorUserId) =>
+        new(
+            ActorUserId: actorUserId,
+            MatchId: session.MatchId,
+            SessionId: session.Id,
+            Reason: session.CancelReason,
+            Deadline: session.CompletionConfirmDeadline ?? session.ScheduledAt);
+
     /// <summary>The match, if the user is part of it; otherwise the same answer as for an unknown id.</summary>
     public static async Task<MatchInfo> GetForParticipantAsync(
         this IMatchDirectory matches,
@@ -189,6 +209,7 @@ public sealed class ProposeSessionCommandValidator : AbstractValidator<ProposeSe
 public sealed class ProposeSessionCommandHandler(
     IMatchDirectory matches,
     ISessionRepository sessions,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ProposeSessionCommand, SwapSessionDto>
 {
@@ -207,6 +228,7 @@ public sealed class ProposeSessionCommandHandler(
             command.Note,
             now);
         sessions.Add(session);
+        notifier.Notify(session.OtherUserId, NotificationType.SessionProposed, session.NotificationData(command.UserId));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return SwapSessionDto.From(session, now);
     }
@@ -217,6 +239,7 @@ public sealed record ReportInPersonSessionCommand(Guid UserId, Guid MatchId) : I
 public sealed class ReportInPersonSessionCommandHandler(
     IMatchDirectory matches,
     ISessionRepository sessions,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ReportInPersonSessionCommand, SwapSessionDto>
 {
@@ -236,6 +259,7 @@ public sealed class ReportInPersonSessionCommandHandler(
 
         var session = SwapSession.ReportInPerson(match.Id, command.UserId, otherUserId, now);
         sessions.Add(session);
+        notifier.Notify(otherUserId, NotificationType.SessionCompletionMarked, session.NotificationData(command.UserId));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return SwapSessionDto.From(session, now);
     }
@@ -310,28 +334,39 @@ public enum SessionAction
 
 public sealed record ChangeSessionCommand(Guid UserId, Guid SessionId, SessionAction Action) : ICommand<SwapSessionDto>;
 
-public sealed class ChangeSessionCommandHandler(ISessionRepository sessions, IUnitOfWork unitOfWork, TimeProvider timeProvider)
+public sealed class ChangeSessionCommandHandler(
+    ISessionRepository sessions,
+    IUserNotifier notifier,
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider)
     : ICommandHandler<ChangeSessionCommand, SwapSessionDto>
 {
     public async ValueTask<SwapSessionDto> Handle(ChangeSessionCommand command, CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
         var session = await sessions.GetForParticipantAsync(command.SessionId, command.UserId, cancellationToken);
+        NotificationType type;
         switch (command.Action)
         {
             case SessionAction.Accept:
                 session.Accept(command.UserId, now);
+                type = NotificationType.SessionAccepted;
                 break;
             case SessionAction.Decline:
                 session.Decline(command.UserId, now);
+                type = NotificationType.SessionDeclined;
                 break;
             case SessionAction.MarkCompleted:
                 session.MarkCompleted(command.UserId, now);
+                type = NotificationType.SessionCompletionMarked;
                 break;
             default:
                 session.ConfirmCompleted(command.UserId, now);
+                type = NotificationType.SessionCompleted;
                 break;
         }
+
+        notifier.Notify(session.OtherThan(command.UserId), type, session.NotificationData(command.UserId));
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return SwapSessionDto.From(session, now);
@@ -350,7 +385,11 @@ public sealed class CancelSessionCommandValidator : AbstractValidator<CancelSess
     }
 }
 
-public sealed class CancelSessionCommandHandler(ISessionRepository sessions, IUnitOfWork unitOfWork, TimeProvider timeProvider)
+public sealed class CancelSessionCommandHandler(
+    ISessionRepository sessions,
+    IUserNotifier notifier,
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider)
     : ICommandHandler<CancelSessionCommand, SwapSessionDto>
 {
     public async ValueTask<SwapSessionDto> Handle(CancelSessionCommand command, CancellationToken cancellationToken)
@@ -358,6 +397,7 @@ public sealed class CancelSessionCommandHandler(ISessionRepository sessions, IUn
         var now = timeProvider.GetUtcNow();
         var session = await sessions.GetForParticipantAsync(command.SessionId, command.UserId, cancellationToken);
         session.Cancel(command.UserId, command.Reason, now);
+        notifier.Notify(session.OtherThan(command.UserId), NotificationType.SessionCancelled, session.NotificationData(command.UserId));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return SwapSessionDto.From(session, now);
     }
@@ -377,18 +417,22 @@ public sealed class CancelSessionsOnMatchEnded(ISessionRepository sessions, Time
     }
 }
 
-/// <summary>Records the session deadlines that have passed: unanswered proposals and unconfirmed completions.</summary>
+/// <summary>
+/// Records the session deadlines that have passed (unanswered proposals and unconfirmed
+/// completions) and reminds of sessions about to start and of marks about to stand.
+/// </summary>
 public sealed record ProcessSessionDeadlinesCommand : ICommand<int>;
 
 public sealed class ProcessSessionDeadlinesCommandHandler(
     ISessionRepository sessions,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ProcessSessionDeadlinesCommand, int>
 {
     /// <summary>Per run; whatever is left over is picked up by the next run.</summary>
     private const int BatchSize = 200;
 
-    /// <returns>How many sessions were updated.</returns>
+    /// <returns>How many sessions were updated, reminders included.</returns>
     public async ValueTask<int> Handle(ProcessSessionDeadlinesCommand command, CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
@@ -396,9 +440,37 @@ public sealed class ProcessSessionDeadlinesCommandHandler(
         foreach (var session in overdue)
         {
             session.RecordPassedDeadline(now);
+            if (session.Status == SwapSessionStatus.Declined)
+            {
+                notifier.Notify(session.ProposedByUserId, NotificationType.SessionDeclined, session.NotificationData(null));
+            }
+            else
+            {
+                notifier.Notify(session.ProposedByUserId, NotificationType.SessionCompleted, session.NotificationData(null));
+                notifier.Notify(session.OtherUserId, NotificationType.SessionCompleted, session.NotificationData(null));
+            }
+        }
+
+        var reminded = 0;
+        foreach (var session in await sessions.ListDueForReminderAsync(now, BatchSize, cancellationToken))
+        {
+            if (session.TakeDueStartReminder(now))
+            {
+                reminded++;
+                notifier.Notify(session.ProposedByUserId, NotificationType.SessionStartingSoon, session.NotificationData(null));
+                notifier.Notify(session.OtherUserId, NotificationType.SessionStartingSoon, session.NotificationData(null));
+            }
+            else if (session.TakeDueCompletionReminder(now))
+            {
+                reminded++;
+                notifier.Notify(
+                    session.OtherThan(session.CompletionMarkedByUserId!.Value),
+                    NotificationType.SessionCompletionReminder,
+                    session.NotificationData(session.CompletionMarkedByUserId));
+            }
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return overdue.Count;
+        return overdue.Count + reminded;
     }
 }

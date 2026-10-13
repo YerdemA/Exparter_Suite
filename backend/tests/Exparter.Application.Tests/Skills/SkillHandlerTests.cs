@@ -331,10 +331,14 @@ public class SkillHandlerTests
             .Handle(new AdminListSkillProposalsQuery(SkillStatus.PendingApproval, null, null), CancellationToken.None);
         Assert.Equal(_userId, Assert.Single(pending.Items).ProposedByUserId);
 
-        var dto = await new ReviewSkillProposalCommandHandler(_skills, _unitOfWork, _clock)
+        var notifier = new Exparter.Application.Tests.Matching.RecordingNotifier();
+        var dto = await new ReviewSkillProposalCommandHandler(_skills, notifier, _unitOfWork, _clock)
             .Handle(new ReviewSkillProposalCommand(proposal.Id, Approve: true), CancellationToken.None);
 
         Assert.Equal(SkillStatus.Approved, dto.Status);
+        Assert.Equal(
+            [(_userId, Exparter.Domain.Notifications.NotificationType.SkillProposalApproved)],
+            notifier.Take());
         await AddAsync(proposal);
         Assert.Single(_userSkills.Items);
     }
@@ -342,7 +346,7 @@ public class SkillHandlerTests
     [Fact]
     public async Task Reviewing_fails_for_an_unknown_or_already_reviewed_proposal()
     {
-        var handler = new ReviewSkillProposalCommandHandler(_skills, _unitOfWork, _clock);
+        var handler = new ReviewSkillProposalCommandHandler(_skills, new Exparter.Application.Tests.Matching.RecordingNotifier(), _unitOfWork, _clock);
         var proposal = Skill.Propose(_skills.CategoryId, "Ukulele", _userId, _clock.GetUtcNow());
         _skills.Add(proposal);
 
