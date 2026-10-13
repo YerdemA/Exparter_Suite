@@ -12,6 +12,8 @@ abstract final class AppRoutes {
   static const matchDetailSegment = ':$matchIdParameter';
   static const matchIdParameter = 'matchId';
   static const messages = '/messages';
+  static const conversationSegment = ':$conversationIdParameter';
+  static const conversationIdParameter = 'conversationId';
   static const profile = '/profile';
   static const profileEditSegment = 'edit';
   static const profileEdit = '$profile/$profileEditSegment';
@@ -26,6 +28,8 @@ abstract final class AppRoutes {
   static String sendRequest(String userId) => '/users/$userId/$sendRequestSegment';
 
   static String matchDetail(String matchId) => '$matches/$matchId';
+
+  static String conversation(String conversationId) => '$messages/$conversationId';
 
   static String skillPicker(UserSkillType type) => '$profile/skills/add/${type.json!.toLowerCase()}';
 

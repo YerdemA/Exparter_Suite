@@ -279,7 +279,7 @@ void main() {
       queryParameters: {'direction': 'Incoming'},
       options: peerAuth,
     );
-    await api.post<void>(
+    final accepted = await api.post<Map<String, dynamic>>(
       '/api/v1/swap-requests/${(incoming.data!['items'] as List<dynamic>).first['id']}/accept',
       options: peerAuth,
     );
@@ -293,8 +293,50 @@ void main() {
     await pumpUntilFound(tester, find.text(l10n.matchStatusActive));
     expect(find.text(l10n.swapYouLearn('Yoga')), findsOneWidget);
 
-    // Ask to end the match; it then waits for the peer's answer.
+    // Messaging: write to the peer from the match, and receive their answer in real time.
     await tester.tap(find.text('Keşif Arkadaşı'));
+    await pumpUntilFound(tester, find.text(l10n.matchSendMessage));
+    await tapVisible(tester, find.text(l10n.matchSendMessage));
+    await pumpUntilFound(tester, find.text(l10n.conversationNoMessages));
+    await tester.enterText(find.byType(TextField), 'Merhaba, ne zaman başlayalım?');
+    // The "request sent" notice from a moment ago floats over the send button until it
+    // times out; a tap now would land on it.
+    for (var i = 0; i < 50 && find.byType(SnackBar).evaluate().isNotEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    await tester.tap(find.byTooltip(l10n.messageSend));
+    // The text is also in the input box until it is sent, so wait for the pending
+    // marker to come and go: after that the one copy left is the stored message.
+    for (var i = 0; i < 100; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+      if (find.text(l10n.messageSending).evaluate().isEmpty &&
+          tester.widget<TextField>(find.byType(TextField)).controller!.text.isEmpty) {
+        break;
+      }
+    }
+
+    expect(find.text(l10n.messageFailed), findsNothing);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, isEmpty);
+    expect(find.text('Merhaba, ne zaman başlayalım?'), findsOneWidget);
+    await api.post<void>(
+      '/api/v1/conversations/${accepted.data!['conversationId']}/messages',
+      data: {'body': 'Yarın akşam uygun.'},
+      options: peerAuth,
+    );
+    // Nothing on this screen asks the server again: the answer can only arrive over
+    // the real-time connection.
+    await pumpUntilFound(tester, find.text('Yarın akşam uygun.'));
+
+    // Ask to end the match; it then waits for the peer's answer.
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navMatches)));
+    await tester.pumpAndSettle();
+    // The tab reopens where it was left; if that is the list, open the match again.
+    if (find.text(l10n.matchEndRequest).evaluate().isEmpty) {
+      await pumpUntilFound(tester, find.text('Keşif Arkadaşı'));
+      await tester.tap(find.text('Keşif Arkadaşı'));
+    }
+
     await pumpUntilFound(tester, find.text(l10n.matchEndRequest));
     await tapVisible(tester, find.text(l10n.matchEndRequest));
     await tester.pumpAndSettle();

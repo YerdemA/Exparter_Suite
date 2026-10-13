@@ -51,7 +51,6 @@
   "homeResendVerification": "Doğrulama e-postasını yeniden gönder",
   "homeVerificationSent": "Doğrulama e-postası gönderildi.",
   "homeAccountRestored": "Hesabınız yeniden etkinleştirildi; silme isteği iptal edildi.",
-  "comingSoon": "Bu bölüm yakında burada olacak.",
 
   "navDiscover": "Keşfet",
   "navMatches": "Eşleşmeler",
@@ -166,6 +165,28 @@
   "errorSessionExpired": "Oturumunuz sona erdi. Lütfen yeniden giriş yapın.",
   "errorNotFound": "Aradığınız içerik bulunamadı.",
   "errorRetry": "Tekrar dene",
+  "errorConversationClosed": "Bu sohbet kapalı.",
+  "errorConversationHasActiveMatch": "Devam eden bir eşleşme varken sohbet kapatılamaz.",
+  "messagesEmpty": "Henüz bir sohbetiniz yok. Bir eşleşme başladığında sohbet burada açılır.",
+  "messagesYouPrefix": "Siz: {text}",
+  "@messagesYouPrefix": {
+    "placeholders": {
+      "text": { "type": "String" }
+    }
+  },
+  "conversationNoMessages": "Henüz mesaj yok.",
+  "conversationClosedLabel": "Kapalı sohbet",
+  "conversationClosedBanner": "Bu sohbet kapatıldı. Yeni mesaj gönderilemez.",
+  "conversationClose": "Sohbeti kapat",
+  "conversationCloseConfirmTitle": "Sohbet kapatılsın mı?",
+  "conversationCloseConfirmBody": "Kapatılan sohbette yeni mesaj gönderilemez; geçmiş mesajlar iki tarafta da görünür kalır. Yeniden eşleşirseniz sohbet tekrar açılır.",
+  "conversationCloseFailed": "Sohbet kapatılamadı. Lütfen tekrar deneyin.",
+  "messageHint": "Mesaj yazın",
+  "messageSend": "Gönder",
+  "messageSending": "Gönderiliyor…",
+  "messageFailed": "Gönderilemedi. Tekrar denemek için dokunun.",
+  "messageSeen": "Görüldü",
+  "matchSendMessage": "Mesaj gönder",
   "errorRequestPending": "Bu kullanıcıyla aranızda cevap bekleyen bir istek var.",
   "errorMatchExists": "Bu kullanıcıyla devam eden bir eşleşmeniz var.",
   "errorRequestCooldown": "Bu kullanıcıya yeniden istek göndermek için 7 gün beklemeniz gerekiyor.",

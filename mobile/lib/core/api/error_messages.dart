@@ -37,6 +37,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'user_skill_in_use' => l10n.errorSkillInUse,
     'invalid_state' || 'concurrent_update' => l10n.errorInvalidState,
     'not_participant' => l10n.errorNotParticipant,
+    'conversation_closed' => l10n.errorConversationClosed,
+    'conversation_has_active_match' => l10n.errorConversationHasActiveMatch,
     _ => l10n.errorUnknown,
   };
 }
