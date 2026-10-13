@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0–6 tamamlandı; dilim 7 onay bekliyor |
+| 5 | Dikey dilimler | Sürüyor: dilim 0–7 tamamlandı |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -98,7 +98,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 4 | Takas isteği ve eşleşme | Tamamlandı (2026-10-13) |
 | 5 | Gerçek zamanlı mesajlaşma | Tamamlandı (2026-10-13) |
 | 6 | Takas oturumları | Tamamlandı (2026-10-13) |
-| 7 | Değerlendirmeler | Tamamlandı, onay bekliyor |
+| 7 | Değerlendirmeler | Tamamlandı (2026-10-13) |
 | 8 | Bildirimler | Başlamadı |
 
 ### Dilim 0 — E-posta doğrulama ve parola sıfırlama
