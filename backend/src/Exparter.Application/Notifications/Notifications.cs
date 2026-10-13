@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Identity;
 using Exparter.Domain.Notifications;
 using FluentValidation;
 using Mediator;
@@ -19,6 +20,8 @@ public interface INotificationRepository
     /// <returns>How many notifications were removed.</returns>
     Task<int> DeleteCreatedBeforeAsync(DateTimeOffset moment, CancellationToken cancellationToken);
 
+    Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken);
+
     void Add(Notification notification);
 }
 
@@ -27,6 +30,8 @@ public interface IDeviceRepository
     Task<Device?> FindByTokenAsync(string fcmToken, CancellationToken cancellationToken);
 
     Task<Device?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+
+    Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken);
 
     void Add(Device device);
 
@@ -219,5 +224,16 @@ public sealed class UnregisterDeviceCommandHandler(IDeviceRepository devices, IU
         devices.Remove(device);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Unit.Value;
+    }
+}
+
+/// <summary>An account is being erased: its notifications and its devices go with it.</summary>
+public sealed class RemoveNotificationsOnAccountErased(INotificationRepository notifications, IDeviceRepository devices)
+    : INotificationHandler<AccountErased>
+{
+    public async ValueTask Handle(AccountErased notification, CancellationToken cancellationToken)
+    {
+        await notifications.DeleteByUserAsync(notification.UserId, cancellationToken);
+        await devices.DeleteByUserAsync(notification.UserId, cancellationToken);
     }
 }

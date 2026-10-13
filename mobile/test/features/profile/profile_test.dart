@@ -33,6 +33,7 @@ void main() {
   );
   late MockProfileRepository repository;
   late MockSkillRepository skillRepository;
+  late MockAuthRepository authRepository;
   late InMemorySessionPersistence persistence;
 
   setUpAll(() => registerFallbackValue(jpeg));
@@ -40,6 +41,7 @@ void main() {
   setUp(() async {
     repository = MockProfileRepository();
     skillRepository = MockSkillRepository();
+    authRepository = MockAuthRepository();
     when(() => skillRepository.listOwnSkills()).thenAnswer((_) async => [testUserSkill('Gitar')]);
     persistence = InMemorySessionPersistence();
     await SessionStore(persistence).save(testSession());
@@ -52,7 +54,7 @@ void main() {
         sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
         reviewRepositoryProvider.overrideWithValue(quietReviewRepository()),
         interactionRequirementsProvider.overrideWith((ref) async => requirements ?? testRequirements()),
-        authRepositoryProvider.overrideWithValue(MockAuthRepository()),
+        authRepositoryProvider.overrideWithValue(authRepository),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),
         if (picker != null) avatarPickerProvider.overrideWithValue(picker),
       ];
@@ -290,6 +292,49 @@ void main() {
       expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
       expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
       expect(find.textContaining('Gitar ·'), findsOneWidget);
+    });
+
+    testWidgets('deleting the account needs the password and signs the user out', (tester) async {
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
+      when(() => authRepository.requestAccountDeletion(password: any(named: 'password'))).thenAnswer((_) async {});
+      await pumpScreen(tester, const ProfileScreen());
+
+      await tester.ensureVisible(find.text(l10n.accountDelete));
+      await tester.tap(find.text(l10n.accountDelete));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.accountDeleteBody), findsOneWidget);
+      final confirm = find.widgetWithText(FilledButton, l10n.accountDelete);
+      expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
+
+      await tester.enterText(find.byType(TextField), 'Passw0rd!x');
+      await tester.pumpAndSettle();
+      await tester.tap(confirm);
+      // Signed out, the screen has no profile to show and keeps spinning; in the app the
+      // router leaves it at this point.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      verify(() => authRepository.requestAccountDeletion(password: 'Passw0rd!x')).called(1);
+      expect(find.text(l10n.accountDeleteScheduled), findsOneWidget);
+      expect(SessionStore(persistence).current, isNull);
+    });
+
+    testWidgets('a wrong password keeps the account and says so', (tester) async {
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
+      when(() => authRepository.requestAccountDeletion(password: any(named: 'password')))
+          .thenThrow(const ApiException(statusCode: 400, code: 'invalid_password'));
+      await pumpScreen(tester, const ProfileScreen());
+
+      await tester.ensureVisible(find.text(l10n.accountDelete));
+      await tester.tap(find.text(l10n.accountDelete));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'wrong');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, l10n.accountDelete));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.errorInvalidPassword), findsOneWidget);
+      expect(find.text('@ayse'), findsOneWidget);
     });
 
     testWidgets('a complete, verified user sees no requirements', (tester) async {

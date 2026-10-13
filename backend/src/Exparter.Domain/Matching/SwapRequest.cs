@@ -134,6 +134,16 @@ public sealed class SwapRequest
         Close(SwapRequestStatus.Cancelled, now);
     }
 
+    /// <summary>One of the two users is leaving: a request still waiting for an answer is withdrawn.</summary>
+    public void CancelBecauseAccountDeleted(DateTimeOffset now)
+    {
+        if (StatusAt(now) == SwapRequestStatus.Pending)
+        {
+            Status = SwapRequestStatus.Cancelled;
+            RespondedAt = now;
+        }
+    }
+
     /// <summary>Records that the time to answer has run out. Does nothing before then.</summary>
     public void ExpireIfOverdue(DateTimeOffset now)
     {

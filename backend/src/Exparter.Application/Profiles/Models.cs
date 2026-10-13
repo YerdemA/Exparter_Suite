@@ -10,6 +10,8 @@ public interface IProfileRepository
     Task<IReadOnlyList<Profile>> ListByUserIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
 
     void Add(Profile profile);
+
+    void Remove(Profile profile);
 }
 
 public sealed record ProfileDto(

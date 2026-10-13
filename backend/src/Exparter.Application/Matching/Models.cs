@@ -37,6 +37,9 @@ public interface ISwapRequestRepository
         PageRequest page,
         CancellationToken cancellationToken);
 
+    /// <summary>The requests stored as pending that the user sent or received.</summary>
+    Task<IReadOnlyList<SwapRequest>> ListPendingOfUserAsync(Guid userId, CancellationToken cancellationToken);
+
     /// <summary>Pending requests past their deadline, oldest first.</summary>
     Task<IReadOnlyList<SwapRequest>> ListOverdueAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
 
@@ -58,6 +61,9 @@ public interface IMatchRepository
 
     /// <summary>Every match of the user, in no particular order.</summary>
     Task<IReadOnlyList<Match>> ListAllAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>The user's matches that have not ended.</summary>
+    Task<IReadOnlyList<Match>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken);
 
     /// <summary>Matches whose end request was not answered in time, oldest first.</summary>
     Task<IReadOnlyList<Match>> ListWithOverdueEndRequestAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);

@@ -20,6 +20,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<OneTimeToken> OneTimeTokens => Set<OneTimeToken>();
 
+    public DbSet<BlockedEmail> BlockedEmails => Set<BlockedEmail>();
+
     public DbSet<Profile> Profiles => Set<Profile>();
 
     public DbSet<SkillCategory> SkillCategories => Set<SkillCategory>();

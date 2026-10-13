@@ -50,6 +50,36 @@ class AuthController extends _$AuthController {
     }
 
     await session.end();
+    if (ref.mounted) {
+      state = const AsyncData(null);
+    }
+  }
+
+  /// Asks for the account to be deleted and signs out. Returns whether the server
+  /// accepted; a refusal (a wrong password, mostly) is left in the state.
+  Future<bool> deleteAccount({required String password}) async {
+    state = const AsyncLoading();
+    final session = ref.read(sessionControllerProvider.notifier);
+    try {
+      await ref.read(authRepositoryProvider).requestAccountDeletion(password: password);
+    } on Object catch (error, stackTrace) {
+      if (ref.mounted) {
+        state = AsyncError(error, stackTrace);
+      }
+
+      return false;
+    }
+
+    // The server has already signed every device out; this only forgets the tokens.
+    await session.end();
+
+    // The sign-in screen that comes next may be handed this same controller; left as
+    // loading, it would show a spinner where its button should be.
+    if (ref.mounted) {
+      state = const AsyncData(null);
+    }
+
+    return true;
   }
 
   Future<void> _run(Future<AuthResponse> Function() action) async {

@@ -17,6 +17,8 @@ internal sealed class InMemoryProfiles : IProfileRepository
         Task.FromResult<IReadOnlyList<Profile>>(Items.Where(x => userIds.Contains(x.UserId)).ToList());
 
     public void Add(Profile profile) => Items.Add(profile);
+
+    public void Remove(Profile profile) => Items.Remove(profile);
 }
 
 internal sealed class FakeObjectStorage : IObjectStorage

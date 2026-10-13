@@ -57,6 +57,82 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+/// Asks for the password, then for the deletion; a refusal is explained.
+Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final password = await showDialog<String>(context: context, builder: (context) => const _DeleteAccountDialog());
+  if (password == null) {
+    return;
+  }
+
+  ref.read(accountRestoredNoticeProvider.notifier).dismiss();
+  final deleted = await ref.read(authControllerProvider.notifier).deleteAccount(password: password);
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        deleted ? l10n.accountDeleteScheduled : errorMessage(l10n, ref.read(authControllerProvider).error ?? Object()),
+      ),
+    ),
+  );
+}
+
+/// Explains what deleting the account does and collects the password that confirms
+/// it. Pops with the password, or null if dismissed.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _password = TextEditingController();
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: Text(l10n.accountDeleteTitle),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.accountDeleteBody),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: _password,
+              obscureText: true,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(labelText: l10n.passwordLabel, helperText: l10n.accountDeletePasswordHint),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel)),
+        FilledButton(
+          onPressed: _password.text.isEmpty ? null : () => Navigator.pop(context, _password.text),
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
+          ),
+          child: Text(l10n.accountDelete),
+        ),
+      ],
+    );
+  }
+}
+
 class _ProfileBody extends ConsumerWidget {
   const _ProfileBody({required this.profile});
 
@@ -232,6 +308,12 @@ class _ProfileBody extends ConsumerWidget {
                       },
                 icon: const Icon(Icons.logout),
                 label: Text(l10n.homeLogout),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(
+                onPressed: loggingOut ? null : () => _deleteAccount(context, ref),
+                style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                child: Text(l10n.accountDelete),
               ),
             ],
           ),

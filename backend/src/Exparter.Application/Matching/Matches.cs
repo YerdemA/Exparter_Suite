@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Identity;
 using Exparter.Application.Notifications;
 using Exparter.Domain.Matching;
 using Exparter.Domain.Notifications;
@@ -168,5 +169,56 @@ public sealed class ProcessMatchingDeadlinesCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return overdueRequests.Count + overdueMatches.Count + reminded;
+    }
+}
+
+/// <summary>
+/// A user is leaving: their pending requests are withdrawn and their matches end, in
+/// the transaction that records the deletion request.
+/// </summary>
+public sealed class CloseMatchingOnAccountDeletion(
+    ISwapRequestRepository requests,
+    IMatchRepository matches,
+    IPublisher publisher,
+    IUserNotifier notifier,
+    TimeProvider timeProvider) : INotificationHandler<AccountDeletionRequested>
+{
+    public async ValueTask Handle(AccountDeletionRequested notification, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        var userId = notification.UserId;
+        foreach (var request in await requests.ListPendingOfUserAsync(userId, cancellationToken))
+        {
+            if (request.StatusAt(now) != SwapRequestStatus.Pending)
+            {
+                continue;
+            }
+
+            request.CancelBecauseAccountDeleted(now);
+
+            // The other user is told what it looked like from their side: a request they
+            // received was withdrawn, or one they sent was never answered.
+            if (request.RequesterId == userId)
+            {
+                notifier.Notify(
+                    request.RecipientId,
+                    NotificationType.SwapRequestCancelled,
+                    new NotificationData(ActorUserId: userId, SwapRequestId: request.Id));
+            }
+            else
+            {
+                notifier.Notify(request.RequesterId, NotificationType.SwapRequestExpired, new NotificationData(SwapRequestId: request.Id));
+            }
+        }
+
+        foreach (var match in await matches.ListOpenOfUserAsync(userId, cancellationToken))
+        {
+            match.EndBecauseAccountDeleted(now);
+            await publisher.Publish(new MatchEnded(match.Id), cancellationToken);
+            notifier.Notify(
+                match.OtherThan(userId),
+                NotificationType.MatchEnded,
+                new NotificationData(ActorUserId: userId, MatchId: match.Id));
+        }
     }
 }

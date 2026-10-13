@@ -61,3 +61,15 @@ internal sealed class OneTimeTokenConfiguration : IEntityTypeConfiguration<OneTi
         builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+internal sealed class BlockedEmailConfiguration : IEntityTypeConfiguration<BlockedEmail>
+{
+    public void Configure(EntityTypeBuilder<BlockedEmail> builder)
+    {
+        builder.ToTable("blocked_emails", IdentitySchema.Name);
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.EmailHash).HasMaxLength(BlockedEmail.HashLength).IsFixedLength();
+        builder.HasIndex(x => x.EmailHash);
+    }
+}

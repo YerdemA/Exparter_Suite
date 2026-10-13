@@ -18,6 +18,16 @@ internal sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     public Task<User?> GetByUsernameAsync(string normalizedUsername, CancellationToken cancellationToken) =>
         dbContext.Users.FirstOrDefaultAsync(x => x.Username == normalizedUsername, cancellationToken);
 
+    public async Task<IReadOnlyList<User>> ListDueForErasureAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken)
+    {
+        var requestedBefore = now - User.DeletionGracePeriod;
+        return await dbContext.Users
+            .Where(x => x.Status == UserStatus.PendingDeletion && x.DeletionRequestedAt <= requestedBefore)
+            .OrderBy(x => x.DeletionRequestedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Add(User user) => dbContext.Users.Add(user);
 }
 
@@ -37,6 +47,9 @@ internal sealed class RefreshTokenRepository(AppDbContext dbContext) : IRefreshT
             .Where(x => x.UserId == userId && x.RevokedAt == null && x.ExpiresAt > now)
             .ToListAsync(cancellationToken);
 
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        dbContext.RefreshTokens.Where(x => x.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+
     public void Add(RefreshToken token) => dbContext.RefreshTokens.Add(token);
 }
 
@@ -53,5 +66,19 @@ internal sealed class OneTimeTokenRepository(AppDbContext dbContext) : IOneTimeT
             .Where(x => x.UserId == userId && x.Purpose == purpose && x.UsedAt == null)
             .ToListAsync(cancellationToken);
 
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        dbContext.OneTimeTokens.Where(x => x.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+
     public void Add(OneTimeToken token) => dbContext.OneTimeTokens.Add(token);
+}
+
+internal sealed class BlockedEmailRepository(AppDbContext dbContext) : IBlockedEmailRepository
+{
+    public Task<bool> IsBlockedAsync(string emailHash, DateTimeOffset now, CancellationToken cancellationToken) =>
+        dbContext.BlockedEmails.AnyAsync(x => x.EmailHash == emailHash && x.BlockedUntil > now, cancellationToken);
+
+    public void Add(BlockedEmail blockedEmail) => dbContext.BlockedEmails.Add(blockedEmail);
+
+    public Task DeleteExpiredAsync(DateTimeOffset now, CancellationToken cancellationToken) =>
+        dbContext.BlockedEmails.Where(x => x.BlockedUntil <= now).ExecuteDeleteAsync(cancellationToken);
 }

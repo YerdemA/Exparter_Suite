@@ -32,6 +32,12 @@ internal sealed class InMemoryNotifications : INotificationRepository
     public Task<int> DeleteCreatedBeforeAsync(DateTimeOffset moment, CancellationToken cancellationToken) =>
         Task.FromResult(Items.RemoveAll(x => x.CreatedAt < moment));
 
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        Items.RemoveAll(x => x.UserId == userId);
+        return Task.CompletedTask;
+    }
+
     public void Add(Notification notification) => Items.Add(notification);
 }
 
@@ -44,6 +50,12 @@ internal sealed class InMemoryDevices : IDeviceRepository
 
     public Task<Device?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
+
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        Items.RemoveAll(x => x.UserId == userId);
+        return Task.CompletedTask;
+    }
 
     public void Add(Device device) => Items.Add(device);
 

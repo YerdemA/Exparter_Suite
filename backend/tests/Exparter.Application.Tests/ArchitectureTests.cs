@@ -16,6 +16,8 @@ public class ArchitectureTests
         typeof(IUserDirectory),
         typeof(UserInfo),
         typeof(UserRegistered),
+        typeof(AccountDeletionRequested),
+        typeof(AccountErased),
         typeof(Exparter.Domain.Skills.SkillLevel),
         typeof(Exparter.Application.Profiles.IProfileDirectory),
         typeof(Exparter.Application.Profiles.ProfileCard),

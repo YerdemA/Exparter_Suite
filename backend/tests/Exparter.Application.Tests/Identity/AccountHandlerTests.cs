@@ -106,6 +106,7 @@ public class RequestAccountDeletionCommandHandlerTests
         _context.Users,
         _context.RefreshTokens,
         _context.Hasher,
+        _context.Publisher,
         _context.UnitOfWork,
         _context.Clock);
 
@@ -123,6 +124,7 @@ public class RequestAccountDeletionCommandHandlerTests
         Assert.Equal(UserStatus.PendingDeletion, user.Status);
         Assert.Equal(_context.Clock.GetUtcNow().AddDays(30), result.PermanentDeletionAt);
         Assert.All(_context.RefreshTokens.Items, token => Assert.True(token.IsRevoked));
+        Assert.Equal(new AccountDeletionRequested(user.Id), Assert.Single(_context.Publisher.Published));
     }
 
     [Fact]

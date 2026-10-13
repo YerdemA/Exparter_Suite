@@ -1,3 +1,4 @@
+using Exparter.Application.Identity;
 using System.Globalization;
 using System.Text;
 using Exparter.Application.Common;
@@ -19,6 +20,9 @@ public interface IConversationRepository
 
     /// <summary>The user's conversations, most recently active first.</summary>
     Task<PagedList<Conversation>> ListAsync(Guid userId, PageRequest page, CancellationToken cancellationToken);
+
+    /// <summary>The user's conversations that are not closed.</summary>
+    Task<IReadOnlyList<Conversation>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken);
 
     /// <summary>The conversations that exist with any of the other users, keyed by that other user.</summary>
     Task<IReadOnlyDictionary<Guid, Guid>> FindIdsByOtherUserAsync(
@@ -371,5 +375,19 @@ public sealed class CloseConversationCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
         await realtime.SendConversationUpdatedAsync(dtos, conversation, cancellationToken);
         return await dtos.ToDtoAsync(conversation, command.UserId, cancellationToken);
+    }
+}
+
+/// <summary>A user is leaving: their conversations become read-only, in the transaction that records the deletion request.</summary>
+public sealed class CloseConversationsOnAccountDeletion(IConversationRepository conversations, TimeProvider timeProvider)
+    : INotificationHandler<AccountDeletionRequested>
+{
+    public async ValueTask Handle(AccountDeletionRequested notification, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        foreach (var conversation in await conversations.ListOpenOfUserAsync(notification.UserId, cancellationToken))
+        {
+            conversation.CloseBecauseAccountDeleted(notification.UserId, now);
+        }
     }
 }

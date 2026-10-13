@@ -28,6 +28,9 @@ public interface IReviewRepository
         IReadOnlyCollection<Guid> userIds,
         CancellationToken cancellationToken);
 
+    /// <summary>Removes, for good, every review the user has received.</summary>
+    Task DeleteReceivedAsync(Guid revieweeId, CancellationToken cancellationToken);
+
     void Add(Review review);
 }
 
@@ -213,4 +216,14 @@ public sealed class GetReviewEligibilityQueryHandler(IUserDirectory users, ISess
             : null;
         return new ReviewEligibilityDto(reason is null, reason);
     }
+}
+
+/// <summary>
+/// An account is being erased: what others said about the user goes with it. What the
+/// user said about others stays, under the name of a deleted user.
+/// </summary>
+public sealed class RemoveReviewsOnAccountErased(IReviewRepository reviews) : INotificationHandler<AccountErased>
+{
+    public async ValueTask Handle(AccountErased notification, CancellationToken cancellationToken) =>
+        await reviews.DeleteReceivedAsync(notification.UserId, cancellationToken);
 }

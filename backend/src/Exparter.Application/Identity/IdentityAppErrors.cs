@@ -7,6 +7,11 @@ internal static class IdentityAppErrors
     public static AppException EmailAlreadyRegistered() =>
         AppException.Conflict("email_already_registered", "The email address is already registered.");
 
+    public static AppException EmailRecentlyDeleted() =>
+        AppException.Conflict(
+            "email_recently_deleted",
+            "An account with this email address was deleted recently; the address cannot be registered again yet.");
+
     public static AppException UsernameAlreadyTaken() =>
         AppException.Conflict("username_already_taken", "The username is already taken.");
 

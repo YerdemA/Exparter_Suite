@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using AccountDeletionRequested = Exparter.Application.Identity.AccountDeletionRequested;
 using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
 using Exparter.Application.Tests.Messaging;
@@ -57,6 +58,10 @@ internal sealed class InMemorySwapRequests : ISwapRequestRepository
             && ((x.RequesterId == userId && x.OfferedSkillId == skillId)
                 || (x.RecipientId == userId && x.RequestedSkillId == skillId))));
 
+    public Task<IReadOnlyList<SwapRequest>> ListPendingOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<SwapRequest>>(
+            Items.Where(x => x.Status == SwapRequestStatus.Pending && x.IsParticipant(userId)).ToList());
+
     public void Add(SwapRequest request) => Items.Add(request);
 }
 
@@ -105,6 +110,9 @@ internal sealed class InMemoryMatches : IMatchRepository
             .Select(x => x.UserAId == userId ? x.UserBId : x.UserAId)
             .Where(otherUserIds.Contains)
             .ToHashSet());
+
+    public Task<IReadOnlyList<Match>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Match>>(Items.Where(x => x.Status != MatchStatus.Ended && x.IsParticipant(userId)).ToList());
 
     public void Add(Match match) => Items.Add(match);
 }
@@ -624,6 +632,47 @@ public class MatchingHandlerTests
                 (_ali, NotificationType.MatchEnded),
             ],
             _notifier.Take());
+    }
+
+    [Fact]
+    public async Task A_leaving_user_withdraws_from_pending_requests_and_ends_their_matches()
+    {
+        var carol = Guid.NewGuid();
+        var deniz = Guid.NewGuid();
+        foreach (var (id, name) in new[] { (carol, "carol"), (deniz, "deniz") })
+        {
+            _users.Users[id] = new UserInfo(id, name, IsActive: true, IsEmailVerified: true);
+            _skills.Offered.Add((id, _spanish));
+        }
+
+        var match = await AcceptAsync((await SendAsync()).Id);
+        var sent = await SendHandler.Handle(new SendSwapRequestCommand(_ali, carol, _guitar, _spanish, null), CancellationToken.None);
+        var received = await SendHandler.Handle(new SendSwapRequestCommand(deniz, _ali, _spanish, _guitar, null), CancellationToken.None);
+        var unrelated = await SendHandler.Handle(new SendSwapRequestCommand(deniz, carol, _spanish, _spanish, null), CancellationToken.None);
+        _notifier.Take();
+        _publisher.Published.Clear();
+
+        await new CloseMatchingOnAccountDeletion(_requests, _matches, _publisher, _notifier, _clock)
+            .Handle(new AccountDeletionRequested(_ali), CancellationToken.None);
+
+        SwapRequestStatus StatusOf(Guid id) => _requests.Items.Single(x => x.Id == id).Status;
+        Assert.Equal(SwapRequestStatus.Cancelled, StatusOf(sent.Id));
+        Assert.Equal(SwapRequestStatus.Cancelled, StatusOf(received.Id));
+        Assert.Equal(SwapRequestStatus.Pending, StatusOf(unrelated.Id));
+        var ended = _matches.Items.Single(x => x.Id == match.Id);
+        Assert.Equal((MatchStatus.Ended, MatchEndReason.AccountDeleted), (ended.Status, ended.EndReason));
+        Assert.Equal(new MatchEnded(match.Id), Assert.Single(_publisher.Published));
+        Assert.Equal(
+            [
+                (carol, NotificationType.SwapRequestCancelled),
+                (deniz, NotificationType.SwapRequestExpired),
+                (_ayse, NotificationType.MatchEnded),
+            ],
+            _notifier.Take());
+
+        // Neither side waits before asking again: nobody refused anybody.
+        _users.Users[_ali] = _users.Users[_ali] with { IsActive = true };
+        await SendHandler.Handle(new SendSwapRequestCommand(deniz, _ali, _spanish, _guitar, null), CancellationToken.None);
     }
 
     [Fact]

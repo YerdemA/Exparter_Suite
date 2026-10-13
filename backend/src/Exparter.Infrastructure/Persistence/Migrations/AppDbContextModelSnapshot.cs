@@ -22,6 +22,32 @@ namespace Exparter.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Exparter.Domain.Identity.BlockedEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("BlockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("blocked_until");
+
+                    b.Property<string>("EmailHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("email_hash")
+                        .IsFixedLength();
+
+                    b.HasKey("Id")
+                        .HasName("pk_blocked_emails");
+
+                    b.HasIndex("EmailHash")
+                        .HasDatabaseName("ix_blocked_emails_email_hash");
+
+                    b.ToTable("blocked_emails", "identity");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Identity.OneTimeToken", b =>
                 {
                     b.Property<Guid>("Id")

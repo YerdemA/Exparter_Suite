@@ -14,6 +14,7 @@ internal sealed class IdentityTestContext
     public InMemoryUsers Users { get; } = new();
     public InMemoryRefreshTokens RefreshTokens { get; } = new();
     public InMemoryOneTimeTokens OneTimeTokens { get; } = new();
+    public InMemoryBlockedEmails BlockedEmails { get; } = new();
     public FakePasswordHasher Hasher { get; } = new();
     public FakeTokenService Tokens { get; } = new();
     public RecordingEmailSender Emails { get; } = new();
@@ -78,6 +79,12 @@ internal sealed class InMemoryUsers : IUserRepository
     public Task<User?> GetByUsernameAsync(string normalizedUsername, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Username == normalizedUsername));
 
+    public Task<IReadOnlyList<User>> ListDueForErasureAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<User>>(Items
+            .Where(x => x.Status == UserStatus.PendingDeletion && x.PermanentDeletionAt <= now)
+            .Take(limit)
+            .ToList());
+
     public void Add(User user) => Items.Add(user);
 }
 
@@ -97,6 +104,12 @@ internal sealed class InMemoryRefreshTokens : IRefreshTokenRepository
         CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<RefreshToken>>(Items.Where(x => x.UserId == userId && x.IsActive(now)).ToList());
 
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        Items.RemoveAll(x => x.UserId == userId);
+        return Task.CompletedTask;
+    }
+
     public void Add(RefreshToken token) => Items.Add(token);
 }
 
@@ -114,7 +127,29 @@ internal sealed class InMemoryOneTimeTokens : IOneTimeTokenRepository
         Task.FromResult<IReadOnlyList<OneTimeToken>>(
             Items.Where(x => x.UserId == userId && x.Purpose == purpose && x.UsedAt is null).ToList());
 
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        Items.RemoveAll(x => x.UserId == userId);
+        return Task.CompletedTask;
+    }
+
     public void Add(OneTimeToken token) => Items.Add(token);
+}
+
+internal sealed class InMemoryBlockedEmails : IBlockedEmailRepository
+{
+    public List<BlockedEmail> Items { get; } = [];
+
+    public Task<bool> IsBlockedAsync(string emailHash, DateTimeOffset now, CancellationToken cancellationToken) =>
+        Task.FromResult(Items.Any(x => x.EmailHash == emailHash && x.BlockedUntil > now));
+
+    public void Add(BlockedEmail blockedEmail) => Items.Add(blockedEmail);
+
+    public Task DeleteExpiredAsync(DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        Items.RemoveAll(x => x.BlockedUntil <= now);
+        return Task.CompletedTask;
+    }
 }
 
 internal sealed class FakePasswordHasher : IPasswordHasher

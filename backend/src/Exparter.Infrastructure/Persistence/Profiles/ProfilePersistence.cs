@@ -33,4 +33,6 @@ internal sealed class ProfileRepository(AppDbContext dbContext) : IProfileReposi
         await dbContext.Profiles.AsNoTracking().Where(x => userIds.Contains(x.UserId)).ToListAsync(cancellationToken);
 
     public void Add(Profile profile) => dbContext.Profiles.Add(profile);
+
+    public void Remove(Profile profile) => dbContext.Profiles.Remove(profile);
 }

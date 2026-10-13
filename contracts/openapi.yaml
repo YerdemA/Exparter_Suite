@@ -52,6 +52,9 @@ paths:
       tags: [Auth]
       operationId: register
       summary: Create an account
+      description: |
+        The email address of an account that was deleted for good cannot be registered
+        again for three months (`email_recently_deleted`).
       security: []
       requestBody:
         required: true

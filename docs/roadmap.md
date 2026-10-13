@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0–7 tamamlandı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0–7 tamamlandı; dilim 8'in ilk parçası (8A) onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -99,7 +99,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 5 | Gerçek zamanlı mesajlaşma | Tamamlandı (2026-10-13) |
 | 6 | Takas oturumları | Tamamlandı (2026-10-13) |
 | 7 | Değerlendirmeler | Tamamlandı (2026-10-13) |
-| 8 | Bildirimler | Başlamadı |
+| 8 | Bildirimler | 8A (uygulama içi) tamamlandı, onay bekliyor; 8B (telefon bildirimi) başlamadı |
 
 ### Dilim 0 — E-posta doğrulama ve parola sıfırlama
 
@@ -191,6 +191,21 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 - Mobil: profillerde "Değerlendirmeler" bölümü (ortalama, liste, kendi değerlendirmeni silme), değerlendirme yazma ekranı, eşleşme ayrıntısında ve karşı tarafın profilinde yalnızca değerlendirme hakkı varken görünen "Değerlendir" düğmesi.
 - Testler (2026-10-13): backend 437 (152 domain, 196 uygulama, 89 entegrasyon), mobil 175. Uçtan uca test emülatörde geçti: tamamlanan buluşmadan sonra eşleşmeden değerlendirme yazma, karşı tarafın profilinde ortalamanın görünmesi ve kendi profilinde alınan değerlendirme.
 - Sonraya bırakılan: değerlendirme bildirimi (dilim 8); değerlendirmeyi şikâyet etme (moderasyon); silinen hesabın yazdığı değerlendirmelerin "Silinmiş kullanıcı" adıyla kalması ve aldıklarının silinmesi (dilim 8, kalıcı hesap silme); profilde yalnızca ilk 50 değerlendirme listelenir.
+
+### Dilim 8A — Uygulama içi bildirimler ve hesap silme
+
+Dilim 8 iki parçaya bölündü (kullanıcı onayı, 2026-10-13): 8A Firebase gerektirmeyen her şey, 8B telefon bildirimleri (FCM).
+
+- Bildirimler: bir kullanıcının işlemi karşı tarafı ilgilendiriyorsa bildirim üretilir (istek, sonlandırma isteği, eşleşmenin bitmesi, oturum adımları ve iptal sebebi, değerlendirme, yetenek önerisinin sonucu). Bildirim, onu doğuran işlemle aynı işlemde kaydedilir; açık bağlantılara `NotificationReceived` olayıyla anında gider. Metni istemci üretir. Kurallar: NT-01–NT-10.
+- Hatırlatmalar: cevaplanmamış sonlandırma isteği ve onaylanmamış tamamlandı işareti için son 24 saatte bir kez; planlanmış çevrimiçi oturum için 24 saat ve 1 saat önce iki tarafa. Kendiliğinden sonuçlanan süreler (süresi dolan istek, cevaplanmayan öneri, kendiliğinden biten eşleşme ve tamamlanan oturum) de bildirilir.
+- Sözleşme: kullanılmayan `MatchCreated` türü çıkarıldı (kabul bildirimi eşleşmenin kimliğini taşır), `SessionStartingSoon` eklendi. Cihaz kaydı uçları da yazıldı; gönderim 8B'de.
+- Saklama: bildirimler 90 gün sonra silinir.
+- Mobil: Keşfet ekranının üst köşesinde okunmamış sayısını gösteren zil, bildirimler ekranı (okundu işaretleme, tümünü okundu sayma, dokununca ilgili ekrana gitme). Gelen bildirim, açık ekrandaki istek, eşleşme, oturum ve değerlendirme listelerini de yeniler.
+- Hesap silme isteği: bekleyen istekler iptal edilir, eşleşme `AccountDeleted` sebebiyle biter (gerçekleşmemiş oturumlar da iptal olur), sohbetler kapanır; karşı taraflara bildirim gider. Giriş yapıp silmeyi geri alan kullanıcıya kapananlar geri gelmez.
+- Kalıcı silme: 30 gün dolunca arka plan işi profili, avatarı, yetenekleri, bildirimleri, cihazları, token'ları ve kullanıcının aldığı değerlendirmeleri siler. Hesap satırı kimliksiz olarak kalır; yazdığı mesaj ve değerlendirmeler "Silinmiş kullanıcı" adıyla görünür. E-postanın hash'i 3 ay tutulur ve bu sürede aynı adresle kayıt `email_recently_deleted` ile reddedilir; kullanıcı adı hemen serbest kalır.
+- Mobil: profil ekranında parola isteyen "Hesabımı sil" akışı (önceden yoktu).
+- Testler (2026-10-13): backend 476 (166 domain, 214 uygulama, 96 entegrasyon), mobil 190.
+- Sonraya bırakılan: telefon bildirimleri ve yeni mesaj bildirimi (8B); bildirim izni akışı (8B); hesap silme isteğinde açık hub bağlantılarının kapatılması; silinen hesap hakkındaki açık şikâyetlerin saklanması (moderasyon); saklama sürelerinin hukuki doğrulaması (yayından önce).
 
 ## Geliştirme ortamı
 

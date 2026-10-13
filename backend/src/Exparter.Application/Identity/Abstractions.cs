@@ -12,6 +12,9 @@ public interface IUserRepository
 
     Task<User?> GetByUsernameAsync(string normalizedUsername, CancellationToken cancellationToken);
 
+    /// <summary>Accounts whose deletion can no longer be taken back, oldest request first.</summary>
+    Task<IReadOnlyList<User>> ListDueForErasureAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
+
     void Add(User user);
 }
 
@@ -23,6 +26,8 @@ public interface IRefreshTokenRepository
 
     Task<IReadOnlyList<RefreshToken>> ListActiveByUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken);
 
+    Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken);
+
     void Add(RefreshToken token);
 }
 
@@ -31,6 +36,8 @@ public interface IOneTimeTokenRepository
     Task<OneTimeToken?> GetByHashAsync(string tokenHash, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<OneTimeToken>> ListUnusedAsync(Guid userId, OneTimeTokenPurpose purpose, CancellationToken cancellationToken);
+
+    Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken);
 
     void Add(OneTimeToken token);
 }

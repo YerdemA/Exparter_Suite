@@ -51,6 +51,9 @@ internal sealed class ReviewRepository(AppDbContext dbContext) : IReviewReposito
             .Select(group => new { UserId = group.Key, Count = group.Count(), Average = group.Average(x => x.Rating) })
             .ToDictionaryAsync(x => x.UserId, x => new RatingSummaryDto(x.Count, x.Average), cancellationToken);
 
+    public Task DeleteReceivedAsync(Guid revieweeId, CancellationToken cancellationToken) =>
+        dbContext.Reviews.Where(x => x.RevieweeId == revieweeId).ExecuteDeleteAsync(cancellationToken);
+
     public void Add(Review review) => dbContext.Reviews.Add(review);
 
     private IQueryable<Review> Visible => dbContext.Reviews.AsNoTracking().Where(x => x.DeletedAt == null);

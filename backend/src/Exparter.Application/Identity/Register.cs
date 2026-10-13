@@ -22,6 +22,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 public sealed class RegisterCommandHandler(
     IUserRepository users,
     IOneTimeTokenRepository oneTimeTokens,
+    IBlockedEmailRepository blockedEmails,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
     TokenIssuer tokenIssuer,
@@ -37,12 +38,17 @@ public sealed class RegisterCommandHandler(
             throw IdentityAppErrors.EmailAlreadyRegistered();
         }
 
+        var now = timeProvider.GetUtcNow();
+        if (await blockedEmails.IsBlockedAsync(BlockedEmail.HashOf(command.Email), now, cancellationToken))
+        {
+            throw IdentityAppErrors.EmailRecentlyDeleted();
+        }
+
         if (await users.GetByUsernameAsync(command.Username, cancellationToken) is not null)
         {
             throw IdentityAppErrors.UsernameAlreadyTaken();
         }
 
-        var now = timeProvider.GetUtcNow();
         var user = User.Register(
             command.Email,
             command.Username,

@@ -58,6 +58,11 @@ internal sealed class ConversationRepository(AppDbContext dbContext) : IConversa
         return dbContext.Conversations.FirstOrDefaultAsync(x => x.UserLowId == low && x.UserHighId == high, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Conversation>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        await dbContext.Conversations
+            .Where(x => x.ClosedAt == null && (x.UserLowId == userId || x.UserHighId == userId))
+            .ToListAsync(cancellationToken);
+
     public Task<PagedList<Conversation>> ListAsync(Guid userId, PageRequest page, CancellationToken cancellationToken) =>
         dbContext.Conversations.AsNoTracking()
             .Where(x => x.UserLowId == userId || x.UserHighId == userId)

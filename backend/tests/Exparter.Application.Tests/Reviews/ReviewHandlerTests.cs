@@ -37,6 +37,12 @@ internal sealed class InMemoryReviews : IReviewRepository
             .GroupBy(x => x.RevieweeId)
             .ToDictionary(group => group.Key, group => new RatingSummaryDto(group.Count(), group.Average(x => x.Rating))));
 
+    public Task DeleteReceivedAsync(Guid revieweeId, CancellationToken cancellationToken)
+    {
+        Items.RemoveAll(x => x.RevieweeId == revieweeId);
+        return Task.CompletedTask;
+    }
+
     public void Add(Review review) => Items.Add(review);
 
     private static PagedList<Review> Paged(IEnumerable<Review> source, PageRequest page)

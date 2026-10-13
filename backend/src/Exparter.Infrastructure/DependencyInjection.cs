@@ -56,6 +56,7 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
+        services.AddScoped<IBlockedEmailRepository, BlockedEmailRepository>();
         services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddScoped<ISkillRepository, SkillRepository>();
         services.AddScoped<IUserSkillRepository, UserSkillRepository>();

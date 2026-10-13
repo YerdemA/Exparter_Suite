@@ -69,6 +69,9 @@ internal sealed class NotificationRepository(AppDbContext dbContext) : INotifica
     public Task<int> DeleteCreatedBeforeAsync(DateTimeOffset moment, CancellationToken cancellationToken) =>
         dbContext.Notifications.Where(x => x.CreatedAt < moment).ExecuteDeleteAsync(cancellationToken);
 
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        dbContext.Notifications.Where(x => x.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+
     public void Add(Notification notification) => dbContext.Notifications.Add(notification);
 }
 
@@ -79,6 +82,9 @@ internal sealed class DeviceRepository(AppDbContext dbContext) : IDeviceReposito
 
     public Task<Device?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Devices.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        dbContext.Devices.Where(x => x.UserId == userId).ExecuteDeleteAsync(cancellationToken);
 
     public void Add(Device device) => dbContext.Devices.Add(device);
 

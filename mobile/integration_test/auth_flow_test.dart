@@ -388,6 +388,8 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Anlatımı çok açıktı.');
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.reviewSubmit));
     await pumpUntilFound(tester, find.text(l10n.ratingSummary(9, 1)));
+    // The average comes with the profile, the list of reviews a moment later.
+    await pumpUntilFound(tester, find.text('Anlatımı çok açıktı.'));
     await tester.ensureVisible(find.text('Anlatımı çok açıktı.'));
     expect(find.text(l10n.reviewRatingOutOf(9)), findsOneWidget);
     expect(find.text(l10n.reviewDelete), findsOneWidget);
@@ -453,5 +455,27 @@ void main() {
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
     await openProfileTab(tester);
     expect(find.text('@$username'), findsOneWidget);
+
+    // Delete the account: it needs the password, signs out, and ends the match for the
+    // peer. Signing in again takes the deletion back.
+    await waitForNotices(tester);
+    // Pressed directly: on the device the test's tap at this spot does not land, though
+    // the button is in view and works by hand.
+    tester.widget<TextButton>(find.widgetWithText(TextButton, l10n.accountDelete)).onPressed!();
+    await pumpUntilFound(tester, find.text(l10n.accountDeleteBody));
+    await tester.enterText(find.byType(TextField), newPassword);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, l10n.accountDelete));
+    await pumpUntilFound(tester, find.text(l10n.loginTitle));
+    final afterDeletion = await api.get<Map<String, dynamic>>('/api/v1/matches/$matchId', options: peerAuth);
+    expect(afterDeletion.data!['status'], 'Ended');
+    expect(afterDeletion.data!['endReason'], 'AccountDeleted');
+    await waitForNotices(tester);
+
+    await tester.enterText(field(l10n.loginIdentifierLabel), username);
+    await tester.enterText(field(l10n.passwordLabel), newPassword);
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
+    await openProfileTab(tester);
+    expect(find.text(l10n.homeAccountRestored), findsOneWidget);
   });
 }

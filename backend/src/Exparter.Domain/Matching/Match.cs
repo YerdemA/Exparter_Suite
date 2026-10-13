@@ -117,6 +117,15 @@ public sealed class Match
         }
     }
 
+    /// <summary>One of the two users is leaving: the match ends without anyone being asked.</summary>
+    public void EndBecauseAccountDeleted(DateTimeOffset now)
+    {
+        if (Status != MatchStatus.Ended)
+        {
+            End(MatchEndReason.AccountDeleted, now);
+        }
+    }
+
     /// <summary>
     /// Says, once per end request and only in its last day, that the user who has not
     /// answered it should be reminded.

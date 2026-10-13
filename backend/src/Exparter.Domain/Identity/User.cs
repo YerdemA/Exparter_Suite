@@ -98,4 +98,24 @@ public sealed class User
         DeletionRequestedAt = null;
         return true;
     }
+
+    /// <summary>
+    /// Makes a deletion permanent once it can no longer be taken back. The row stays, as
+    /// the author of what the user wrote, but nothing in it identifies anyone any more.
+    /// </summary>
+    public void Erase(DateTimeOffset now)
+    {
+        if (Status != UserStatus.PendingDeletion || now < PermanentDeletionAt)
+        {
+            throw IdentityErrors.InvalidState("Only an account whose deletion can no longer be taken back can be erased.");
+        }
+
+        // Unique placeholders: the address and the name become free for others to take.
+        var tag = Id.ToString("N");
+        Status = UserStatus.Deleted;
+        Email = $"{tag}@deleted.invalid";
+        Username = $"d.{tag[^(Identity.Username.MaxLength - 2)..]}";
+        PasswordHash = string.Empty;
+        EmailVerifiedAt = null;
+    }
 }

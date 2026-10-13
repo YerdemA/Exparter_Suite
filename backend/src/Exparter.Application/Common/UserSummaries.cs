@@ -32,7 +32,8 @@ internal sealed class UserSummaries(IUserDirectory users, IProfileDirectory prof
             id => id,
             id =>
             {
-                if (!accounts.TryGetValue(id, out var account))
+                // An erased account is described like one that was never there.
+                if (!accounts.TryGetValue(id, out var account) || account.IsDeleted)
                 {
                     return new UserSummaryDto(id, null, null, null, IsDeleted: true);
                 }

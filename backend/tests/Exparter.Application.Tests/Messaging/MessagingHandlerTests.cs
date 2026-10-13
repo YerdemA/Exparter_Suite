@@ -22,6 +22,9 @@ internal sealed class InMemoryConversations : IConversationRepository
     public Task<Conversation?> FindByUsersAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.IsParticipant(firstUserId) && x.IsParticipant(secondUserId)));
 
+    public Task<IReadOnlyList<Conversation>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Conversation>>(Items.Where(x => !x.IsClosed && x.IsParticipant(userId)).ToList());
+
     public Task<PagedList<Conversation>> ListAsync(Guid userId, PageRequest page, CancellationToken cancellationToken)
     {
         var all = Items.Where(x => x.IsParticipant(userId)).OrderByDescending(x => x.LastActivityAt).ToList();

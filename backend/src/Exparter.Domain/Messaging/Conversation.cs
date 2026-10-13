@@ -108,6 +108,16 @@ public sealed class Conversation
         ClosedByUserId = userId;
     }
 
+    /// <summary>One of the two users is leaving: the conversation becomes read-only, match or no match.</summary>
+    public void CloseBecauseAccountDeleted(Guid userId, DateTimeOffset now)
+    {
+        if (!IsClosed)
+        {
+            ClosedAt = now;
+            ClosedByUserId = userId;
+        }
+    }
+
     /// <summary>The two users matched again: the conversation continues where it stopped.</summary>
     public void Reopen(DateTimeOffset now)
     {

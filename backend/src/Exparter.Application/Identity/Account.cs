@@ -30,6 +30,7 @@ public sealed class RequestAccountDeletionCommandHandler(
     IUserRepository users,
     IRefreshTokenRepository refreshTokens,
     IPasswordHasher passwordHasher,
+    IPublisher publisher,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<RequestAccountDeletionCommand, AccountDeletionScheduled>
 {
@@ -51,6 +52,9 @@ public sealed class RequestAccountDeletionCommandHandler(
             refreshToken.Revoke(now);
         }
 
+        // Published before saving: what other modules close for the leaving user is
+        // committed together with the request, or not at all.
+        await publisher.Publish(new AccountDeletionRequested(user.Id), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return new AccountDeletionScheduled(user.PermanentDeletionAt!.Value);
     }
