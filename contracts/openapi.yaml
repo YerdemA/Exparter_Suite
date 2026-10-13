@@ -2427,9 +2427,10 @@ components:
       properties:
         canReview: { type: boolean }
         reason:
+          type: string
+          nullable: true
           allOf:
             - $ref: '#/components/schemas/ReviewBlockReason'
-          nullable: true
           description: Why a review cannot be written. Null when it can.
 
     ReviewBlockReason:
