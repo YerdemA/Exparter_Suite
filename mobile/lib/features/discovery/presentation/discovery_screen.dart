@@ -11,6 +11,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
+import '../../reviews/presentation/user_reviews_section.dart';
 import '../../skills/presentation/skill_controller.dart';
 import '../../skills/presentation/skill_labels.dart';
 import '../domain/discovery_repository.dart';
@@ -397,6 +398,7 @@ class _UserCard extends StatelessWidget {
                         Text(user.displayName ?? username ?? '', style: theme.textTheme.titleMedium),
                         if (user.displayName != null && username != null) Text(username, style: muted),
                         if (modes != null) Text(modes, style: muted),
+                        if (item.rating.reviewCount > 0) RatingLabel(rating: item.rating),
                       ],
                     ),
                   ),

@@ -12,6 +12,7 @@ import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/matches/domain/match_repository.dart';
 import 'package:exparter/features/messages/domain/message_repository.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
+import 'package:exparter/features/reviews/domain/review_repository.dart';
 import 'package:exparter/features/sessions/domain/session_repository.dart';
 import 'package:exparter/features/skills/domain/skill_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
@@ -32,6 +33,18 @@ class MockMatchRepository extends Mock implements MatchRepository {}
 class MockMessageRepository extends Mock implements MessageRepository {}
 
 class MockSessionRepository extends Mock implements SessionRepository {}
+
+class MockReviewRepository extends Mock implements ReviewRepository {}
+
+/// A review repository for tests that are about something else: no reviews, none can be written.
+MockReviewRepository quietReviewRepository() {
+  final repository = MockReviewRepository();
+  when(() => repository.listReceived(any())).thenAnswer((_) async => []);
+  when(() => repository.getEligibility(any())).thenAnswer(
+    (_) async => const ReviewEligibility(canReview: false, reason: ReviewBlockReason.noCompletedSession),
+  );
+  return repository;
+}
 
 const testStats = UserStats(totalMatches: 5, completedMatches: 3, cancelledMatches: 1, completedSessions: 9);
 

@@ -5,6 +5,7 @@ using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
 using Exparter.Application.Sessions;
 using Exparter.Application.Profiles;
+using Exparter.Application.Reviews;
 using Exparter.Application.Skills;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,8 @@ public static class DependencyInjection
         services.AddScoped<ConversationDtoFactory>();
         services.AddScoped<ISessionDirectory, SessionDirectory>();
         services.AddScoped<IUserStats, UserStats>();
+        services.AddScoped<IReviewDirectory, ReviewDirectory>();
+        services.AddScoped<ReviewDtoFactory>();
         return services;
     }
 }

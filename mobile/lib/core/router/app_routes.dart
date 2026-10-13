@@ -8,6 +8,7 @@ abstract final class AppRoutes {
   static const userProfileSegment = 'users/:$userIdParameter';
   static const userIdParameter = 'userId';
   static const sendRequestSegment = 'request';
+  static const writeReviewSegment = 'review';
   static const matches = '/matches';
   static const matchDetailSegment = ':$matchIdParameter';
   static const matchIdParameter = 'matchId';
@@ -27,6 +28,8 @@ abstract final class AppRoutes {
   static String userProfile(String userId) => '/users/$userId';
 
   static String sendRequest(String userId) => '/users/$userId/$sendRequestSegment';
+
+  static String writeReview(String userId) => '/users/$userId/$writeReviewSegment';
 
   static String matchDetail(String matchId) => '$matches/$matchId';
 

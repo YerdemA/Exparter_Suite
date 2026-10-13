@@ -1,3 +1,4 @@
+using Exparter.Application.Common;
 using Exparter.Application.Matching;
 using Exparter.Domain.Skills;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,8 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
         public bool AcceptsOnline { get; init; }
         public bool AcceptsInPerson { get; init; }
         public int Compatibility { get; init; }
+        public int ReviewCount { get; init; }
+        public double? AverageRating { get; init; }
     }
 
     public async Task<IReadOnlyList<DiscoveredUser>> FindAsync(DiscoveryCriteria criteria, CancellationToken cancellationToken)
@@ -38,7 +41,8 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                     p.accepts_online, p.accepts_in_person,
                     CASE WHEN fit.teaches_viewer AND fit.learns_from_viewer THEN 2
                          WHEN fit.teaches_viewer THEN 1
-                         ELSE 0 END AS compatibility
+                         ELSE 0 END AS compatibility,
+                    rating.review_count, rating.average_rating
              FROM identity.users u
              JOIN profiles.profiles p ON p.user_id = u.id
              CROSS JOIN LATERAL (
@@ -64,6 +68,11 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                            AND ((me.accepts_online AND p.accepts_online)
                              OR (me.accepts_in_person AND p.accepts_in_person AND me.city = p.city))) AS shares_preference
              ) fit
+             CROSS JOIN LATERAL (
+                 SELECT count(*)::int AS review_count, avg(r.rating)::float8 AS average_rating
+                 FROM reviews.reviews r
+                 WHERE r.reviewee_id = u.id AND r.deleted_at IS NULL
+             ) rating
              WHERE u.id <> {viewer}
                AND u.status = 'Active'
                AND ({searching}
@@ -87,7 +96,7 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                AND ({pattern}::text IS NULL
                  OR u.username LIKE {pattern}::text ESCAPE '\'
                  OR lower(translate(p.display_name, {from}, {to})) LIKE {pattern}::text ESCAPE '\')
-             ORDER BY compatibility DESC, fit.shares_preference DESC, p.updated_at DESC, u.id
+             ORDER BY compatibility DESC, fit.shares_preference DESC, rating.average_rating DESC NULLS LAST, p.updated_at DESC, u.id
              LIMIT {criteria.Limit} OFFSET {criteria.Offset}
              """).ToListAsync(cancellationToken);
 
@@ -120,6 +129,7 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                 row.AcceptsOnline,
                 row.AcceptsInPerson,
                 (Compatibility)row.Compatibility,
+                new RatingSummaryDto(row.ReviewCount, row.AverageRating),
                 SkillsOf(row.UserId, UserSkillType.Offered),
                 SkillsOf(row.UserId, UserSkillType.Wanted)))
             .ToList();

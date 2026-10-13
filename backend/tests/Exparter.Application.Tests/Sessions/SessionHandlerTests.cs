@@ -60,6 +60,12 @@ internal sealed class InMemorySessions : ISessionRepository
             && x.IsParticipant(userId)
             && x.IsParticipant(otherUserId)));
 
+    public Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, DateTimeOffset now, CancellationToken cancellationToken) =>
+        Task.FromResult(Items
+            .Where(x => x.IsParticipant(userId) && x.IsParticipant(otherUserId) && x.StatusAt(now) == SwapSessionStatus.Completed)
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefault());
+
     public void Add(SwapSession session) => Items.Add(session);
 
     private static PagedList<SwapSession> Paged(IEnumerable<SwapSession> source, PageRequest page)

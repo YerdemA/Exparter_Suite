@@ -2,6 +2,7 @@ import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/api_providers.dart';
 import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_store.dart';
+import 'package:exparter/features/reviews/data/api_review_repository.dart';
 import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/features/sessions/presentation/match_sessions_section.dart';
 import 'package:exparter/features/sessions/presentation/propose_session_screen.dart';
@@ -79,6 +80,7 @@ void main() {
 
   List<Override> overrides() => [
         sessionRepositoryProvider.overrideWithValue(repository),
+        reviewRepositoryProvider.overrideWithValue(quietReviewRepository()),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),
       ];
 

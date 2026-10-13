@@ -70,7 +70,7 @@ internal static class Avatars
 
 internal static class ProfileMapping
 {
-    public static ProfileDto ToDto(this Profile profile, IObjectStorage storage) =>
+    public static ProfileDto ToDto(this Profile profile, IObjectStorage storage, RatingSummaryDto rating) =>
         new(
             profile.UserId,
             profile.DisplayName,
@@ -80,7 +80,7 @@ internal static class ProfileMapping
             profile.AcceptsInPerson,
             Avatars.UrlOf(profile, storage),
             profile.IsComplete,
-            RatingSummaryDto.None,
+            rating,
             profile.CreatedAt,
             profile.UpdatedAt);
 }

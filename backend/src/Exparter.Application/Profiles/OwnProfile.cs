@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Reviews;
 using Exparter.Domain.Profiles;
 using FluentValidation;
 using Mediator;
@@ -30,14 +31,14 @@ public sealed class CreateProfileOnUserRegistered(IProfileRepository profiles, T
 
 public sealed record GetOwnProfileQuery(Guid UserId) : IQuery<ProfileDto>;
 
-public sealed class GetOwnProfileQueryHandler(IProfileRepository profiles, IObjectStorage storage)
+public sealed class GetOwnProfileQueryHandler(IProfileRepository profiles, IObjectStorage storage, IReviewDirectory reviews)
     : IQueryHandler<GetOwnProfileQuery, ProfileDto>
 {
     public async ValueTask<ProfileDto> Handle(GetOwnProfileQuery query, CancellationToken cancellationToken)
     {
         var profile = await profiles.GetByUserIdAsync(query.UserId, cancellationToken)
             ?? throw ProfileAppErrors.ProfileNotFound();
-        return profile.ToDto(storage);
+        return profile.ToDto(storage, await reviews.GetRatingAsync(profile.UserId, cancellationToken));
     }
 }
 
@@ -74,6 +75,7 @@ public sealed class UpdateOwnProfileCommandValidator : AbstractValidator<UpdateO
 public sealed class UpdateOwnProfileCommandHandler(
     IProfileRepository profiles,
     IObjectStorage storage,
+    IReviewDirectory reviews,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<UpdateOwnProfileCommand, ProfileDto>
 {
@@ -90,7 +92,7 @@ public sealed class UpdateOwnProfileCommandHandler(
             command.AcceptsInPerson,
             timeProvider.GetUtcNow());
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return profile.ToDto(storage);
+        return profile.ToDto(storage, await reviews.GetRatingAsync(profile.UserId, cancellationToken));
     }
 }
 
@@ -99,7 +101,8 @@ public sealed record GetUserProfileQuery(Guid UserId) : IQuery<PublicProfileDto>
 public sealed class GetUserProfileQueryHandler(
     IProfileRepository profiles,
     IUserDirectory users,
-    IObjectStorage storage) : IQueryHandler<GetUserProfileQuery, PublicProfileDto>
+    IObjectStorage storage,
+    IReviewDirectory reviews) : IQueryHandler<GetUserProfileQuery, PublicProfileDto>
 {
     public async ValueTask<PublicProfileDto> Handle(GetUserProfileQuery query, CancellationToken cancellationToken)
     {
@@ -122,6 +125,6 @@ public sealed class GetUserProfileQueryHandler(
             profile.City,
             profile.AcceptsOnline,
             profile.AcceptsInPerson,
-            RatingSummaryDto.None);
+            await reviews.GetRatingAsync(profile.UserId, cancellationToken));
     }
 }

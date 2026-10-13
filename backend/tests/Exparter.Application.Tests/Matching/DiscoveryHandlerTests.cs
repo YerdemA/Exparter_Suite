@@ -1,3 +1,4 @@
+using Exparter.Application.Common;
 using Exparter.Application.Matching;
 using Exparter.Application.Tests.Profiles;
 using Exparter.Domain.Skills;
@@ -34,7 +35,7 @@ public class DiscoveryHandlerTests
         for (var index = 0; index < count; index++)
         {
             _readModel.Ranked.Add(new DiscoveredUser(
-                Guid.NewGuid(), $"user{index}", $"User {index}", null, "34", true, false, Compatibility.None, [], []));
+                Guid.NewGuid(), $"user{index}", $"User {index}", null, "34", true, false, Compatibility.None, RatingSummaryDto.None, [], []));
         }
     }
 
@@ -51,6 +52,7 @@ public class DiscoveryHandlerTests
             AcceptsOnline: true,
             AcceptsInPerson: true,
             Compatibility.Mutual,
+            new RatingSummaryDto(4, 9.25),
             [new DiscoveredSkill(skillId, "Gitar", SkillLevel.Advanced)],
             []));
 
@@ -60,6 +62,7 @@ public class DiscoveryHandlerTests
         Assert.Equal("deniz", item.User.Username);
         Assert.Equal("https://storage.test/download/avatars/x/1.jpg", item.User.AvatarUrl?.ToString());
         Assert.Equal(Compatibility.Mutual, item.Compatibility);
+        Assert.Equal(new RatingSummaryDto(4, 9.25), item.Rating);
         Assert.Equal(skillId, Assert.Single(item.OfferedSkills).Skill.Id);
         Assert.Null(page.NextCursor);
     }

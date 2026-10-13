@@ -7,6 +7,7 @@ import 'package:exparter/features/discovery/presentation/discovery_labels.dart';
 import 'package:exparter/features/discovery/presentation/discovery_screen.dart';
 import 'package:exparter/features/discovery/presentation/user_profile_screen.dart';
 import 'package:exparter/features/profile/data/api_profile_repository.dart';
+import 'package:exparter/features/reviews/data/api_review_repository.dart';
 import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/features/skills/data/api_skill_repository.dart';
 import 'package:exparter/features/skills/presentation/skill_controller.dart';
@@ -35,6 +36,7 @@ void main() {
 
   List<Override> overrides() => [
         sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
+        reviewRepositoryProvider.overrideWithValue(quietReviewRepository()),
         discoveryRepositoryProvider.overrideWithValue(repository),
         skillRepositoryProvider.overrideWithValue(skillRepository),
         skillCategoriesProvider.overrideWith((ref) async => testCategories),

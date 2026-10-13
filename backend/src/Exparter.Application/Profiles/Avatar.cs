@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Reviews;
 using FluentValidation;
 using Mediator;
 
@@ -42,6 +43,7 @@ public sealed class SetAvatarCommandValidator : AbstractValidator<SetAvatarComma
 public sealed class SetAvatarCommandHandler(
     IProfileRepository profiles,
     IObjectStorage storage,
+    IReviewDirectory reviews,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<SetAvatarCommand, ProfileDto>
 {
@@ -73,7 +75,7 @@ public sealed class SetAvatarCommandHandler(
             await storage.DeleteAsync(previous, cancellationToken);
         }
 
-        return profile.ToDto(storage);
+        return profile.ToDto(storage, await reviews.GetRatingAsync(profile.UserId, cancellationToken));
     }
 }
 

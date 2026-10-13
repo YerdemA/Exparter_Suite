@@ -2,6 +2,7 @@ using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
+using Exparter.Application.Reviews;
 using Exparter.Application.Sessions;
 using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
@@ -11,6 +12,7 @@ using Exparter.Infrastructure.Persistence;
 using Exparter.Infrastructure.Persistence.Identity;
 using Exparter.Infrastructure.Persistence.Matching;
 using Exparter.Infrastructure.Persistence.Messaging;
+using Exparter.Infrastructure.Persistence.Reviews;
 using Exparter.Infrastructure.Persistence.Sessions;
 using Exparter.Infrastructure.Persistence.Profiles;
 using Exparter.Infrastructure.Persistence.Skills;
@@ -60,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<IMatchRepository, MatchRepository>();
         services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
+        services.AddScoped<IReviewRepository, ReviewRepository>();
 
         services.AddOptions<StorageOptions>()
             .Bind(configuration.GetSection(StorageOptions.SectionName))

@@ -11,6 +11,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
+import '../../reviews/presentation/user_reviews_section.dart';
 import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/skill_labels.dart';
 import 'discovery_controller.dart';
@@ -147,6 +148,8 @@ class _Content extends ConsumerWidget {
               _SkillGroup(title: l10n.userOfferedTitle, skills: offered),
               const SizedBox(height: AppSpacing.lg),
               _SkillGroup(title: l10n.userWantedTitle, skills: wanted),
+              const SizedBox(height: AppSpacing.lg),
+              UserReviewsSection(userId: profile.userId, rating: profile.rating),
             ],
           ),
         ),

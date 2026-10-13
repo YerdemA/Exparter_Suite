@@ -165,6 +165,40 @@
   "errorSessionExpired": "Oturumunuz sona erdi. Lütfen yeniden giriş yapın.",
   "errorNotFound": "Aradığınız içerik bulunamadı.",
   "errorRetry": "Tekrar dene",
+  "errorReviewAlreadyExists": "Bu kullanıcıyı daha önce değerlendirdiniz.",
+  "errorSessionNotCompleted": "Değerlendirme için bu kullanıcıyla tamamlanmış bir oturumunuz olmalı.",
+  "reviewsTitle": "Değerlendirmeler",
+  "reviewsUnavailable": "Değerlendirmeler yüklenemedi.",
+  "ratingNone": "Henüz değerlendirme yok",
+  "ratingSummary": "{average} · {count} değerlendirme",
+  "@ratingSummary": {
+    "placeholders": {
+      "average": {
+        "type": "double",
+        "format": "decimalPatternDigits",
+        "optionalParameters": { "decimalDigits": 1 }
+      },
+      "count": { "type": "int" }
+    }
+  },
+  "reviewRatingOutOf": "{rating}/10",
+  "@reviewRatingOutOf": {
+    "placeholders": {
+      "rating": { "type": "int" }
+    }
+  },
+  "reviewWrite": "Değerlendir",
+  "reviewWriteTitle": "Değerlendirme yaz",
+  "reviewRatingLabel": "Puanınız",
+  "reviewCommentLabel": "Yorum (isteğe bağlı)",
+  "reviewNotice": "Değerlendirme gönderildikten sonra düzenlenemez. Silerseniz yerine yenisini yazamazsınız.",
+  "reviewSubmit": "Gönder",
+  "reviewSent": "Değerlendirmeniz gönderildi.",
+  "reviewDelete": "Değerlendirmeyi sil",
+  "reviewDeleteTitle": "Değerlendirme silinsin mi?",
+  "reviewDeleteBody": "Sildiğiniz değerlendirmenin yerine yenisini yazamazsınız.",
+  "reviewDeleteConfirm": "Sil",
+  "reviewDeleted": "Değerlendirmeniz silindi.",
   "errorSessionInPast": "Oturum için gelecekte bir tarih ve saat seçin.",
   "errorSessionNotStarted": "Oturum başlamadan tamamlandı olarak işaretlenemez.",
   "errorMatchEndPending": "Eşleşme için sonlandırma isteği beklerken yeni oturum eklenemez.",

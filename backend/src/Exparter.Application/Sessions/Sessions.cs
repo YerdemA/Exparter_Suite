@@ -47,6 +47,9 @@ public interface ISessionRepository
     /// </summary>
     Task<bool> HasInPersonMeetingBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken);
 
+    /// <summary>The earliest completed session of the two users, in any of their matches.</summary>
+    Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, DateTimeOffset now, CancellationToken cancellationToken);
+
     void Add(SwapSession session);
 }
 
@@ -59,6 +62,9 @@ public interface ISessionDirectory
     Task<IReadOnlySet<Guid>> GetMatchIdsWithCompletedSessionAsync(
         IReadOnlyCollection<Guid> matchIds,
         CancellationToken cancellationToken);
+
+    /// <returns>The id of a completed session of the two users, or null if they have none.</returns>
+    Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken);
 }
 
 internal sealed class SessionDirectory(ISessionRepository sessions, TimeProvider timeProvider) : ISessionDirectory
@@ -70,6 +76,9 @@ internal sealed class SessionDirectory(ISessionRepository sessions, TimeProvider
         IReadOnlyCollection<Guid> matchIds,
         CancellationToken cancellationToken) =>
         sessions.ListMatchIdsWithCompletedSessionAsync(matchIds, timeProvider.GetUtcNow(), cancellationToken);
+
+    public Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken) =>
+        sessions.FindCompletedBetweenAsync(userId, otherUserId, timeProvider.GetUtcNow(), cancellationToken);
 }
 
 public sealed record SwapSessionDto(

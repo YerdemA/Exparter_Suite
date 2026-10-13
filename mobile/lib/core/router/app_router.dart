@@ -16,6 +16,7 @@ import '../../features/messages/presentation/conversation_screen.dart';
 import '../../features/messages/presentation/conversations_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/reviews/presentation/write_review_screen.dart';
 import '../../features/sessions/presentation/propose_session_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/skills/presentation/skill_picker_screen.dart';
@@ -106,6 +107,11 @@ GoRouter appRouter(Ref ref) {
                         path: AppRoutes.sendRequestSegment,
                         builder: (context, state) =>
                             SendRequestScreen(recipientId: state.pathParameters[AppRoutes.userIdParameter]!),
+                      ),
+                      GoRoute(
+                        path: AppRoutes.writeReviewSegment,
+                        builder: (context, state) =>
+                            WriteReviewScreen(userId: state.pathParameters[AppRoutes.userIdParameter]!),
                       ),
                     ],
                   ),
