@@ -1,6 +1,7 @@
 using System.Globalization;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Matching;
 using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
 using FluentValidation;
@@ -21,6 +22,9 @@ public static class DependencyInjection
         services.AddScoped<IProfileDirectory, ProfileDirectory>();
         services.AddScoped<IUserSkillDirectory, UserSkillDirectory>();
         services.AddScoped<IInteractionRequirements, InteractionRequirements>();
+        services.AddScoped<IUserSummaries, UserSummaries>();
+        services.AddScoped<ISkillUsage, SkillUsage>();
+        services.AddScoped<MatchingDtoFactory>();
         return services;
     }
 }

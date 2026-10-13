@@ -40,7 +40,11 @@ internal sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) :
                 return true;
 
             case DomainException domain:
-                await ApiProblem.WriteAsync(httpContext, StatusCodes.Status409Conflict, domain.Code, domain.Message);
+                // A broken rule is a conflict, except the rule about who may act at all.
+                var status = domain.Code == Exparter.Domain.Matching.MatchingErrors.NotParticipantCode
+                    ? StatusCodes.Status403Forbidden
+                    : StatusCodes.Status409Conflict;
+                await ApiProblem.WriteAsync(httpContext, status, domain.Code, domain.Message);
                 return true;
 
             default:

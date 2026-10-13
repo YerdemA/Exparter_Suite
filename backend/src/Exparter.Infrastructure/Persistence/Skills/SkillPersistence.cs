@@ -93,6 +93,9 @@ internal sealed class SkillRepository(AppDbContext dbContext) : ISkillRepository
     public Task<Skill?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Skills.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Skill>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        await dbContext.Skills.AsNoTracking().Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
+
     public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
         dbContext.Skills.AnyAsync(x => x.Slug == slug, cancellationToken);
 
@@ -143,6 +146,11 @@ internal sealed class UserSkillRepository(AppDbContext dbContext) : IUserSkillRe
 
     public Task<bool> HasOfferedSkillAsync(Guid userId, CancellationToken cancellationToken) =>
         dbContext.UserSkills.AnyAsync(x => x.UserId == userId && x.Type == UserSkillType.Offered, cancellationToken);
+
+    public Task<bool> OffersSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) =>
+        dbContext.UserSkills.AnyAsync(
+            x => x.UserId == userId && x.SkillId == skillId && x.Type == UserSkillType.Offered,
+            cancellationToken);
 
     public void Add(UserSkill userSkill) => dbContext.UserSkills.Add(userSkill);
 

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api/error_messages.dart';
 import '../../../core/api/generated/export.dart';
+import '../../../core/auth/interaction_requirements.dart';
+import '../../../core/auth/session_controller.dart';
+import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/data/api_profile_repository.dart';
@@ -79,6 +83,7 @@ class _Content extends ConsumerWidget {
       cityName: cityName,
     );
     final offered = skills.where((skill) => skill.type == UserSkillType.offered).toList();
+    final isOwnProfile = ref.watch(sessionControllerProvider).value?.id == profile.userId;
     final wanted = skills.where((skill) => skill.type == UserSkillType.wanted).toList();
 
     return Align(
@@ -112,6 +117,28 @@ class _Content extends ConsumerWidget {
               if (profile.bio != null) ...[
                 const SizedBox(height: AppSpacing.lg),
                 Text(profile.bio!, style: theme.textTheme.bodyLarge),
+              ],
+              if (!isOwnProfile) ...[
+                const SizedBox(height: AppSpacing.lg),
+                FilledButton.icon(
+                  // A user with nothing to teach cannot be asked for a swap.
+                  onPressed: offered.isEmpty
+                      ? null
+                      : () async {
+                          final requirements = await ref.read(interactionRequirementsProvider.future);
+                          if (!context.mounted) {
+                            return;
+                          }
+
+                          if (requirements?.canInteract ?? false) {
+                            context.go(AppRoutes.sendRequest(profile.userId));
+                          } else {
+                            await showInteractionRequiredDialog(context);
+                          }
+                        },
+                  icon: const Icon(Icons.swap_horiz),
+                  label: Text(l10n.requestSend),
+                ),
               ],
               const SizedBox(height: AppSpacing.lg),
               _SkillGroup(title: l10n.userOfferedTitle, skills: offered),

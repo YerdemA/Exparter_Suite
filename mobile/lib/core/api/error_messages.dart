@@ -30,6 +30,13 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'avatar_invalid' || 'avatar_not_uploaded' => l10n.errorAvatarInvalid,
     'email_already_verified' => l10n.errorEmailAlreadyVerified,
     'not_found' => l10n.errorNotFound,
+    'swap_request_already_pending' => l10n.errorRequestPending,
+    'match_already_exists' => l10n.errorMatchExists,
+    'swap_request_cooldown' => l10n.errorRequestCooldown,
+    'skill_not_offered' => l10n.errorSkillNotOffered,
+    'user_skill_in_use' => l10n.errorSkillInUse,
+    'invalid_state' || 'concurrent_update' => l10n.errorInvalidState,
+    'not_participant' => l10n.errorNotParticipant,
     _ => l10n.errorUnknown,
   };
 }

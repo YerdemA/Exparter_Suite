@@ -9,6 +9,9 @@ internal sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<User>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        await dbContext.Users.AsNoTracking().Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
+
     public Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
         dbContext.Users.FirstOrDefaultAsync(x => x.Email == normalizedEmail, cancellationToken);
 

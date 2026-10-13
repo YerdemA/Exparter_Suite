@@ -7,7 +7,10 @@ abstract final class AppRoutes {
   static const home = '/';
   static const userProfileSegment = 'users/:$userIdParameter';
   static const userIdParameter = 'userId';
+  static const sendRequestSegment = 'request';
   static const matches = '/matches';
+  static const matchDetailSegment = ':$matchIdParameter';
+  static const matchIdParameter = 'matchId';
   static const messages = '/messages';
   static const profile = '/profile';
   static const profileEditSegment = 'edit';
@@ -19,6 +22,10 @@ abstract final class AppRoutes {
   static const skillProposals = '$profile/$skillProposalsSegment';
 
   static String userProfile(String userId) => '/users/$userId';
+
+  static String sendRequest(String userId) => '/users/$userId/$sendRequestSegment';
+
+  static String matchDetail(String matchId) => '$matches/$matchId';
 
   static String skillPicker(UserSkillType type) => '$profile/skills/add/${type.json!.toLowerCase()}';
 

@@ -189,6 +189,144 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.ToTable("users", "identity");
                 });
 
+            modelBuilder.Entity("Exparter.Domain.Matching.Match", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EndReason")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("end_reason");
+
+                    b.Property<DateTimeOffset?>("EndRequestExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_request_expires_at");
+
+                    b.Property<DateTimeOffset?>("EndRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_requested_at");
+
+                    b.Property<Guid?>("EndRequestedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("end_requested_by_user_id");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ended_at");
+
+                    b.Property<Guid>("SkillTaughtByAId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("skill_taught_by_a_id");
+
+                    b.Property<Guid>("SkillTaughtByBId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("skill_taught_by_b_id");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("SwapRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("swap_request_id");
+
+                    b.Property<Guid>("UserAId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_a_id");
+
+                    b.Property<Guid>("UserBId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_b_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_matches");
+
+                    b.HasIndex("SwapRequestId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_matches_swap_request_id");
+
+                    b.HasIndex("Status", "EndRequestExpiresAt")
+                        .HasDatabaseName("ix_matches_status_end_request_expires_at");
+
+                    b.HasIndex("UserAId", "CreatedAt")
+                        .HasDatabaseName("ix_matches_user_a_id_created_at");
+
+                    b.HasIndex("UserBId", "CreatedAt")
+                        .HasDatabaseName("ix_matches_user_b_id_created_at");
+
+                    b.ToTable("matches", "matching");
+                });
+
+            modelBuilder.Entity("Exparter.Domain.Matching.SwapRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("message");
+
+                    b.Property<Guid>("OfferedSkillId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("offered_skill_id");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipient_id");
+
+                    b.Property<Guid>("RequestedSkillId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_skill_id");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requester_id");
+
+                    b.Property<DateTimeOffset?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("responded_at");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_swap_requests");
+
+                    b.HasIndex("RecipientId", "CreatedAt")
+                        .HasDatabaseName("ix_swap_requests_recipient_id_created_at");
+
+                    b.HasIndex("RequesterId", "CreatedAt")
+                        .HasDatabaseName("ix_swap_requests_requester_id_created_at");
+
+                    b.HasIndex("Status", "ExpiresAt")
+                        .HasDatabaseName("ix_swap_requests_status_expires_at");
+
+                    b.ToTable("swap_requests", "matching");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Profiles.Profile", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1098,6 +1236,16 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_refresh_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("Exparter.Domain.Matching.Match", b =>
+                {
+                    b.HasOne("Exparter.Domain.Matching.SwapRequest", null)
+                        .WithMany()
+                        .HasForeignKey("SwapRequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_matches_swap_requests_swap_request_id");
                 });
 
             modelBuilder.Entity("Exparter.Domain.Skills.Skill", b =>

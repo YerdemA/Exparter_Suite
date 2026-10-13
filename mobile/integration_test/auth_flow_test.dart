@@ -241,6 +241,68 @@ void main() {
     expect(find.text(l10n.homeResendVerification), findsNothing);
     expect(find.text(l10n.interactionRequirements), findsNothing);
 
+    // Swap request and match. The other side is driven through the API: the peer starts
+    // offering yoga and verifies their email, so that they can accept.
+    final peerAuth = Options(headers: {'Authorization': 'Bearer ${registered.data!['accessToken']}'});
+    final yoga = await api.get<Map<String, dynamic>>('/api/v1/skills', queryParameters: {'q': 'yoga'});
+    await api.post<void>(
+      '/api/v1/me/skills',
+      data: {'skillId': (yoga.data!['items'] as List<dynamic>).first['id'], 'type': 'Offered', 'level': 'Expert'},
+      options: peerAuth,
+    );
+    await api.post<void>(
+      '/api/v1/auth/email-verification/confirm',
+      data: {'token': await tokenFromEmail('$peer@example.com', 'doğrulama')},
+    );
+
+    // Straight to the peer's profile, as tapping their card in discovery would.
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go(AppRoutes.userProfile((registered.data!['account'] as Map<String, dynamic>)['id'] as String));
+    await pumpUntilFound(tester, find.text(l10n.requestSend));
+    await tapVisible(tester, find.text(l10n.requestSend));
+    await pumpUntilFound(tester, find.text(l10n.requestOfferedLabel));
+    await tapVisible(tester, find.widgetWithText(ChoiceChip, 'Gitar · ${l10n.skillLevelAdvanced}'));
+    await tapVisible(tester, find.widgetWithText(ChoiceChip, 'Yoga · ${l10n.skillLevelExpert}'));
+    await tester.enterText(find.byType(TextField), 'Merhaba, takas yapalım mı?');
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.requestSubmit));
+    await pumpUntilFound(tester, find.text(l10n.requestSent));
+
+    // The request waits under "sent"; once the peer accepts it becomes a match.
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navMatches)));
+    await pumpUntilFound(tester, find.text(l10n.matchesEmpty));
+    await tester.tap(find.widgetWithText(Tab, l10n.matchesTabOutgoing));
+    await pumpUntilFound(tester, find.text(l10n.requestCancel));
+    expect(find.text('“Merhaba, takas yapalım mı?”'), findsOneWidget);
+
+    final incoming = await api.get<Map<String, dynamic>>(
+      '/api/v1/swap-requests',
+      queryParameters: {'direction': 'Incoming'},
+      options: peerAuth,
+    );
+    await api.post<void>(
+      '/api/v1/swap-requests/${(incoming.data!['items'] as List<dynamic>).first['id']}/accept',
+      options: peerAuth,
+    );
+    await tester.tap(find.widgetWithText(Tab, l10n.matchesTabMatches));
+    await tester.pumpAndSettle();
+    // Coming back to the tab reloads it; if it still shows the old answer, pull to refresh.
+    if (find.text(l10n.matchesEmpty).evaluate().isNotEmpty) {
+      await tester.fling(find.text(l10n.matchesEmpty), const Offset(0, 400), 1000);
+    }
+
+    await pumpUntilFound(tester, find.text(l10n.matchStatusActive));
+    expect(find.text(l10n.swapYouLearn('Yoga')), findsOneWidget);
+
+    // Ask to end the match; it then waits for the peer's answer.
+    await tester.tap(find.text('Keşif Arkadaşı'));
+    await pumpUntilFound(tester, find.text(l10n.matchEndRequest));
+    await tapVisible(tester, find.text(l10n.matchEndRequest));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, l10n.matchEndRequest));
+    await pumpUntilFound(tester, find.text(l10n.matchEndWaitingOther));
+
+    await openProfileTab(tester);
+
     // Sign out, and stay signed out after another restart.
     await tapVisible(tester, find.widgetWithText(OutlinedButton, l10n.homeLogout));
     await pumpUntilFound(tester, find.text(l10n.loginTitle));

@@ -17,6 +17,10 @@ public class ArchitectureTests
         typeof(UserInfo),
         typeof(UserRegistered),
         typeof(Exparter.Domain.Skills.SkillLevel),
+        typeof(Exparter.Application.Profiles.IProfileDirectory),
+        typeof(Exparter.Application.Profiles.ProfileCard),
+        typeof(Exparter.Application.Skills.IUserSkillDirectory),
+        typeof(Exparter.Application.Matching.ISkillUsage),
     ];
 
     private const BindingFlags AllMembers =

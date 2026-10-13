@@ -19,6 +19,8 @@ public interface ISkillRepository
 
     Task<Skill?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Skill>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken);
 
     /// <summary>Skills proposed by one user, newest first, whatever their status.</summary>
@@ -46,6 +48,8 @@ public interface IUserSkillRepository
 
     Task<bool> HasOfferedSkillAsync(Guid userId, CancellationToken cancellationToken);
 
+    Task<bool> OffersSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken);
+
     void Add(UserSkill userSkill);
 
     void Remove(UserSkill userSkill);
@@ -55,12 +59,23 @@ public interface IUserSkillRepository
 public interface IUserSkillDirectory
 {
     Task<bool> HasOfferedSkillAsync(Guid userId, CancellationToken cancellationToken);
+
+    Task<bool> OffersSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken);
+
+    /// <summary>Names of the skills that exist among the given ids.</summary>
+    Task<IReadOnlyDictionary<Guid, string>> GetSkillNamesAsync(IReadOnlyCollection<Guid> skillIds, CancellationToken cancellationToken);
 }
 
-internal sealed class UserSkillDirectory(IUserSkillRepository userSkills) : IUserSkillDirectory
+internal sealed class UserSkillDirectory(IUserSkillRepository userSkills, ISkillRepository skills) : IUserSkillDirectory
 {
     public Task<bool> HasOfferedSkillAsync(Guid userId, CancellationToken cancellationToken) =>
         userSkills.HasOfferedSkillAsync(userId, cancellationToken);
+
+    public Task<bool> OffersSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) =>
+        userSkills.OffersSkillAsync(userId, skillId, cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, string>> GetSkillNamesAsync(IReadOnlyCollection<Guid> skillIds, CancellationToken cancellationToken) =>
+        (await skills.ListByIdsAsync(skillIds, cancellationToken)).ToDictionary(skill => skill.Id, skill => skill.Name);
 }
 
 public sealed record SkillCategoryDto(Guid Id, string Name, string Slug);

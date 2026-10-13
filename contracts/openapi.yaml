@@ -629,10 +629,12 @@ paths:
       operationId: sendSwapRequest
       summary: Send a swap request
       description: |
-        Requires a verified email. `offeredSkillId` must be one of the sender's offered
-        skills and `requestedSkillId` one of the recipient's offered skills. Rejected with
-        409 if the two users already have a pending request or an unfinished match, or if
-        either has blocked the other.
+        The sender must meet the interaction requirements. `offeredSkillId` must be one of
+        the sender's offered skills and `requestedSkillId` one of the recipient's offered
+        skills. Rejected with 409 if the two users already have a pending request or an
+        unfinished match, if either has blocked the other, or if the recipient declined or
+        did not answer the sender's previous request less than 7 days ago
+        (`swap_request_cooldown`).
       requestBody:
         required: true
         content:
@@ -671,7 +673,7 @@ paths:
       tags: [SwapRequests]
       operationId: acceptSwapRequest
       summary: Accept a received swap request
-      description: Only the recipient can accept. Creates a match and opens the conversation between the two users.
+      description: Only the recipient can accept, and must meet the interaction requirements. Creates a match.
       parameters:
         - $ref: '#/components/parameters/SwapRequestId'
       responses:
@@ -2062,6 +2064,11 @@ components:
           type: string
           format: uuid
           description: The skill the sender wants to learn from the recipient.
+        message:
+          type: string
+          nullable: true
+          maxLength: 300
+          description: An optional note to the recipient.
 
     SwapRequest:
       type: object
@@ -2072,6 +2079,7 @@ components:
         recipient: { $ref: '#/components/schemas/UserSummary' }
         offeredSkill: { $ref: '#/components/schemas/SkillRef' }
         requestedSkill: { $ref: '#/components/schemas/SkillRef' }
+        message: { type: string, nullable: true }
         status: { $ref: '#/components/schemas/SwapRequestStatus' }
         createdAt: { type: string, format: date-time }
         expiresAt:
@@ -2101,7 +2109,7 @@ components:
 
     Match:
       type: object
-      required: [id, swapRequestId, userA, userB, skillTaughtByA, skillTaughtByB, status, conversationId, createdAt]
+      required: [id, swapRequestId, userA, userB, skillTaughtByA, skillTaughtByB, status, createdAt]
       properties:
         id: { type: string, format: uuid }
         swapRequestId: { type: string, format: uuid }
@@ -2116,8 +2124,16 @@ components:
         skillTaughtByA: { $ref: '#/components/schemas/SkillRef' }
         skillTaughtByB: { $ref: '#/components/schemas/SkillRef' }
         status: { $ref: '#/components/schemas/MatchStatus' }
-        conversationId: { type: string, format: uuid }
-        endRequestedByUserId: { type: string, format: uuid, nullable: true }
+        conversationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The conversation between the two users; null until they have one.
+        endRequestedByUserId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Who asked to end the match. Kept after the match has ended.
         endRequestedAt: { type: string, format: date-time, nullable: true }
         endRequestExpiresAt:
           type: string

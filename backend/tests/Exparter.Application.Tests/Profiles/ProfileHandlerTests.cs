@@ -13,6 +13,9 @@ internal sealed class InMemoryProfiles : IProfileRepository
     public Task<Profile?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.UserId == userId));
 
+    public Task<IReadOnlyList<Profile>> ListByUserIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Profile>>(Items.Where(x => userIds.Contains(x.UserId)).ToList());
+
     public void Add(Profile profile) => Items.Add(profile);
 }
 
@@ -41,6 +44,9 @@ internal sealed class FakeUserDirectory : IUserDirectory
 
     public Task<UserInfo?> FindAsync(Guid userId, CancellationToken cancellationToken) =>
         Task.FromResult(Users.GetValueOrDefault(userId));
+
+    public Task<IReadOnlyList<UserInfo>> FindManyAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<UserInfo>>(Users.Values.Where(user => userIds.Contains(user.Id)).ToList());
 }
 
 public class ProfileHandlerTests

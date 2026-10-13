@@ -7,6 +7,8 @@ public interface IProfileRepository
 {
     Task<Profile?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Profile>> ListByUserIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
+
     void Add(Profile profile);
 }
 

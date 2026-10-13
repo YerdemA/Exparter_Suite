@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Matching;
 using Exparter.Domain.Skills;
 using FluentValidation;
 using Mediator;
@@ -105,7 +106,7 @@ public sealed class UpdateOwnSkillCommandHandler(
 
 public sealed record RemoveOwnSkillCommand(Guid UserId, Guid UserSkillId) : ICommand;
 
-public sealed class RemoveOwnSkillCommandHandler(IUserSkillRepository userSkills, IUnitOfWork unitOfWork)
+public sealed class RemoveOwnSkillCommandHandler(IUserSkillRepository userSkills, ISkillUsage usage, IUnitOfWork unitOfWork)
     : ICommandHandler<RemoveOwnSkillCommand>
 {
     public async ValueTask<Unit> Handle(RemoveOwnSkillCommand command, CancellationToken cancellationToken)
@@ -113,6 +114,13 @@ public sealed class RemoveOwnSkillCommandHandler(IUserSkillRepository userSkills
         var existing = await userSkills.ListByUserAsync(command.UserId, cancellationToken);
         var userSkill = existing.FirstOrDefault(item => item.Id == command.UserSkillId)
             ?? throw SkillAppErrors.UserSkillNotFound();
+
+        // The other user in a pending request or an unfinished match is counting on this skill.
+        if (userSkill.Type == UserSkillType.Offered
+            && await usage.IsOfferedSkillInUseAsync(command.UserId, userSkill.SkillId, cancellationToken))
+        {
+            throw AppException.Conflict("user_skill_in_use", "The skill is used by a pending swap request or an unfinished match.");
+        }
 
         userSkills.Remove(userSkill);
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -166,6 +166,78 @@
   "errorSessionExpired": "Oturumunuz sona erdi. Lütfen yeniden giriş yapın.",
   "errorNotFound": "Aradığınız içerik bulunamadı.",
   "errorRetry": "Tekrar dene",
+  "errorRequestPending": "Bu kullanıcıyla aranızda cevap bekleyen bir istek var.",
+  "errorMatchExists": "Bu kullanıcıyla devam eden bir eşleşmeniz var.",
+  "errorRequestCooldown": "Bu kullanıcıya yeniden istek göndermek için 7 gün beklemeniz gerekiyor.",
+  "errorSkillNotOffered": "Seçilen yetenek artık sunulmuyor.",
+  "errorSkillInUse": "Bu yetenek cevap bekleyen bir istekte veya devam eden bir eşleşmede kullanılıyor.",
+  "errorInvalidState": "Bu işlem artık yapılamıyor.",
+  "errorNotParticipant": "Bu işlemi yapma yetkiniz yok.",
+  "deletedUser": "Silinmiş kullanıcı",
+  "matchesTabMatches": "Eşleşmeler",
+  "matchesTabIncoming": "Gelen",
+  "matchesTabOutgoing": "Gönderilen",
+  "matchesEmpty": "Henüz bir eşleşmeniz yok. Keşfet sekmesinden takas isteği gönderebilirsiniz.",
+  "requestsIncomingEmpty": "Cevap bekleyen gelen isteğiniz yok.",
+  "requestsOutgoingEmpty": "Cevap bekleyen gönderilmiş isteğiniz yok.",
+  "swapYouTeach": "Siz öğretirsiniz: {skill}",
+  "@swapYouTeach": {
+    "placeholders": {
+      "skill": { "type": "String" }
+    }
+  },
+  "swapYouLearn": "Siz öğrenirsiniz: {skill}",
+  "@swapYouLearn": {
+    "placeholders": {
+      "skill": { "type": "String" }
+    }
+  },
+  "remainingDays": "{count} gün kaldı",
+  "@remainingDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "remainingHours": "{count} saat kaldı",
+  "@remainingHours": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "remainingSoon": "1 saatten az kaldı",
+  "requestAccept": "Kabul et",
+  "requestDecline": "Reddet",
+  "requestCancel": "Geri çek",
+  "requestSend": "İstek gönder",
+  "requestSendTitle": "Takas isteği",
+  "requestOfferedLabel": "Öğreteceğiniz yetenek",
+  "requestRequestedLabel": "Öğrenmek istediğiniz yetenek",
+  "requestOwnSkillsEmpty": "Henüz sunduğunuz bir yetenek yok. Profilinizden ekleyebilirsiniz.",
+  "requestTheirSkillsEmpty": "Bu kullanıcı henüz bir yetenek sunmuyor.",
+  "requestMessageLabel": "Not (isteğe bağlı)",
+  "requestSubmit": "Gönder",
+  "requestSent": "İsteğiniz gönderildi.",
+  "matchTitle": "Eşleşme",
+  "matchViewProfile": "Profili görüntüle",
+  "matchStatusActive": "Aktif",
+  "matchStatusEndRequested": "Sonlandırma bekleniyor",
+  "matchStatusEnded": "Sona erdi",
+  "matchEndRequest": "Eşleşmeyi sonlandır",
+  "matchEndConfirmTitle": "Eşleşme sonlandırılsın mı?",
+  "matchEndConfirmBody": "Karşı taraf onayladığında eşleşme sona erer. 7 gün içinde cevap gelmezse eşleşme kendiliğinden sonlanır.",
+  "matchEndWaitingOther": "Sonlandırma isteğiniz karşı tarafın onayını bekliyor.",
+  "matchEndWithdraw": "İsteği geri al",
+  "matchEndAskedByOther": "{name} eşleşmeyi sonlandırmak istiyor.",
+  "@matchEndAskedByOther": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "matchEndAccept": "Onayla",
+  "matchEndReject": "Reddet",
+  "matchEndedMutual": "Eşleşme karşılıklı onayla sona erdi.",
+  "matchEndedExpired": "Sonlandırma isteği cevaplanmadığı için eşleşme sona erdi.",
+  "matchEndedOther": "Eşleşme sona erdi.",
   "discoverSearchLabel": "Ad veya kullanıcı adı arayın",
   "discoverAllCities": "Tüm şehirler",
   "discoverAllSkills": "Tüm yetenekler",

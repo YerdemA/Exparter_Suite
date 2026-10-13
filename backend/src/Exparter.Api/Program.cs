@@ -37,6 +37,7 @@ builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadReq
 builder.Services.AddApiAuthentication();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddHostedService<MatchingDeadlineWorker>();
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
 var app = builder.Build();
@@ -53,6 +54,7 @@ api.MapIdentityEndpoints();
 api.MapProfileEndpoints();
 api.MapSkillEndpoints();
 api.MapDiscoveryEndpoints();
+api.MapSwapEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

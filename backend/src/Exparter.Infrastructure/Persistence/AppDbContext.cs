@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Domain.Identity;
+using Exparter.Domain.Matching;
 using Exparter.Domain.Profiles;
 using Exparter.Domain.Skills;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Skill> Skills => Set<Skill>();
 
     public DbSet<UserSkill> UserSkills => Set<UserSkill>();
+    public DbSet<SwapRequest> SwapRequests => Set<SwapRequest>();
+    public DbSet<Match> Matches => Set<Match>();
 
     async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {
