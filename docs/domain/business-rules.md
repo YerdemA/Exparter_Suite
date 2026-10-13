@@ -129,6 +129,7 @@ Durum: **Onaylandı (2026-10-07).**
 | SS-16 | Bekleyen sonlandırma isteği olan veya sona ermiş eşleşmeye oturum eklenemez (planlama da bildirim de). | Application |
 | SS-17 | SS-09'daki iptal yalnızca henüz gerçekleşmemiş (önerilmiş veya planlanmış) oturumları kapsar; onay bekleyen tamamlandı işareti eşleşme bittikten sonra da onaylanabilir. | Domain |
 | SS-18 | Süresi geçen öneri ve onay, arka plan işi kaydetmeden önce de her okumada ve işlemde sonuçlanmış sayılır. | Domain |
+| SS-19 | Bir kullanıcı çifti, bütün eşleşmeleri boyunca yalnızca bir yüz yüze buluşma bildirebilir (sahte bildirimle istatistik şişirmeye karşı). İptal edilmiş bildirim sayılmaz; onay bekleyen veya tamamlanmış bildirim varken yenisi `in_person_already_reported` ile reddedilir. | Application + veritabanı |
 
 ### Kullanıcı istatistikleri
 
@@ -136,11 +137,11 @@ Durum: **Onaylandı (2026-10-07).**
 
 | No | Kural |
 |---|---|
-| ST-01 | Toplam eşleşme: kullanıcının devam edenler dahil bütün eşleşmeleri. |
+| ST-01 | Toplam eşleşme: kullanıcının sona ermiş bütün eşleşmeleri. Devam eden eşleşme, sona erene kadar hiçbir sayaca girmez. |
 | ST-02 | Tamamlanan eşleşme: en az bir oturumu tamamlanmış, sona ermiş eşleşme. |
 | ST-03 | İptal edilen (tamamlanmamış) eşleşme: hiçbir oturumu tamamlanmadan sona ermiş eşleşme. |
 | ST-04 | Tamamlanan oturum: kullanıcının bütün eşleşmelerindeki tamamlanmış oturumlar (kendiliğinden tamamlananlar dahil). |
-| ST-05 | Toplam ile diğer ikisinin farkı, devam eden eşleşmelerin sayısıdır. |
+| ST-05 | Toplam, tamamlanan ile iptal edilenin toplamına eşittir. |
 
 ## Değerlendirme
 

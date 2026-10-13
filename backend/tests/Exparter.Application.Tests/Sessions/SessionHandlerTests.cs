@@ -54,6 +54,12 @@ internal sealed class InMemorySessions : ISessionRepository
             .Select(x => x.MatchId)
             .ToHashSet());
 
+    public Task<bool> HasInPersonMeetingBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken) =>
+        Task.FromResult(Items.Any(x => x.Mode == SessionMode.InPerson
+            && x.Status != SwapSessionStatus.Cancelled
+            && x.IsParticipant(userId)
+            && x.IsParticipant(otherUserId)));
+
     public void Add(SwapSession session) => Items.Add(session);
 
     private static PagedList<SwapSession> Paged(IEnumerable<SwapSession> source, PageRequest page)
@@ -221,6 +227,27 @@ public class SessionHandlerTests
     }
 
     [Fact]
+    public async Task A_pair_can_have_only_one_in_person_meeting_that_was_not_cancelled()
+    {
+        var first = await ReportAsync();
+        Assert.Equal("in_person_already_reported", await AppCodeOfAsync(() => ReportAsync(_ayse)));
+
+        // A disputed report does not use up the pair's one meeting.
+        await CancelAsync(first.Id, _ayse);
+        var second = await ReportAsync(_ayse);
+        await ChangeAsync(second.Id, _ali, SessionAction.ConfirmCompleted);
+
+        // Nor does a later match between the same two users bring a new one.
+        var rematch = Guid.NewGuid();
+        _matches.Items[rematch] = new MatchInfo(rematch, _ayse, _ali, true, false);
+        Assert.Equal(
+            "in_person_already_reported",
+            await AppCodeOfAsync(() => new ReportInPersonSessionCommandHandler(_matches, _sessions, _unitOfWork, _clock)
+                .Handle(new ReportInPersonSessionCommand(_ali, rematch), CancellationToken.None).AsTask()));
+        Assert.Equal(2, _sessions.Items.Count);
+    }
+
+    [Fact]
     public async Task A_cancelled_session_carries_who_cancelled_and_why()
     {
         var session = await ProposeAsync();
@@ -317,11 +344,11 @@ public class SessionHandlerTests
         users.Users[_ali] = new UserInfo(_ali, "ali", IsActive: true, IsEmailVerified: true);
         var stats = new UserStats(users, _matches, new SessionDirectory(_sessions, _clock));
 
-        // Match 1 (this one): two completed sessions, still running.
+        // Match 1 (this one): two completed sessions. While it runs it counts nowhere.
         await CompleteOnlineAsync();
         var second = await ReportAsync();
         await ChangeAsync(second.Id, _ayse, SessionAction.ConfirmCompleted);
-        Assert.Equal(new UserStatsDto(1, 0, 0, 2), await stats.GetAsync(_ali, CancellationToken.None));
+        Assert.Equal(new UserStatsDto(0, 0, 0, 2), await stats.GetAsync(_ali, CancellationToken.None));
 
         // It ends: completed, because a session was completed in it.
         _matches.Ended.Add(_matchId);
@@ -333,7 +360,7 @@ public class SessionHandlerTests
         var running = Guid.NewGuid();
         _matches.Items[running] = new MatchInfo(running, Guid.NewGuid(), _ali, true, false);
 
-        Assert.Equal(new UserStatsDto(3, 1, 1, 2), await stats.GetAsync(_ali, CancellationToken.None));
+        Assert.Equal(new UserStatsDto(2, 1, 1, 2), await stats.GetAsync(_ali, CancellationToken.None));
 
         // Ayşe took part in the first match only.
         users.Users[_ayse] = new UserInfo(_ayse, "ayse", IsActive: true, IsEmailVerified: true);

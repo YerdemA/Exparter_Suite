@@ -5,8 +5,8 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import 'session_controller.dart';
 
-/// A user's history of swaps in numbers: how many matches, how many went well and how
-/// many ended without a single session.
+/// A user's history of swaps in numbers: how many matches have ended, how many of them
+/// went well and how many ended without a single session.
 class UserStatsCard extends ConsumerWidget {
   const UserStatsCard({required this.userId, super.key});
 

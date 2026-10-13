@@ -44,6 +44,12 @@ class MatchSessionsSection extends ConsumerWidget {
     final sessions = ref.watch(matchSessionsProvider(match.id));
     final busy = ref.watch(sessionActionsProvider).isLoading;
     final ownUserId = ref.watch(sessionControllerProvider).value?.id;
+    // A pair reports an in-person meeting only once. An earlier match of the same two
+    // users is not visible here; the server refuses the report in that case.
+    final metInPerson = sessions.value?.any(
+          (session) => session.mode == SessionMode.inPerson && session.status != SwapSessionStatus.cancelled,
+        ) ??
+        false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,14 +63,16 @@ class MatchSessionsSection extends ConsumerWidget {
             icon: const Icon(Icons.videocam_outlined),
             label: Text(l10n.sessionProposeOnline),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            onPressed: busy ? null : () => _reportInPerson(context, ref),
-            icon: const Icon(Icons.handshake_outlined),
-            label: Text(l10n.sessionInPersonReport),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(l10n.sessionInPersonHint, style: theme.textTheme.bodySmall),
+          if (!metInPerson) ...[
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton.icon(
+              onPressed: busy ? null : () => _reportInPerson(context, ref),
+              icon: const Icon(Icons.handshake_outlined),
+              label: Text(l10n.sessionInPersonReport),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(l10n.sessionInPersonHint, style: theme.textTheme.bodySmall),
+          ],
           const SizedBox(height: AppSpacing.md),
         ],
         if (busy) const LinearProgressIndicator(),

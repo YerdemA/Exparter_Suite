@@ -41,6 +41,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'session_in_past' => l10n.errorSessionInPast,
     'session_not_started' => l10n.errorSessionNotStarted,
     'match_end_pending' => l10n.errorMatchEndPending,
+    'in_person_already_reported' => l10n.errorInPersonAlreadyReported,
     'conversation_has_active_match' => l10n.errorConversationHasActiveMatch,
     _ => l10n.errorUnknown,
   };

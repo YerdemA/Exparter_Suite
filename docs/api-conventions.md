@@ -96,6 +96,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `conversation_has_active_match` | 409 | Aktif eşleşme varken sohbet kapatılamaz. |
 | `session_not_started` | 409 | Oturum, başlangıç zamanından önce tamamlandı işaretlenemez. |
 | `session_in_past` | 409 | Oturum tarihi gelecekte olmalı. |
+| `in_person_already_reported` | 409 | İki kullanıcı arasında iptal edilmemiş bir yüz yüze buluşma bildirimi zaten var. |
 | `review_already_exists` | 409 | Bu kullanıcı daha önce değerlendirilmiş. |
 | `session_not_completed` | 409 | Değerlendirme için tamamlanmış oturum gerekir. |
 | `already_blocked` | 409 | Kullanıcı zaten engellenmiş. |

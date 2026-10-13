@@ -11,8 +11,8 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0–5 tamamlandı; dilim 6 onay bekliyor |
-| 6 | Sertleştirme ve MVP yayını | Tamamlandı, onay bekliyor |
+| 5 | Dikey dilimler | Sürüyor: dilim 0–6 tamamlandı |
+| 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -97,7 +97,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 3 | Keşfet | Tamamlandı (2026-10-13) |
 | 4 | Takas isteği ve eşleşme | Tamamlandı (2026-10-13) |
 | 5 | Gerçek zamanlı mesajlaşma | Tamamlandı (2026-10-13) |
-| 6 | Takas oturumları | Başlamadı |
+| 6 | Takas oturumları | Tamamlandı (2026-10-13) |
 | 7 | Değerlendirmeler | Başlamadı |
 | 8 | Bildirimler | Başlamadı |
 
@@ -174,13 +174,13 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 ### Dilim 6 — Oturumlar ve profil istatistikleri
 
 - Çevrimiçi oturum: taraflardan biri tarih, saat, süre (30/45/60/90/120 dk) ve isteğe bağlı notla önerir; diğeri kabul veya reddeder. Başlangıç saatine kadar cevaplanmayan öneri reddedilmiş sayılır. Başlangıçtan sonra bir taraf tamamlandı işaretler, diğeri onaylar; 72 saat cevapsız kalırsa kendiliğinden tamamlanır.
-- Yüz yüze buluşma: uygulamada planlanmaz; kullanıcılar sohbette ayarlar, tarih ve yer tutulmaz. Buluşmadan sonra taraflardan biri "Yüz yüze buluştuk" diye bildirir, diğeri onaylar veya sebep yazarak itiraz eder (kullanıcı kararı, 2026-10-13).
+- Yüz yüze buluşma: uygulamada planlanmaz; kullanıcılar sohbette ayarlar, tarih ve yer tutulmaz. Buluşmadan sonra taraflardan biri "Yüz yüze buluştuk" diye bildirir, diğeri onaylar veya sebep yazarak itiraz eder (kullanıcı kararı, 2026-10-13). Sahteciliğe karşı bir kullanıcı çifti, bütün eşleşmeleri boyunca yalnızca bir yüz yüze buluşma bildirebilir; iptal edilen (itiraz edilen) bildirim bu hakkı tüketmez.
 - İptal: taraflardan biri sebep yazarak tek başına iptal eder; sebebi yalnızca iki taraf görür.
 - Eşleşmeyle ilişki: sonlandırma isteği bekleyen veya sona ermiş eşleşmeye oturum eklenemez; eşleşme bitince henüz gerçekleşmemiş oturumlar iptal edilir, onay bekleyen işaret sonradan da onaylanabilir.
-- İstatistikler (`GET /api/v1/users/{userId}/stats`): toplam eşleşme, tamamlanan eşleşme, iptal edilen (tamamlanmamış) eşleşme ve tamamlanan oturum; kayıtlardan hesaplanır, ayrı sayaç tutulmaz.
+- İstatistikler (`GET /api/v1/users/{userId}/stats`): toplam eşleşme, tamamlanan eşleşme, iptal edilen (tamamlanmamış) eşleşme ve tamamlanan oturum; kayıtlardan hesaplanır, ayrı sayaç tutulmaz. Devam eden eşleşme hiçbir sayaca girmez: toplam = tamamlanan + iptal edilen.
 - Mobil: eşleşme ayrıntısında oturum listesi, "Çevrimiçi oturum öner" formu, "Yüz yüze buluştuk" bildirimi ve oturum kartlarındaki işlemler; kendi profilinde ve başka kullanıcıların profilinde istatistik kartı.
-- Testler (2026-10-13): backend 411 (140 domain, 187 uygulama, 84 entegrasyon), mobil 161. Uçtan uca test emülatörde geçti: yüz yüze buluşma bildirimi, karşı tarafın onayı, çevrimiçi oturum önerisi ve profildeki istatistik.
-- Sonraya bırakılan: iptal sebebinin ve hatırlatmaların bildirim olarak gitmesi (dilim 8); iptal sebeplerinin admin tarafından görülmesi (moderasyon); bütün eşleşmelerdeki oturumları gösteren takvim ekranı (API hazır: `GET /api/v1/sessions`).
+- Testler (2026-10-13): backend 413 (140 domain, 188 uygulama, 85 entegrasyon), mobil 162. Uçtan uca test emülatörde geçti: yüz yüze buluşma bildirimi, karşı tarafın onayı, çevrimiçi oturum önerisi ve profildeki istatistik.
+- Sonraya bırakılan: uygulamaya gömülü görüntülü görüşme modülü (çevrimiçi oturumlar yalnızca planlanan saatte bu modülle yapılacak; zamanlaması kararlaştırılacak, o zamana kadar taraflar bağlantıyı nota yazar); iptal sebebinin ve hatırlatmaların bildirim olarak gitmesi (dilim 8); iptal sebeplerinin admin tarafından görülmesi (moderasyon); bütün eşleşmelerdeki oturumları gösteren takvim ekranı (API hazır: `GET /api/v1/sessions`).
 
 ## Geliştirme ortamı
 

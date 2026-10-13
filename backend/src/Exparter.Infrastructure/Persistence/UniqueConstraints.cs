@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Sessions;
 
 namespace Exparter.Infrastructure.Persistence;
 
@@ -17,6 +18,9 @@ internal static class UniqueConstraints
     public const string ConversationPerPair = "ix_conversations_pair";
     public const string MessagePerClientId = "ix_messages_client_id";
 
+    // Also over the pair in either order; created with SQL by the LimitInPersonMeetingsPerPair migration.
+    public const string InPersonMeetingPerPair = "ix_swap_sessions_in_person_pair";
+
     public static AppException? ToAppException(string? constraintName) => constraintName switch
     {
         UserEmail => AppException.Conflict("email_already_registered", "The email address is already registered."),
@@ -27,6 +31,7 @@ internal static class UniqueConstraints
         OpenMatchPerPair => AppException.Conflict("match_already_exists", "The two users already have a match that has not ended."),
         // Both mean the same request arrived twice at once; the client's retry finds what the first one stored.
         ConversationPerPair or MessagePerClientId => AppException.Conflict("concurrent_update", "The resource was changed by another request."),
+        InPersonMeetingPerPair => SessionConflicts.InPersonAlreadyReported(),
         _ => null,
     };
 }

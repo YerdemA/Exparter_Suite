@@ -1016,6 +1016,10 @@ paths:
         confirms it or disputes it by cancelling with a reason, and without an answer
         within 72 hours it is completed automatically. The match must be active and must
         not have a pending end request.
+
+        Two users can have only one in-person meeting on record across all their
+        matches; a further report is refused with `in_person_already_reported` unless the
+        earlier one was cancelled.
       parameters:
         - $ref: '#/components/parameters/MatchId'
       responses:
@@ -2360,7 +2364,7 @@ components:
         totalMatches:
           type: integer
           format: int32
-          description: Every match the user has had, running ones included.
+          description: Matches that have ended. A running match is not counted until it is over.
         completedMatches:
           type: integer
           format: int32

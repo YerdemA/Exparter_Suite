@@ -105,6 +105,14 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
             .ToListAsync(cancellationToken))
         .ToHashSet();
 
+    public Task<bool> HasInPersonMeetingBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken) =>
+        dbContext.SwapSessions.AnyAsync(
+            x => x.Mode == SessionMode.InPerson
+                && x.Status != SwapSessionStatus.Cancelled
+                && ((x.ProposedByUserId == userId && x.OtherUserId == otherUserId)
+                    || (x.ProposedByUserId == otherUserId && x.OtherUserId == userId)),
+            cancellationToken);
+
     public void Add(SwapSession session) => dbContext.SwapSessions.Add(session);
 
     private static IQueryable<SwapSession> Completed(IQueryable<SwapSession> sessions, DateTimeOffset now) =>

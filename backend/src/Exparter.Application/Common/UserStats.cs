@@ -8,7 +8,7 @@ namespace Exparter.Application.Common;
 /// What a user's history of swaps says about them, shown on their profile to help
 /// others decide whether to trust them.
 /// </summary>
-/// <param name="TotalMatches">Every match the user has had, running ones included.</param>
+/// <param name="TotalMatches">Matches that have ended. A running match counts nowhere until it is over.</param>
 /// <param name="CompletedMatches">Ended matches in which at least one session was completed.</param>
 /// <param name="CancelledMatches">Ended matches in which no session was completed.</param>
 /// <param name="CompletedSessions">Sessions completed across all matches.</param>
@@ -38,7 +38,7 @@ internal sealed class UserStats(IUserDirectory users, IMatchDirectory matches, I
         var withCompletedSession = await sessions.GetMatchIdsWithCompletedSessionAsync(ended, cancellationToken);
         var completed = ended.Count(withCompletedSession.Contains);
         return new UserStatsDto(
-            history.Count,
+            ended.Count,
             completed,
             ended.Count - completed,
             await sessions.CountCompletedAsync(userId, cancellationToken));

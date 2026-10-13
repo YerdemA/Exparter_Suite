@@ -127,6 +127,33 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task A_pair_can_report_an_in_person_meeting_only_once_unless_it_was_cancelled()
+    {
+        var (ali, ayse, matchPath) = await MatchedPairAsync();
+        var first = await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
+
+        await ProblemAssert.IsAsync(
+            await PostAsync(ayse, $"{matchPath}/sessions/in-person"), HttpStatusCode.Conflict, "in_person_already_reported");
+        await ProblemAssert.IsAsync(
+            await PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Conflict, "in_person_already_reported");
+
+        await OkAsync(PostAsync(ayse, $"{PathOf(first)}/cancel", new { reason = "Böyle bir buluşma olmadı." }));
+        var second = await OkAsync(PostAsync(ayse, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
+        await OkAsync(PostAsync(ali, $"{PathOf(second)}/completion/confirm"));
+
+        await ProblemAssert.IsAsync(
+            await PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Conflict, "in_person_already_reported");
+
+        // The database refuses a second one even if two reports slip past the check together.
+        var duplicate = await Record.ExceptionAsync(() => ExecuteSqlAsync(
+            $"""
+            INSERT INTO sessions.swap_sessions (id, match_id, proposed_by_user_id, other_user_id, mode, status, completed_automatically, created_at)
+            VALUES ({Guid.NewGuid()}, {Guid.NewGuid()}, {ayse.UserId}, {ali.UserId}, 'InPerson', 'CompletionPending', false, now())
+            """));
+        Assert.Contains("ix_swap_sessions_in_person_pair", duplicate?.Message);
+    }
+
+    [Fact]
     public async Task A_reported_meeting_can_be_disputed_by_cancelling_with_a_reason()
     {
         var (ali, ayse, matchPath) = await MatchedPairAsync();
@@ -250,12 +277,12 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     {
         var (ali, ayse, firstMatch) = await MatchedPairAsync();
         var viewer = await TestSession.RegisterAsync(_client);
-        Assert.Equal((1, 0, 0, 0), await StatsAsync(viewer, ali));
+        Assert.Equal((0, 0, 0, 0), await StatsAsync(viewer, ali));
 
         // First match: one completed meeting, then the match ends.
         var reported = await OkAsync(PostAsync(ali, $"{firstMatch}/sessions/in-person"), HttpStatusCode.Created);
         await OkAsync(PostAsync(ayse, $"{PathOf(reported)}/completion/confirm"));
-        Assert.Equal((1, 0, 0, 1), await StatsAsync(viewer, ali));
+        Assert.Equal((0, 0, 0, 1), await StatsAsync(viewer, ali));
         await EndMatchAsync(ali, ayse, firstMatch);
         Assert.Equal((1, 1, 0, 1), await StatsAsync(viewer, ali));
 
@@ -269,7 +296,7 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
                 new { recipientId = ali.UserId, offeredSkillId = guitar, requestedSkillId = guitar }),
             HttpStatusCode.Created);
         var second = await OkAsync(PostAsync(ali, $"/api/v1/swap-requests/{request.GetProperty("id").GetGuid()}/accept"));
-        Assert.Equal((2, 1, 0, 1), await StatsAsync(viewer, ali));
+        Assert.Equal((1, 1, 0, 1), await StatsAsync(viewer, ali));
         await EndMatchAsync(carol, ali, $"/api/v1/matches/{second.GetProperty("id").GetGuid()}");
 
         Assert.Equal((2, 1, 1, 1), await StatsAsync(viewer, ali));

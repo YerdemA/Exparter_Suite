@@ -41,6 +41,12 @@ public interface ISessionRepository
         DateTimeOffset now,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Whether the two users have an in-person meeting on record, in any of their
+    /// matches, that was not cancelled.
+    /// </summary>
+    Task<bool> HasInPersonMeetingBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken);
+
     void Add(SwapSession session);
 }
 
@@ -109,6 +115,12 @@ public sealed record SwapSessionDto(
             session.CancelledAt,
             session.CreatedAt);
     }
+}
+
+public static class SessionConflicts
+{
+    public static AppException InPersonAlreadyReported() =>
+        AppException.Conflict("in_person_already_reported", "The two users have already reported an in-person meeting.");
 }
 
 internal static class SessionExtensions
@@ -205,7 +217,15 @@ public sealed class ReportInPersonSessionCommandHandler(
         var match = await matches.GetForParticipantAsync(command.MatchId, command.UserId, cancellationToken);
         match.EnsureAcceptsSessions();
 
-        var session = SwapSession.ReportInPerson(match.Id, command.UserId, match.OtherThan(command.UserId), now);
+        // Nobody else sees an in-person meeting take place, so two users could inflate
+        // their statistics with reports; one per pair is all that counts.
+        var otherUserId = match.OtherThan(command.UserId);
+        if (await sessions.HasInPersonMeetingBetweenAsync(command.UserId, otherUserId, cancellationToken))
+        {
+            throw SessionConflicts.InPersonAlreadyReported();
+        }
+
+        var session = SwapSession.ReportInPerson(match.Id, command.UserId, otherUserId, now);
         sessions.Add(session);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return SwapSessionDto.From(session, now);

@@ -186,6 +186,14 @@ void main() {
       expect(find.textContaining(l10n.remainingDays(2)), findsOneWidget);
     });
 
+    testWidgets('a pair that has met in person cannot report another meeting', (tester) async {
+      stubSessions(() => [session(mode: SessionMode.inPerson, status: SwapSessionStatus.completed)]);
+      await pump(tester, MatchSessionsSection(match: match()));
+
+      expect(find.text(l10n.sessionProposeOnline), findsOneWidget);
+      expect(find.text(l10n.sessionInPersonReport), findsNothing);
+    });
+
     testWidgets('a proposal from the other user can be accepted or declined', (tester) async {
       stubSessions(() => [session(note: 'https://meet.example/abc')]);
       when(() => repository.accept('session-1')).thenAnswer((_) async => session(status: SwapSessionStatus.scheduled));
