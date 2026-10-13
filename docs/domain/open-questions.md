@@ -125,6 +125,7 @@ Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir 
 - E-posta sağlayıcısı: Faz 3 (ADR).
 - Gönderi akışı: MVP sonrası, takas akışı (Faz 5 dilim 2–8) bittikten sonra ayrı bir dilim olarak. Kullanıcı sunduğu yeteneklerden birini seçer ve o yetenekle ilgili paylaşım yapar. Paylaşım metin, görsel veya video olabilir; metin + görsel ve metin + video birlikte de olabilir. Akış, Keşfet'ten bağımsız ayrı bir ekrandır. Beğeni ve yorum etkileşim sayılır; tamamlanmış profil ve doğrulanmış e-posta gerektirir. Ayrıntılar (video sınırları, moderasyon, sıralama) o dilimin başında netleştirilecek.
 - Kullanıcı istatistiklerinin profilde gösterimi, güven puanı ve rozet/başarım modülü: hangi sayıların hangi dilimde görünür olacağı dilim 4'ün planında önerilecek; rozetler MVP sonrası.
+- Renk paleti: kullanıcı mevcut pembe ağırlıklı paleti beğenmedi (2026-10-13); palet büyük olasılıkla değişecek. Yeni palet kararlaştırılınca yalnızca `mobile/lib/core/theme/` altındaki token'lar değişir; ekranlar renkleri oradan aldığı için başka dosyaya dokunmak gerekmez.
 - Kapsamlı yetenek kataloğu (alt kategoriler, çok daha fazla yetenek) ve yetenek sınırının ödeme planlarına bağlanması: MVP sonrası.
 - Reşit olmayan (13–17 yaş) kullanıcılar: MVP sonrası. Yetişkinlerle eşleşme, özel mesajlaşma ve yüz yüze oturum için koruma kuralları, yaş bilgisinin toplanması ve veli onayı o zaman kararlaştırılacak.
 
