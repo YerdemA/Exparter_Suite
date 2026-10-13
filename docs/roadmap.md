@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0, 1 ve 2 tamamlandı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0, 1 ve 2 tamamlandı; dilim 3 onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -94,7 +94,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 0 | E-posta doğrulama ve parola sıfırlama | Tamamlandı (2026-10-09) |
 | 1 | Profil ve avatar | Tamamlandı (2026-10-13) |
 | 2 | Yetenek kataloğu ve kullanıcı yetenekleri | Tamamlandı (2026-10-13) |
-| 3 | Keşfet | Başlamadı |
+| 3 | Keşfet | Tamamlandı, onay bekliyor |
 | 4 | Takas isteği ve eşleşme | Başlamadı |
 | 5 | Gerçek zamanlı mesajlaşma | Başlamadı |
 | 6 | Takas oturumları | Başlamadı |
@@ -137,6 +137,16 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 - Admin: `scripts/admin-skill-proposals.ps1` bekleyen önerileri listeler ve onaylar/reddeder. Hesabı admin yapmak için betiğin başındaki komut kullanılır.
 - Testler (2026-10-13): backend 246 (91 domain, 107 uygulama, 48 entegrasyon), mobil 80. Uçtan uca test emülatörde geçti: katalogdan arayıp sunulan ve istenen yetenek ekleme, seviye seçme, eksikler kartının güncellenmesi, yeniden açılışta yeteneklerin korunması; ardından önceki dilimlerin akışı.
 - Sonraya bırakılan: eşleşmede veya bekleyen istekte kullanılan sunulan yeteneğin kaldırılamaması (SK-06), eşleşmelerin geldiği dilim 4'te.
+
+### Dilim 3 — Keşfet
+
+- `GET /api/v1/discovery/users`: karşılıklı uyum, tek yönlü uyum, tercih uyumu ve yenilik sırasıyla kullanıcı listesi; cursor ile sayfalanır. Sunulan seviye istenen en düşük seviyenin altındaysa uyum sayılmaz. Uyumu olmayan kullanıcılar listenin sonunda gösterilir.
+- Filtreler: kategori, yetenek, şehir, çevrimiçi / yüz yüze. Ad veya kullanıcı adıyla arama büyük/küçük harf ve Türkçe karakter ayrımı yapmaz.
+- Görünürlük değişti: etkileşim koşulunu sağlamayan kullanıcı öneri olarak listelenmez, ama aranınca bulunur ve profili ile yetenekleri açılabilir. Askıya alınmış ve silinmekte olan hesaplar hiçbir yerde görünmez.
+- Keşfet tek bir SQL sorgusudur ve üç modülün tablosunu birlikte okur; modül sınırı kuralının bilinçli tek istisnası (ADR 0011).
+- Mobil: Keşfet sekmesi (arama, şehir / mod / kategori filtreleri, sonsuz kaydırma, aşağı çekerek yenileme) ve başka bir kullanıcının salt okunur profil ekranı.
+- Testler (2026-10-13): backend 270 (91 domain, 123 uygulama, 56 entegrasyon), mobil 93. Uçtan uca test emülatörde geçti: koşulu sağlamayan bir kullanıcı önerilerde çıkmıyor, adıyla aranınca bulunuyor ve profili açılıyor.
+- Sonraya bırakılan: ekranda tek bir yeteneğe göre filtre (API destekliyor, ekranda yalnızca kategori var); "İstek gönder" düğmesi dilim 4'te; puana göre sıralama dilim 7'de; engellenen kullanıcıların gizlenmesi moderasyonla birlikte.
 
 ## Geliştirme ortamı
 

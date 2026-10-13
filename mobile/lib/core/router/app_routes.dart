@@ -5,6 +5,8 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const home = '/';
+  static const userProfileSegment = 'users/:$userIdParameter';
+  static const userIdParameter = 'userId';
   static const matches = '/matches';
   static const messages = '/messages';
   static const profile = '/profile';
@@ -15,6 +17,8 @@ abstract final class AppRoutes {
   static const skillTypeParameter = 'type';
   static const skillProposalsSegment = 'skills/proposals';
   static const skillProposals = '$profile/$skillProposalsSegment';
+
+  static String userProfile(String userId) => '/users/$userId';
 
   static String skillPicker(UserSkillType type) => '$profile/skills/add/${type.json!.toLowerCase()}';
 

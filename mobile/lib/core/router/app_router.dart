@@ -7,6 +7,8 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/verify_email_screen.dart';
+import '../../features/discovery/presentation/discovery_screen.dart';
+import '../../features/discovery/presentation/user_profile_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
@@ -88,10 +90,14 @@ GoRouter appRouter(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) => ComingSoonScreen(
-                  title: AppLocalizations.of(context).navDiscover,
-                  icon: Icons.explore_outlined,
-                ),
+                builder: (context, state) => const DiscoveryScreen(),
+                routes: [
+                  GoRoute(
+                    path: AppRoutes.userProfileSegment,
+                    builder: (context, state) =>
+                        UserProfileScreen(userId: state.pathParameters[AppRoutes.userIdParameter]!),
+                  ),
+                ],
               ),
             ],
           ),
