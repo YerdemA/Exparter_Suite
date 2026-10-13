@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/generated/export.dart';
+import '../../../core/auth/interaction_requirements.dart';
 import '../../../core/auth/session_controller.dart';
 import '../../../core/riverpod.dart';
 import '../data/api_profile_repository.dart';
@@ -63,6 +64,8 @@ class ProfileActions extends _$ProfileActions {
     try {
       ownProfile.set(await action(ref.read(profileRepositoryProvider)));
       if (ref.mounted) {
+        // Filling in the profile is one of the interaction requirements.
+        ref.invalidate(interactionRequirementsProvider);
         state = const AsyncData(null);
       }
 

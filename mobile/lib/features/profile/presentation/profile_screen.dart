@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/error_messages.dart';
 import '../../../core/api/generated/export.dart';
+import '../../../core/auth/interaction_requirements.dart';
 import '../../../core/auth/session_controller.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
@@ -11,6 +12,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/recovery_controller.dart';
+import '../../skills/presentation/own_skills_section.dart';
 import '../data/api_profile_repository.dart';
 import '../data/avatar_picker.dart';
 import 'profile_controller.dart';
@@ -124,6 +126,7 @@ class _ProfileBody extends ConsumerWidget {
     final busy = ref.watch(profileActionsProvider).isLoading;
     final loggingOut = ref.watch(authControllerProvider).isLoading;
     final restored = ref.watch(accountRestoredNoticeProvider);
+    final requirements = ref.watch(interactionRequirementsProvider).value;
     final cityName = profile.city == null
         ? null
         : ref.watch(citiesProvider).value?.where((city) => city.code == profile.city).firstOrNull?.name;
@@ -183,11 +186,8 @@ class _ProfileBody extends ConsumerWidget {
               Text(profile.bio!, style: theme.textTheme.bodyLarge),
             ],
             const SizedBox(height: AppSpacing.lg),
-            if (!profile.isComplete || !(account?.emailVerified ?? true)) ...[
-              _RequirementsCard(
-                profileFilled: profile.isComplete,
-                emailVerified: account?.emailVerified ?? true,
-              ),
+            if (requirements != null && !requirements.canInteract) ...[
+              _RequirementsCard(requirements: requirements),
               const SizedBox(height: AppSpacing.md),
             ],
             FilledButton.icon(
@@ -195,7 +195,9 @@ class _ProfileBody extends ConsumerWidget {
               icon: const Icon(Icons.edit_outlined),
               label: Text(profile.isComplete ? l10n.profileEdit : l10n.profileFillIn),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.xl),
+            const OwnSkillsSection(),
+            const SizedBox(height: AppSpacing.xl),
             if (restored) ...[
               _StatusTile(icon: Icons.restore, color: brand.success, text: l10n.homeAccountRestored),
               const SizedBox(height: AppSpacing.sm),
@@ -230,10 +232,9 @@ enum _AvatarChoice { gallery, camera, remove }
 
 /// Tells a user who cannot interact with others yet what is still missing.
 class _RequirementsCard extends StatelessWidget {
-  const _RequirementsCard({required this.profileFilled, required this.emailVerified});
+  const _RequirementsCard({required this.requirements});
 
-  final bool profileFilled;
-  final bool emailVerified;
+  final InteractionRequirements requirements;
 
   @override
   Widget build(BuildContext context) {
@@ -266,8 +267,9 @@ class _RequirementsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.interactionRequirements, style: theme.textTheme.titleMedium),
-          row(profileFilled, l10n.requirementProfile),
-          row(emailVerified, l10n.requirementEmail),
+          row(requirements.profileCompleted, l10n.requirementProfile),
+          row(requirements.hasOfferedSkill, l10n.requirementSkill),
+          row(requirements.emailVerified, l10n.requirementEmail),
         ],
       ),
     );

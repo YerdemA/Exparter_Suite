@@ -10,6 +10,7 @@ import '../../features/auth/presentation/verify_email_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
+import '../../features/skills/presentation/skill_picker_screen.dart';
 import '../../l10n/app_localizations.dart';
 import '../api/generated/export.dart';
 import '../auth/session_controller.dart';
@@ -125,6 +126,19 @@ GoRouter appRouter(Ref ref) {
                   GoRoute(
                     path: AppRoutes.profileEditSegment,
                     builder: (context, state) => const ProfileFormScreen(),
+                  ),
+                  GoRoute(
+                    path: AppRoutes.skillPickerSegment,
+                    builder: (context, state) => SkillPickerScreen(
+                      // Anything but "wanted" opens the offered picker, including a mistyped link.
+                      type: state.pathParameters[AppRoutes.skillTypeParameter] == 'wanted'
+                          ? UserSkillType.wanted
+                          : UserSkillType.offered,
+                    ),
+                  ),
+                  GoRoute(
+                    path: AppRoutes.skillProposalsSegment,
+                    builder: (context, state) => const SkillProposalsScreen(),
                   ),
                 ],
               ),

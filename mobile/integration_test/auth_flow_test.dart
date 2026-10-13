@@ -95,7 +95,7 @@ void main() {
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go(uri.toString());
   }
 
-  testWidgets('account and profile lifecycle against the real backend', (tester) async {
+  testWidgets('account, profile and skills lifecycle against the real backend', (tester) async {
     final id = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
     final username = 'e2e_$id';
     final email = '$username@example.com';
@@ -131,10 +131,41 @@ void main() {
     expect(find.text('@$username'), findsOneWidget);
     expect(find.text(l10n.homeEmailNotVerified), findsOneWidget);
 
-    // The session and the saved profile survive a restart.
+    // Add a skill to teach: search the catalog, pick it, choose a level.
+    expect(find.text(l10n.requirementSkill), findsOneWidget);
+    await tapVisible(tester, find.text(l10n.skillsAddOffered));
+    await pumpUntilFound(tester, find.text(l10n.skillPickerTitleOffered));
+    await tester.enterText(find.byType(TextField), 'gitar');
+    await tester.pump(const Duration(milliseconds: 500));
+    await pumpUntilFound(tester, find.widgetWithText(ListTile, 'Gitar'));
+    await tester.tap(find.widgetWithText(ListTile, 'Gitar'));
+    await pumpUntilFound(tester, find.text(l10n.skillLevelQuestionOffered));
+    await tester.tap(find.text(l10n.skillLevelAdvanced));
+    await pumpUntilFound(tester, find.text('Gitar · ${l10n.skillLevelAdvanced}'));
+
+    // And one to learn, asking for a teacher of at least intermediate level.
+    await tapVisible(tester, find.text(l10n.skillsAddWanted));
+    await pumpUntilFound(tester, find.text(l10n.skillPickerTitleWanted));
+    await tester.enterText(find.byType(TextField), 'ispanyolca');
+    await tester.pump(const Duration(milliseconds: 500));
+    await pumpUntilFound(tester, find.widgetWithText(ListTile, 'İspanyolca'));
+    await tester.tap(find.widgetWithText(ListTile, 'İspanyolca'));
+    await pumpUntilFound(tester, find.text(l10n.skillLevelQuestionWanted));
+    await tester.tap(find.text(l10n.skillLevelIntermediate));
+    await pumpUntilFound(
+      tester,
+      find.text('İspanyolca · ${l10n.skillWantedLevel(l10n.skillLevelIntermediate)}'),
+    );
+
+    // Only the email is missing now.
+    expect(find.text(l10n.interactionRequirements), findsOneWidget);
+    expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
+
+    // The session, the saved profile and the skills survive a restart.
     await launchApp(tester);
     await openProfileTab(tester);
     expect(find.text('Uçtan Uca'), findsOneWidget);
+    await pumpUntilFound(tester, find.text('Gitar · ${l10n.skillLevelAdvanced}'));
 
     // Edit the profile: add a bio and in-person swaps in a city.
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileEdit));

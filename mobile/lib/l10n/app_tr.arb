@@ -60,7 +60,11 @@
 
   "interactionRequirements": "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir.",
   "requirementProfile": "Profil bilgileri",
+  "requirementSkill": "En az bir sunulan yetenek",
   "requirementEmail": "E-posta doğrulaması",
+  "interactionGoToProfile": "Profile git",
+  "actionClose": "Kapat",
+  "actionCancel": "Vazgeç",
   "requirementDone": "Tamamlandı",
   "requirementMissing": "Eksik",
   "profileFillIn": "Profilinizi doldurun",
@@ -84,6 +88,59 @@
       "city": { "type": "String" }
     }
   },
+
+  "skillsOfferedTitle": "Sunduğunuz yetenekler",
+  "skillsOfferedEmpty": "Henüz öğretebileceğiniz bir yetenek eklemediniz.",
+  "skillsWantedTitle": "Öğrenmek istedikleriniz",
+  "skillsWantedEmpty": "Henüz öğrenmek istediğiniz bir yetenek eklemediniz.",
+  "skillsAddOffered": "Sunduğunuz yetenek ekle",
+  "skillsAddWanted": "Öğrenmek istediğiniz yetenek ekle",
+  "skillsCount": "{count}/{max}",
+  "@skillsCount": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "skillsLimitReached": "Bu türde en fazla 5 yetenek ekleyebilirsiniz.",
+  "skillChangeLevel": "Seviyeyi değiştir",
+  "skillRemove": "Yeteneği kaldır",
+  "skillPickerTitleOffered": "Sunduğunuz yetenek",
+  "skillPickerTitleWanted": "Öğrenmek istediğiniz yetenek",
+  "skillSearchLabel": "Yetenek arayın",
+  "skillSearchEmpty": "Aramanızla eşleşen yetenek bulunamadı.",
+  "skillSearchNarrow": "Daha fazla sonuç var. Aramayı daraltın veya bir kategori seçin.",
+  "skillAlreadyAdded": "Eklendi",
+  "skillLevelQuestionOffered": "Bu yetenekteki seviyeniz nedir?",
+  "skillLevelQuestionWanted": "Öğreticinin en az hangi seviyede olmasını istersiniz?",
+  "skillLevelBeginner": "Başlangıç",
+  "skillLevelIntermediate": "Orta",
+  "skillLevelAdvanced": "İleri",
+  "skillLevelExpert": "Uzman",
+  "skillLevelUnknown": "Bilinmiyor",
+  "skillWantedLevel": "en az {level}",
+  "@skillWantedLevel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "skillProposeAction": "Yetenek önerin",
+  "skillProposeHint": "Aradığınız yetenek listede yoksa önerebilirsiniz.",
+  "skillProposeExplanation": "Öneriniz incelendikten sonra kataloğa eklenir ve profilinizde kullanabilirsiniz.",
+  "skillProposeNameLabel": "Yetenek adı",
+  "skillProposeCategoryLabel": "Kategori",
+  "skillProposeSubmit": "Öner",
+  "skillProposalSent": "Öneriniz incelemeye alındı.",
+  "skillProposalsTitle": "Yetenek önerileriniz",
+  "skillProposalsEmpty": "Henüz bir yetenek önermediniz.",
+  "skillStatusPending": "İnceleniyor",
+  "skillStatusApproved": "Onaylandı",
+  "skillStatusRejected": "Reddedildi",
+  "validationSkillName": "Yetenek adı en az 2 karakter olmalı.",
+  "errorSkillAlreadyAdded": "Bu yetenek zaten ekli.",
+  "errorWantedLevelNotHigher": "Hem sunduğunuz hem öğrenmek istediğiniz bir yetenekte, istediğiniz seviye kendi seviyenizden yüksek olmalı.",
+  "errorSkillAlreadyExists": "Bu yetenek katalogda zaten var veya inceleniyor.",
+  "errorSkillNotApproved": "Bu yetenek henüz onaylanmadı.",
 
   "avatarChange": "Fotoğrafı değiştir",
   "avatarFromGallery": "Galeriden seç",

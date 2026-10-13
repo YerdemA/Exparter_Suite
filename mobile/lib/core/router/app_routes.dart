@@ -1,3 +1,5 @@
+import '../api/generated/export.dart';
+
 abstract final class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
@@ -8,6 +10,13 @@ abstract final class AppRoutes {
   static const profile = '/profile';
   static const profileEditSegment = 'edit';
   static const profileEdit = '$profile/$profileEditSegment';
+
+  static const skillPickerSegment = 'skills/add/:$skillTypeParameter';
+  static const skillTypeParameter = 'type';
+  static const skillProposalsSegment = 'skills/proposals';
+  static const skillProposals = '$profile/$skillProposalsSegment';
+
+  static String skillPicker(UserSkillType type) => '$profile/skills/add/${type.json!.toLowerCase()}';
 
   // Reached from links in emails, so these paths are part of the email contract
   // (see Email:EmailVerificationUrl and Email:PasswordResetUrl on the backend).

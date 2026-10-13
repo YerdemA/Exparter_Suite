@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/auth/interaction_requirements.dart';
 import '../../../core/auth/session_controller.dart';
 import '../../../core/riverpod.dart';
 import '../data/api_auth_repository.dart';
@@ -17,6 +18,7 @@ Future<void> emailVerification(Ref ref, String token) async {
   final signedIn = (await ref.read(sessionControllerProvider.future)) != null;
 
   await repository.confirmEmailVerification(token: token);
+  ref.invalidate(interactionRequirementsProvider);
 
   if (signedIn) {
     try {

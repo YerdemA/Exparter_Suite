@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0 ve 1 tamamlandı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0 ve 1 tamamlandı; dilim 2 onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -93,7 +93,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 |---|---|---|
 | 0 | E-posta doğrulama ve parola sıfırlama | Tamamlandı (2026-10-09) |
 | 1 | Profil ve avatar | Tamamlandı (2026-10-13) |
-| 2 | Yetenek kataloğu ve kullanıcı yetenekleri | Başlamadı |
+| 2 | Yetenek kataloğu ve kullanıcı yetenekleri | Tamamlandı, onay bekliyor |
 | 3 | Keşfet | Başlamadı |
 | 4 | Takas isteği ve eşleşme | Başlamadı |
 | 5 | Gerçek zamanlı mesajlaşma | Başlamadı |
@@ -126,6 +126,17 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 dotnet user-secrets set --project src/Exparter.Api "Storage:AccessKey" "<.env içindeki STORAGE_ACCESS_KEY>"
 dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env içindeki STORAGE_SECRET_KEY>"
 ```
+
+### Dilim 2 — Yetenek kataloğu ve kullanıcı yetenekleri
+
+- Katalog: 10 kategori ve 68 yetenek, migration ile gelen başlangıç verisi. Arama büyük/küçük harf ve Türkçe karakter ayrımı yapmaz ("ingilizce" → "İngilizce").
+- Kullanıcı yetenekleri: en fazla 5 sunulan ve 5 istenen; aynı yetenek iki tipte de olabilir, istenen seviye sunulandan yüksekse.
+- Yetenek önerisi: doğrulanmış e-posta yeterli; admin onaylayana kadar katalogda görünmez ve kullanılamaz.
+- Etkileşim koşulları: doğrulanmış e-posta, tamamlanmış profil ve en az bir sunulan yetenek tek bir yerde denetlenir (`IInteractionRequirements`) ve `GET /me/interaction-requirements` ile istemciye verilir. Koşulları sağlamayan kullanıcının profili ve yetenekleri başkalarına görünmez.
+- Mobil: Profil sekmesinde sunulan ve istenen yetenekler; katalogdan arama ve kategoriyle seçme, seviye belirleme, seviye değiştirme, kaldırma; yetenek önerme ve önerilerin durumu; eksikler kartında "En az bir sunulan yetenek" satırı; etkileşim reddedildiğinde uyarı penceresi.
+- Admin: `scripts/admin-skill-proposals.ps1` bekleyen önerileri listeler ve onaylar/reddeder. Hesabı admin yapmak için betiğin başındaki komut kullanılır.
+- Testler (2026-10-13): backend 245 (91 domain, 107 uygulama, 47 entegrasyon), mobil 80.
+- Sonraya bırakılan: eşleşmede veya bekleyen istekte kullanılan sunulan yeteneğin kaldırılamaması (SK-06), eşleşmelerin geldiği dilim 4'te.
 
 ## Geliştirme ortamı
 
