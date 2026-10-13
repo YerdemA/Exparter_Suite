@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Matching;
 using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
 using Exparter.Application.Tests.Identity;
@@ -35,6 +36,9 @@ internal sealed class InMemorySkills : ISkillRepository
 
     public Task<Skill?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
+
+    public Task<IReadOnlyList<Skill>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Skill>>(Items.Where(x => ids.Contains(x.Id)).ToList());
 
     public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
         Task.FromResult(Items.Any(x => x.Slug == slug));
@@ -85,9 +89,20 @@ internal sealed class InMemoryUserSkills(InMemorySkills skills) : IUserSkillRepo
     public Task<bool> HasOfferedSkillAsync(Guid userId, CancellationToken cancellationToken) =>
         Task.FromResult(Items.Any(x => x.UserId == userId && x.Type == UserSkillType.Offered));
 
+    public Task<bool> OffersSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) =>
+        Task.FromResult(Items.Any(x => x.UserId == userId && x.SkillId == skillId && x.Type == UserSkillType.Offered));
+
     public void Add(UserSkill userSkill) => Items.Add(userSkill);
 
     public void Remove(UserSkill userSkill) => Items.Remove(userSkill);
+}
+
+internal sealed class FakeSkillUsage : ISkillUsage
+{
+    public HashSet<Guid> SkillsInUse { get; } = [];
+
+    public Task<bool> IsOfferedSkillInUseAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) =>
+        Task.FromResult(SkillsInUse.Contains(skillId));
 }
 
 public class SkillHandlerTests
@@ -96,6 +111,7 @@ public class SkillHandlerTests
     private readonly InMemorySkills _skills = new();
     private readonly InMemoryUserSkills _userSkills;
     private readonly FakeUserDirectory _users = new();
+    private readonly FakeSkillUsage _usage = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
 
@@ -194,7 +210,7 @@ public class SkillHandlerTests
     public async Task Remove_deletes_the_callers_own_skill_only()
     {
         var added = await AddAsync(_skills.AddApproved("Gitar"));
-        var handler = new RemoveOwnSkillCommandHandler(_userSkills, _unitOfWork);
+        var handler = new RemoveOwnSkillCommandHandler(_userSkills, _usage, _unitOfWork);
 
         await Assert.ThrowsAsync<AppException>(
             async () => await handler.Handle(new RemoveOwnSkillCommand(Guid.NewGuid(), added.Id), CancellationToken.None));
@@ -202,6 +218,23 @@ public class SkillHandlerTests
 
         await handler.Handle(new RemoveOwnSkillCommand(_userId, added.Id), CancellationToken.None);
         Assert.Empty(_userSkills.Items);
+    }
+
+    [Fact]
+    public async Task An_offered_skill_in_use_cannot_be_removed_but_a_wanted_one_can()
+    {
+        var skill = _skills.AddApproved("Gitar");
+        var offered = await AddAsync(skill, level: SkillLevel.Beginner);
+        var wanted = await AddAsync(skill, UserSkillType.Wanted, SkillLevel.Advanced);
+        _usage.SkillsInUse.Add(skill.Id);
+        var handler = new RemoveOwnSkillCommandHandler(_userSkills, _usage, _unitOfWork);
+
+        var exception = await Assert.ThrowsAsync<AppException>(
+            async () => await handler.Handle(new RemoveOwnSkillCommand(_userId, offered.Id), CancellationToken.None));
+        Assert.Equal("user_skill_in_use", exception.Code);
+
+        await handler.Handle(new RemoveOwnSkillCommand(_userId, wanted.Id), CancellationToken.None);
+        Assert.Equal(offered.Id, Assert.Single(_userSkills.Items).Id);
     }
 
     [Fact]
@@ -328,11 +361,19 @@ public class InteractionRequirementsTests
     private sealed class StubProfiles(bool complete) : IProfileDirectory
     {
         public Task<bool> IsCompleteAsync(Guid userId, CancellationToken cancellationToken) => Task.FromResult(complete);
+
+        public Task<IReadOnlyList<ProfileCard>> GetCardsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<ProfileCard>>([]);
     }
 
     private sealed class StubSkills(bool hasOffered) : IUserSkillDirectory
     {
         public Task<bool> HasOfferedSkillAsync(Guid userId, CancellationToken cancellationToken) => Task.FromResult(hasOffered);
+
+        public Task<bool> OffersSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) => Task.FromResult(hasOffered);
+
+        public Task<IReadOnlyDictionary<Guid, string>> GetSkillNamesAsync(IReadOnlyCollection<Guid> skillIds, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyDictionary<Guid, string>>(new Dictionary<Guid, string>());
     }
 
     private static readonly Guid UserId = Guid.NewGuid();

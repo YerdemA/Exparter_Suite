@@ -64,6 +64,9 @@
 | Tamamlanmış profil | Görünen ad, en az bir takas tercihi (yüz yüze ise şehir) ve en az bir sunulan yetenek. |
 | Hitap | Uygulamanın tamamında ve e-postalarda "siz" hitabı kullanılır. Düğme etiketleri kısa emir kipinde kalır ("Giriş yap", "Kaydet"). Etkileşim uyarısı: "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." |
 | Gönderiler | MVP sonrası. Yapısı aşağıda. |
+| İstek notu | İstek gönderirken isteğe bağlı, en fazla 300 karakterlik not yazılabilir. |
+| Yeniden istek | Reddedilen veya süresi dolan istekten sonra aynı kişiye 7 gün yeniden istek gönderilemez. |
+| İstatistik tanımları | "Tamamlanan eşleşme": en az bir tamamlanmış oturumu olan sona ermiş eşleşme. "İptal edilen eşleşme": hiç oturum tamamlanmadan sona eren eşleşme. Sayılar profile dilim 6'da (oturumlar) eklenir. Tanım ileride değişebilir. |
 | Kullanıcı istatistikleri | Kullanıcı başına istatistik tutulacak ve ileride profilde güven puanının yanında gösterilecek: "Tamamlanan Eşleşme", "İptal Edilen Eşleşme" gibi sayılar. Amaç karşı tarafa güvenip güvenmemeye yardımcı olmak; rozet/başarım modülü de bu veriye dayanacak. Dilim 4 (eşleşmeler), 6 (oturumlar) ve 7 (değerlendirmeler) bu sayıların çıkarılabileceği biçimde tasarlanır: her eşleşme ve oturumun nasıl ve kim tarafından bittiği ile zamanı saklanır. |
 | Yetenek kataloğu | MVP'de 10 kategori ve 68 yetenek (başlangıç verisi). Tam sürümde çok daha kapsamlı bir kategori yapısı kurulacak. |
 | Yetenek sınırı | 5 sunulan, 5 istenen. İleride ödeme planlarına bağlanacak. |

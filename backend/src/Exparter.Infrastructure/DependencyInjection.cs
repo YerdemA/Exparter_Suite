@@ -52,6 +52,8 @@ public static class DependencyInjection
         services.AddScoped<ISkillRepository, SkillRepository>();
         services.AddScoped<IUserSkillRepository, UserSkillRepository>();
         services.AddScoped<IDiscoveryReadModel, DiscoveryReadModel>();
+        services.AddScoped<ISwapRequestRepository, SwapRequestRepository>();
+        services.AddScoped<IMatchRepository, MatchRepository>();
 
         services.AddOptions<StorageOptions>()
             .Bind(configuration.GetSection(StorageOptions.SectionName))

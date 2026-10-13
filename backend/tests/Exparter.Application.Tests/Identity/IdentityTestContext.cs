@@ -69,6 +69,9 @@ internal sealed class InMemoryUsers : IUserRepository
     public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
 
+    public Task<IReadOnlyList<User>> ListByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<User>>(Items.Where(x => ids.Contains(x.Id)).ToList());
+
     public Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Email == normalizedEmail));
 

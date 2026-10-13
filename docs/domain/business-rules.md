@@ -56,7 +56,7 @@ Durum: **Onaylandı (2026-10-07).**
 | SK-09 | Yetenek önermek için doğrulanmış e-posta yeterlidir; diğer etkileşim koşulları aranmaz (kataloğunda yeteneği olmayan kullanıcı önce öneri yapabilmelidir). | Application |
 | SK-07 | Aynı yetenek hem sunulan hem istenen olabilir; bu durumda istenen seviye sunulan seviyeden yüksek olmalıdır. Seviyelerden biri değiştirildiğinde de kural korunur. | Application |
 | SK-05 | Sunulan yetenekte seviye kullanıcının kendi seviyesidir. İstenen yetenekte seviye, aranan öğreticinin en düşük seviyesidir. | — |
-| SK-06 | Aktif bir eşleşmede veya bekleyen bir istekte kullanılan sunulan yetenek profilden kaldırılamaz. (Eşleşmelerin geldiği dilim 4'te uygulanır.) | Application |
+| SK-06 | Sona ermemiş bir eşleşmede veya bekleyen bir istekte kullanılan sunulan yetenek profilden kaldırılamaz. | Application |
 
 ## Takas isteği
 
@@ -72,6 +72,10 @@ Durum: **Onaylandı (2026-10-07).**
 | RQ-08 | İsteği yalnızca alıcı kabul veya reddedebilir; yalnızca gönderen geri çekebilir. | Domain |
 | RQ-09 | İstek 3 gün içinde cevaplanmazsa `Expired` olur. Süresi dolmuş istek kabul edilemez. | Domain |
 | RQ-10 | `Pending` dışındaki durumlar sondur; başka duruma geçilemez. | Domain |
+| RQ-11 | İsteği reddedilen veya süresi dolan gönderen, aynı kullanıcıya 7 gün geçmeden yeniden istek gönderemez. Geri çekilen istek bekleme başlatmaz; alıcı ise beklemeden karşı istek gönderebilir. | Domain |
+| RQ-12 | İstek, alıcıya isteğe bağlı kısa bir not taşıyabilir (en fazla 300 karakter). | Application |
+| RQ-13 | Gönderen etkileşim koşullarını sağlamalıdır. Alıcının koşulları sağlaması istek almak için şart değildir, kabul etmek için şarttır. | Application |
+| RQ-14 | Süresi dolmuş istek, arka plan işi kaydetmeden önce de her okumada ve işlemde süresi dolmuş sayılır. | Domain |
 
 ## Eşleşme
 

@@ -29,5 +29,8 @@ internal sealed class ProfileRepository(AppDbContext dbContext) : IProfileReposi
     public Task<Profile?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
         dbContext.Profiles.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 
+    public async Task<IReadOnlyList<Profile>> ListByUserIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) =>
+        await dbContext.Profiles.AsNoTracking().Where(x => userIds.Contains(x.UserId)).ToListAsync(cancellationToken);
+
     public void Add(Profile profile) => dbContext.Profiles.Add(profile);
 }

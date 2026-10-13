@@ -87,6 +87,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `swap_request_to_self` | 409 | Kullanıcı kendine istek gönderemez. |
 | `skill_not_offered` | 409 | Seçilen yetenek ilgili kullanıcının sunduğu yetenekler arasında değil. |
 | `swap_request_already_pending` | 409 | İki kullanıcı arasında bekleyen bir istek var. |
+| `swap_request_cooldown` | 409 | Alıcı, gönderenin önceki isteğini reddetti veya cevaplamadı; yeni istek için 7 gün beklenmeli. |
 | `match_already_exists` | 409 | İki kullanıcı arasında sona ermemiş bir eşleşme var. |
 | `user_blocked` | 409 | Taraflardan biri diğerini engellemiş. |
 | `invalid_state` | 409 | Kaynağın mevcut durumu bu geçişe izin vermiyor. |
