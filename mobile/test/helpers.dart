@@ -7,6 +7,7 @@ import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/core/theme/app_theme.dart';
 import 'package:exparter/features/auth/domain/auth_repository.dart';
 import 'package:exparter/features/discovery/domain/discovery_repository.dart';
+import 'package:exparter/features/matches/domain/match_repository.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/features/skills/domain/skill_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
@@ -21,6 +22,8 @@ class MockProfileRepository extends Mock implements ProfileRepository {}
 class MockSkillRepository extends Mock implements SkillRepository {}
 
 class MockDiscoveryRepository extends Mock implements DiscoveryRepository {}
+
+class MockMatchRepository extends Mock implements MatchRepository {}
 
 class InMemorySessionPersistence implements SessionPersistence {
   InMemorySessionPersistence([this.value]);

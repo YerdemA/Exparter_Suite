@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0, 1, 2 ve 3 tamamlandı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0, 1, 2 ve 3 tamamlandı; dilim 4 onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -95,7 +95,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 1 | Profil ve avatar | Tamamlandı (2026-10-13) |
 | 2 | Yetenek kataloğu ve kullanıcı yetenekleri | Tamamlandı (2026-10-13) |
 | 3 | Keşfet | Tamamlandı (2026-10-13) |
-| 4 | Takas isteği ve eşleşme | Başlamadı |
+| 4 | Takas isteği ve eşleşme | Tamamlandı, onay bekliyor |
 | 5 | Gerçek zamanlı mesajlaşma | Başlamadı |
 | 6 | Takas oturumları | Başlamadı |
 | 7 | Değerlendirmeler | Başlamadı |
@@ -147,6 +147,18 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 - Mobil: Keşfet sekmesi (arama, şehir / mod / kategori filtreleri, sonsuz kaydırma, aşağı çekerek yenileme) ve başka bir kullanıcının salt okunur profil ekranı.
 - Testler (2026-10-13): backend 270 (91 domain, 123 uygulama, 56 entegrasyon), mobil 94. Uçtan uca test emülatörde geçti: koşulu sağlamayan bir kullanıcı önerilerde çıkmıyor, adıyla aranınca bulunuyor ve profili açılıyor.
 - Sonraya bırakılan: "İstek gönder" düğmesi dilim 4'te; puana göre sıralama dilim 7'de; engellenen kullanıcıların gizlenmesi moderasyonla birlikte.
+
+### Dilim 4 — Takas isteği ve eşleşme
+
+- İstek: gönderen kendi sunduğu bir yeteneği ve alıcının sunduğu bir yeteneği seçer, isteğe bağlı not (en fazla 300 karakter) ekler. Gönderen etkileşim koşullarını sağlamalıdır; alıcı kabul ederken sağlamalıdır.
+- Kurallar: bir çift arasında tek bekleyen istek ve tek sona ermemiş eşleşme (veritabanı dizinleriyle de korunur); istek 3 günde sona erer; reddedilen veya cevaplanmayan gönderen aynı kişiye 7 gün yeniden istek gönderemez; geri çekilen istek bekleme başlatmaz.
+- Eşleşme: kabul edilen istek eşleşme oluşturur. Bir taraf sonlandırmayı ister, diğeri onaylar veya reddeder; isteyen geri alabilir; 7 gün cevapsız kalan istek eşleşmeyi sonlandırır.
+- Süreler: okumalar ve işlemler süreyi saate göre değerlendirir; dakikada bir çalışan arka plan işi (`MatchingDeadlineWorker`) kayıtlı durumu günceller.
+- Bekleyen istekte veya sona ermemiş eşleşmede kullanılan sunulan yetenek kaldırılamaz (SK-06).
+- İstatistik için veri: her istek ve eşleşmenin nasıl, ne zaman ve kimin isteğiyle bittiği saklanır. Sayılar profile dilim 6'da eklenecek.
+- Mobil: başka kullanıcının profilinde "İstek gönder"; istek formu; Eşleşmeler sekmesinde eşleşmeler, gelen ve gönderilen istekler (kabul, ret, geri çekme); eşleşme ayrıntısı ve sonlandırma akışı.
+- Testler (2026-10-13): backend 331 (110 domain, 154 uygulama, 67 entegrasyon), mobil 118. Uçtan uca test emülatörde geçti: istek gönderme, karşı tarafın kabulü, eşleşmenin görünmesi ve sonlandırma isteği.
+- Sonraya bırakılan: eşleşme kabulünde sohbetin açılması ve `conversationId` (dilim 5); yeni istek ve sonlandırma hatırlatması bildirimleri (dilim 8); engelleme ile eşleşmenin sonlanması (moderasyon); listelerde yalnızca ilk 50 kayıt gösterilir.
 
 ## Geliştirme ortamı
 

@@ -9,6 +9,9 @@ import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/verify_email_screen.dart';
 import '../../features/discovery/presentation/discovery_screen.dart';
 import '../../features/discovery/presentation/user_profile_screen.dart';
+import '../../features/matches/presentation/match_detail_screen.dart';
+import '../../features/matches/presentation/matches_screen.dart';
+import '../../features/matches/presentation/send_request_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
@@ -96,6 +99,13 @@ GoRouter appRouter(Ref ref) {
                     path: AppRoutes.userProfileSegment,
                     builder: (context, state) =>
                         UserProfileScreen(userId: state.pathParameters[AppRoutes.userIdParameter]!),
+                    routes: [
+                      GoRoute(
+                        path: AppRoutes.sendRequestSegment,
+                        builder: (context, state) =>
+                            SendRequestScreen(recipientId: state.pathParameters[AppRoutes.userIdParameter]!),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -105,10 +115,14 @@ GoRouter appRouter(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.matches,
-                builder: (context, state) => ComingSoonScreen(
-                  title: AppLocalizations.of(context).navMatches,
-                  icon: Icons.handshake_outlined,
-                ),
+                builder: (context, state) => const MatchesScreen(),
+                routes: [
+                  GoRoute(
+                    path: AppRoutes.matchDetailSegment,
+                    builder: (context, state) =>
+                        MatchDetailScreen(matchId: state.pathParameters[AppRoutes.matchIdParameter]!),
+                  ),
+                ],
               ),
             ],
           ),
