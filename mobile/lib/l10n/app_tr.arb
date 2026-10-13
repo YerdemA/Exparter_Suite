@@ -165,6 +165,75 @@
   "errorSessionExpired": "Oturumunuz sona erdi. Lütfen yeniden giriş yapın.",
   "errorNotFound": "Aradığınız içerik bulunamadı.",
   "errorRetry": "Tekrar dene",
+  "errorSessionInPast": "Oturum için gelecekte bir tarih ve saat seçin.",
+  "errorSessionNotStarted": "Oturum başlamadan tamamlandı olarak işaretlenemez.",
+  "errorMatchEndPending": "Eşleşme için sonlandırma isteği beklerken yeni oturum eklenemez.",
+  "sessionsTitle": "Oturumlar",
+  "sessionsEmpty": "Henüz bir oturum yok.",
+  "sessionProposeOnline": "Çevrimiçi oturum öner",
+  "sessionProposeTitle": "Çevrimiçi oturum",
+  "sessionProposeSubmit": "Öner",
+  "sessionProposed": "Oturum öneriniz gönderildi.",
+  "sessionDateLabel": "Tarih",
+  "sessionTimeLabel": "Saat",
+  "sessionDurationLabel": "Süre",
+  "sessionDurationMinutes": "{minutes} dk",
+  "@sessionDurationMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "sessionNoteLabel": "Not (isteğe bağlı)",
+  "sessionNoteHelper": "Örneğin görüşme bağlantısı.",
+  "sessionInPersonReport": "Yüz yüze buluştuk",
+  "sessionInPersonHint": "Yüz yüze buluşmaları sohbette kendiniz ayarlarsınız. Buluştuktan sonra buradan bildirin; karşı taraf onaylayınca tamamlanmış sayılır.",
+  "sessionInPersonConfirmTitle": "Yüz yüze buluştunuz mu?",
+  "sessionInPersonConfirmBody": "Karşı taraftan bu buluşmayı onaylaması istenecek. 72 saat içinde cevap gelmezse buluşma tamamlanmış sayılır.",
+  "sessionInPersonTitle": "Yüz yüze buluşma",
+  "sessionOnlineTitle": "{date} {time} · {minutes} dk",
+  "@sessionOnlineTitle": {
+    "placeholders": {
+      "date": { "type": "String" },
+      "time": { "type": "String" },
+      "minutes": { "type": "int" }
+    }
+  },
+  "sessionStatusProposed": "Öneri, cevap bekliyor",
+  "sessionStatusScheduled": "Planlandı",
+  "sessionStatusCompletionPending": "Tamamlandı onayı bekliyor",
+  "sessionStatusCompleted": "Tamamlandı",
+  "sessionStatusDeclined": "Reddedildi",
+  "sessionStatusCancelled": "İptal edildi",
+  "sessionMarkCompleted": "Tamamlandı olarak işaretle",
+  "sessionWaitingConfirmation": "Karşı tarafın onayı bekleniyor;",
+  "sessionConfirmQuestionOnline": "Karşı taraf bu oturumu tamamlandı olarak işaretledi.",
+  "sessionConfirmQuestionInPerson": "Karşı taraf yüz yüze buluştuğunuzu bildirdi.",
+  "sessionConfirm": "Onayla",
+  "sessionDispute": "İtiraz et",
+  "sessionDisputeTitle": "İtirazınızın sebebi",
+  "sessionCancel": "İptal et",
+  "sessionCancelTitle": "İptal sebebi",
+  "sessionReasonLabel": "Sebep",
+  "sessionReasonHelper": "En az 5 karakter. Karşı taraf bu sebebi görür.",
+  "sessionReasonSubmit": "Gönder",
+  "sessionCancelReason": "İptal sebebi: {reason}",
+  "@sessionCancelReason": {
+    "placeholders": {
+      "reason": { "type": "String" }
+    }
+  },
+  "sessionCancelledMatchEnded": "Eşleşme sona erdiği için iptal edildi.",
+  "sessionCompletedAutomatically": "Süre dolduğu için kendiliğinden tamamlandı.",
+  "statsTotalMatches": "Toplam eşleşme",
+  "statsCompletedMatches": "Tamamlanan",
+  "statsCancelledMatches": "İptal edilen",
+  "statsCompletedSessions": "Tamamlanan oturum: {count}",
+  "@statsCompletedSessions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statsUnavailable": "İstatistikler yüklenemedi.",
   "errorConversationClosed": "Bu sohbet kapalı.",
   "errorConversationHasActiveMatch": "Devam eden bir eşleşme varken sohbet kapatılamaz.",
   "messagesEmpty": "Henüz bir sohbetiniz yok. Bir eşleşme başladığında sohbet burada açılır.",

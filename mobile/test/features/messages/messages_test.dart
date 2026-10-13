@@ -10,6 +10,7 @@ import 'package:exparter/features/messages/data/api_message_repository.dart';
 import 'package:exparter/features/messages/presentation/conversation_screen.dart';
 import 'package:exparter/features/messages/presentation/conversations_screen.dart';
 import 'package:exparter/features/messages/presentation/message_controller.dart';
+import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,6 +83,7 @@ void main() {
   });
 
   List<Override> overrides() => [
+        sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
         messageRepositoryProvider.overrideWithValue(repository),
         realtimeClientProvider.overrideWithValue(realtime),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),

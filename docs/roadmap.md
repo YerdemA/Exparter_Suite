@@ -11,8 +11,8 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0–5 tamamlandı |
-| 6 | Sertleştirme ve MVP yayını | Başlamadı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0–5 tamamlandı; dilim 6 onay bekliyor |
+| 6 | Sertleştirme ve MVP yayını | Tamamlandı, onay bekliyor |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -170,6 +170,17 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 - Mobil: Mesajlar sekmesi (son mesaj, okunmamış sayısı), sohbet ekranı (iyimser gönderim, başarısız mesajı yeniden deneme, eskiye doğru sayfalama, "Görüldü", sohbeti kapatma), alt çubukta okunmamış rozeti, eşleşme ayrıntısında "Mesaj gönder". Bağlantı koparsa yeniden kurulur ve ekrandaki veriler yenilenir.
 - Testler (2026-10-13): backend 366 (119 domain, 171 uygulama, 76 entegrasyon; hub gerçek SignalR istemcisiyle sınanır), mobil 143. Uçtan uca test emülatörde geçti: eşleşmeden sohbete geçiş, mesaj gönderme ve karşı tarafın cevabının gerçek bağlantı üzerinden anında gelmesi.
 - Sonraya bırakılan: uygulama kapalıyken telefon bildirimi (dilim 8, FCM); engelleme ve hesap silmenin sohbeti kapatması (moderasyon ve dilim 8); sohbet listesinde yalnızca ilk 50 sohbet.
+
+### Dilim 6 — Oturumlar ve profil istatistikleri
+
+- Çevrimiçi oturum: taraflardan biri tarih, saat, süre (30/45/60/90/120 dk) ve isteğe bağlı notla önerir; diğeri kabul veya reddeder. Başlangıç saatine kadar cevaplanmayan öneri reddedilmiş sayılır. Başlangıçtan sonra bir taraf tamamlandı işaretler, diğeri onaylar; 72 saat cevapsız kalırsa kendiliğinden tamamlanır.
+- Yüz yüze buluşma: uygulamada planlanmaz; kullanıcılar sohbette ayarlar, tarih ve yer tutulmaz. Buluşmadan sonra taraflardan biri "Yüz yüze buluştuk" diye bildirir, diğeri onaylar veya sebep yazarak itiraz eder (kullanıcı kararı, 2026-10-13).
+- İptal: taraflardan biri sebep yazarak tek başına iptal eder; sebebi yalnızca iki taraf görür.
+- Eşleşmeyle ilişki: sonlandırma isteği bekleyen veya sona ermiş eşleşmeye oturum eklenemez; eşleşme bitince henüz gerçekleşmemiş oturumlar iptal edilir, onay bekleyen işaret sonradan da onaylanabilir.
+- İstatistikler (`GET /api/v1/users/{userId}/stats`): toplam eşleşme, tamamlanan eşleşme, iptal edilen (tamamlanmamış) eşleşme ve tamamlanan oturum; kayıtlardan hesaplanır, ayrı sayaç tutulmaz.
+- Mobil: eşleşme ayrıntısında oturum listesi, "Çevrimiçi oturum öner" formu, "Yüz yüze buluştuk" bildirimi ve oturum kartlarındaki işlemler; kendi profilinde ve başka kullanıcıların profilinde istatistik kartı.
+- Testler (2026-10-13): backend 411 (140 domain, 187 uygulama, 84 entegrasyon), mobil 161. Uçtan uca test emülatörde geçti: yüz yüze buluşma bildirimi, karşı tarafın onayı, çevrimiçi oturum önerisi ve profildeki istatistik.
+- Sonraya bırakılan: iptal sebebinin ve hatırlatmaların bildirim olarak gitmesi (dilim 8); iptal sebeplerinin admin tarafından görülmesi (moderasyon); bütün eşleşmelerdeki oturumları gösteren takvim ekranı (API hazır: `GET /api/v1/sessions`).
 
 ## Geliştirme ortamı
 

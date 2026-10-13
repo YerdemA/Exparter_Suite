@@ -12,6 +12,7 @@ import 'package:exparter/features/matches/presentation/match_labels.dart';
 import 'package:exparter/features/matches/presentation/matches_screen.dart';
 import 'package:exparter/features/matches/presentation/send_request_screen.dart';
 import 'package:exparter/features/profile/data/api_profile_repository.dart';
+import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/features/skills/data/api_skill_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
@@ -94,6 +95,7 @@ void main() {
   });
 
   List<Override> overrides() => [
+        sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
         matchRepositoryProvider.overrideWithValue(repository),
         discoveryRepositoryProvider.overrideWithValue(discoveryRepository),
         skillRepositoryProvider.overrideWithValue(skillRepository),
@@ -328,6 +330,7 @@ void main() {
       expect(find.text('Deniz Kaya'), findsOneWidget);
       expect(find.text(l10n.swapYouTeach('Gitar')), findsOneWidget);
 
+      await tester.ensureVisible(find.text(l10n.matchEndRequest));
       await tester.tap(find.text(l10n.matchEndRequest));
       await tester.pumpAndSettle();
       expect(find.text(l10n.matchEndConfirmBody), findsOneWidget);
@@ -348,6 +351,7 @@ void main() {
       when(() => repository.withdrawEndRequest('match-1')).thenAnswer((_) async => testMatch());
       await pump(tester, const MatchDetailScreen(matchId: 'match-1'));
 
+      await tester.ensureVisible(find.text(l10n.matchEndWithdraw));
       await tester.tap(find.text(l10n.matchEndWithdraw));
       await tester.pumpAndSettle();
 
