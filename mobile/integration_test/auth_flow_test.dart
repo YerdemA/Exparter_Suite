@@ -168,7 +168,7 @@ void main() {
     expect(find.byType(Image), findsNothing);
 
     // Verify the email address with the link from the email.
-    openLink(tester, AppRoutes.verifyEmail, await tokenFromEmail(email, 'doğrula'));
+    openLink(tester, AppRoutes.verifyEmail, await tokenFromEmail(email, 'doğrulama'));
     await pumpUntilFound(tester, find.text(l10n.verifyEmailSuccess));
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionContinue));
     await openProfileTab(tester);
@@ -195,7 +195,7 @@ void main() {
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit));
     await pumpUntilFound(tester, find.text(l10n.forgotPasswordSent));
 
-    openLink(tester, AppRoutes.resetPassword, await tokenFromEmail(email, 'parola'));
+    openLink(tester, AppRoutes.resetPassword, await tokenFromEmail(email, 'sıfırlama'));
     await pumpUntilFound(tester, find.text(l10n.resetPasswordTitle));
     await tester.enterText(field(l10n.passwordLabel), newPassword);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.resetPasswordSubmit));

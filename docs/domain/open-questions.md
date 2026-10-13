@@ -62,7 +62,7 @@
 | Gezinme | Alt gezinme çubuğu: Keşfet, Eşleşmeler, Mesajlar, Profil. |
 | Etkileşim koşulu | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir, ama etkileşime giremez, istek gönderemez ve keşfette gösterilmez. Zorunlu profil ekranı yoktur; koşul etkileşim anında uyarıyla devreye girer. |
 | Tamamlanmış profil | Görünen ad, en az bir takas tercihi (yüz yüze ise şehir) ve en az bir sunulan yetenek. |
-| Etkileşim uyarısı | Metin "siz" hitabıyla: "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." |
+| Hitap | Uygulamanın tamamında ve e-postalarda "siz" hitabı kullanılır. Düğme etiketleri kısa emir kipinde kalır ("Giriş yap", "Kaydet"). Etkileşim uyarısı: "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." |
 | Gönderiler | MVP sonrası. Yapısı aşağıda. |
 
 ## Onaylanan ayrıntılar (2026-10-07)

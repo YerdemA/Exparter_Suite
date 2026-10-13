@@ -33,7 +33,7 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 
 ## Kodlama kuralları
 
-- Arayüz dili Türkçe; kod, adlandırma, yorumlar ve commit mesajları İngilizce.
+- Arayüz dili Türkçe ve "siz" hitabıyla (e-postalar dahil); düğme etiketleri kısa emir kipinde ("Giriş yap", "Kaydet"). Kod, adlandırma, yorumlar ve commit mesajları İngilizce.
 - Conventional Commits. Her faz ayrı branch'te (`phase-N/...`), tamamlanınca `main`'e merge.
 - Gizli bilgiler repoya girmez: lokalde `.env` veya user-secrets, repoda yalnızca `.env.example`.
 - Domain katmanının dış bağımlılığı olmaz. Entity'ler zengin modeldir, setter'lar kapalıdır. Validation Application'da, iş kuralları Domain'de.
