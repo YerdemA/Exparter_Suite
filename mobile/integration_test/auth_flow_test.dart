@@ -9,6 +9,7 @@ import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:integration_test/integration_test.dart';
@@ -101,6 +102,9 @@ void main() {
     final email = '$username@example.com';
     const password = 'Passw0rd!x';
     const newPassword = 'N3w-Passw0rd';
+
+    // A session left on the device by an earlier run would skip the sign-in screen.
+    await const FlutterSecureStorage().deleteAll();
 
     await launchApp(tester);
     await pumpUntilFound(tester, find.text(l10n.loginTitle));

@@ -135,7 +135,7 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 - Etkileşim koşulları: doğrulanmış e-posta, tamamlanmış profil ve en az bir sunulan yetenek tek bir yerde denetlenir (`IInteractionRequirements`) ve `GET /me/interaction-requirements` ile istemciye verilir. Koşulları sağlamayan kullanıcının profili ve yetenekleri başkalarına görünmez.
 - Mobil: Profil sekmesinde sunulan ve istenen yetenekler; katalogdan arama ve kategoriyle seçme, seviye belirleme, seviye değiştirme, kaldırma; yetenek önerme ve önerilerin durumu; eksikler kartında "En az bir sunulan yetenek" satırı; etkileşim reddedildiğinde uyarı penceresi.
 - Admin: `scripts/admin-skill-proposals.ps1` bekleyen önerileri listeler ve onaylar/reddeder. Hesabı admin yapmak için betiğin başındaki komut kullanılır.
-- Testler (2026-10-13): backend 245 (91 domain, 107 uygulama, 47 entegrasyon), mobil 80.
+- Testler (2026-10-13): backend 245 (91 domain, 107 uygulama, 47 entegrasyon), mobil 80. Uçtan uca test emülatörde geçti: katalogdan arayıp sunulan ve istenen yetenek ekleme, seviye seçme, eksikler kartının güncellenmesi, yeniden açılışta yeteneklerin korunması; ardından önceki dilimlerin akışı.
 - Sonraya bırakılan: eşleşmede veya bekleyen istekte kullanılan sunulan yeteneğin kaldırılamaması (SK-06), eşleşmelerin geldiği dilim 4'te.
 
 ## Geliştirme ortamı

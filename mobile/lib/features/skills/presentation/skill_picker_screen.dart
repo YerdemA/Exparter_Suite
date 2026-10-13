@@ -23,36 +23,43 @@ Future<SkillLevel?> showSkillLevelSheet(
     showModalBottomSheet<SkillLevel>(
       context: context,
       showDragHandle: true,
+      // Sized to its content and scrollable, so the four levels stay reachable on a
+      // short screen or while the keyboard is still open.
+      isScrollControlled: true,
       builder: (sheetContext) {
         final l10n = AppLocalizations.of(sheetContext);
         final theme = Theme.of(sheetContext);
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(skillName, style: theme.textTheme.titleLarge),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      type == UserSkillType.offered ? l10n.skillLevelQuestionOffered : l10n.skillLevelQuestionWanted,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(skillName, style: theme.textTheme.titleLarge),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        type == UserSkillType.offered
+                            ? l10n.skillLevelQuestionOffered
+                            : l10n.skillLevelQuestionWanted,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              for (final level in selectableSkillLevels)
-                ListTile(
-                  title: Text(skillLevelLabel(l10n, level)),
-                  trailing: level == current ? const Icon(Icons.check) : null,
-                  onTap: () => Navigator.pop(sheetContext, level),
-                ),
-            ],
+                const SizedBox(height: AppSpacing.sm),
+                for (final level in selectableSkillLevels)
+                  ListTile(
+                    title: Text(skillLevelLabel(l10n, level)),
+                    trailing: level == current ? const Icon(Icons.check) : null,
+                    onTap: () => Navigator.pop(sheetContext, level),
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -92,6 +99,8 @@ class _SkillPickerScreenState extends ConsumerState<SkillPickerScreen> {
   Future<void> _add(Skill skill) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    // Closing the keyboard first gives the level sheet the whole screen.
+    FocusManager.instance.primaryFocus?.unfocus();
     final level = await showSkillLevelSheet(context, skillName: skill.name, type: widget.type);
     if (level == null) {
       return;

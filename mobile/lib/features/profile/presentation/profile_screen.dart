@@ -134,94 +134,99 @@ class _ProfileBody extends ConsumerWidget {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
-        child: ListView(
+        // A plain column rather than a lazy list: the content is short, and every part
+        // of it (name, skills, account) stays built while the user scrolls.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            Center(
-              child: Stack(
-                alignment: Alignment.bottomRight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    ProfileAvatar(name: profile.displayName, imageUrl: profile.avatarUrl, size: _avatarSize),
+                    if (busy)
+                      const Positioned.fill(child: Center(child: CircularProgressIndicator()))
+                    else
+                      IconButton.filled(
+                        tooltip: l10n.avatarChange,
+                        onPressed: () => _changeAvatar(context, ref),
+                        icon: const Icon(Icons.photo_camera_outlined),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              if (profile.displayName != null)
+                Text(
+                  profile.displayName!,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineMedium,
+                ),
+              if (account != null)
+                Text(
+                  '@${account.username}',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
                 children: [
-                  ProfileAvatar(name: profile.displayName, imageUrl: profile.avatarUrl, size: _avatarSize),
-                  if (busy)
-                    const Positioned.fill(child: Center(child: CircularProgressIndicator()))
-                  else
-                    IconButton.filled(
-                      tooltip: l10n.avatarChange,
-                      onPressed: () => _changeAvatar(context, ref),
-                      icon: const Icon(Icons.photo_camera_outlined),
+                  if (profile.acceptsOnline)
+                    Chip(avatar: const Icon(Icons.videocam_outlined), label: Text(l10n.profileModeOnline)),
+                  if (profile.acceptsInPerson)
+                    Chip(
+                      avatar: const Icon(Icons.place_outlined),
+                      label: Text(cityName == null ? l10n.profileModeInPerson : l10n.profileModeInPersonIn(cityName)),
                     ),
                 ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (profile.displayName != null)
-              Text(
-                profile.displayName!,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineMedium,
-              ),
-            if (account != null)
-              Text(
-                '@${account.username}',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
-            const SizedBox(height: AppSpacing.md),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: [
-                if (profile.acceptsOnline)
-                  Chip(avatar: const Icon(Icons.videocam_outlined), label: Text(l10n.profileModeOnline)),
-                if (profile.acceptsInPerson)
-                  Chip(
-                    avatar: const Icon(Icons.place_outlined),
-                    label: Text(cityName == null ? l10n.profileModeInPerson : l10n.profileModeInPersonIn(cityName)),
-                  ),
+              if (profile.bio != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text(profile.bio!, style: theme.textTheme.bodyLarge),
               ],
-            ),
-            if (profile.bio != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              Text(profile.bio!, style: theme.textTheme.bodyLarge),
-            ],
-            const SizedBox(height: AppSpacing.lg),
-            if (requirements != null && !requirements.canInteract) ...[
-              _RequirementsCard(requirements: requirements),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            FilledButton.icon(
-              onPressed: () => context.go(AppRoutes.profileEdit),
-              icon: const Icon(Icons.edit_outlined),
-              label: Text(profile.isComplete ? l10n.profileEdit : l10n.profileFillIn),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            const OwnSkillsSection(),
-            const SizedBox(height: AppSpacing.xl),
-            if (restored) ...[
-              _StatusTile(icon: Icons.restore, color: brand.success, text: l10n.homeAccountRestored),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-            if (account != null) ...[
-              _StatusTile(
-                icon: account.emailVerified ? Icons.verified_outlined : Icons.mark_email_unread_outlined,
-                color: account.emailVerified ? brand.success : brand.warning,
-                text: account.emailVerified ? l10n.homeEmailVerified : l10n.homeEmailNotVerified,
+              const SizedBox(height: AppSpacing.lg),
+              if (requirements != null && !requirements.canInteract) ...[
+                _RequirementsCard(requirements: requirements),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              FilledButton.icon(
+                onPressed: () => context.go(AppRoutes.profileEdit),
+                icon: const Icon(Icons.edit_outlined),
+                label: Text(profile.isComplete ? l10n.profileEdit : l10n.profileFillIn),
               ),
-              if (!account.emailVerified) const _ResendVerificationButton(),
+              const SizedBox(height: AppSpacing.xl),
+              const OwnSkillsSection(),
+              const SizedBox(height: AppSpacing.xl),
+              if (restored) ...[
+                _StatusTile(icon: Icons.restore, color: brand.success, text: l10n.homeAccountRestored),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+              if (account != null) ...[
+                _StatusTile(
+                  icon: account.emailVerified ? Icons.verified_outlined : Icons.mark_email_unread_outlined,
+                  color: account.emailVerified ? brand.success : brand.warning,
+                  text: account.emailVerified ? l10n.homeEmailVerified : l10n.homeEmailNotVerified,
+                ),
+                if (!account.emailVerified) const _ResendVerificationButton(),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+              OutlinedButton.icon(
+                onPressed: loggingOut
+                    ? null
+                    : () {
+                        ref.read(accountRestoredNoticeProvider.notifier).dismiss();
+                        ref.read(authControllerProvider.notifier).logout();
+                      },
+                icon: const Icon(Icons.logout),
+                label: Text(l10n.homeLogout),
+              ),
             ],
-            const SizedBox(height: AppSpacing.lg),
-            OutlinedButton.icon(
-              onPressed: loggingOut
-                  ? null
-                  : () {
-                      ref.read(accountRestoredNoticeProvider.notifier).dismiss();
-                      ref.read(authControllerProvider.notifier).logout();
-                    },
-              icon: const Icon(Icons.logout),
-              label: Text(l10n.homeLogout),
-            ),
-          ],
+          ),
         ),
       ),
     );
