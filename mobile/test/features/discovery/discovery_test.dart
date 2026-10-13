@@ -7,6 +7,7 @@ import 'package:exparter/features/discovery/presentation/discovery_labels.dart';
 import 'package:exparter/features/discovery/presentation/discovery_screen.dart';
 import 'package:exparter/features/discovery/presentation/user_profile_screen.dart';
 import 'package:exparter/features/profile/data/api_profile_repository.dart';
+import 'package:exparter/features/skills/data/api_skill_repository.dart';
 import 'package:exparter/features/skills/presentation/skill_controller.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
@@ -20,13 +21,20 @@ import '../../helpers.dart';
 void main() {
   final l10n = AppLocalizationsTr();
   late MockDiscoveryRepository repository;
+  late MockSkillRepository skillRepository;
 
   setUpAll(() => registerFallbackValue(noDiscoveryFilters));
 
-  setUp(() => repository = MockDiscoveryRepository());
+  setUp(() {
+    repository = MockDiscoveryRepository();
+    skillRepository = MockSkillRepository();
+    when(() => skillRepository.searchSkills(categoryId: any(named: 'categoryId'), query: any(named: 'query')))
+        .thenAnswer((_) async => testSkillPage([testSkill('Gitar'), testSkill('Piyano')]));
+  });
 
   List<Override> overrides() => [
         discoveryRepositoryProvider.overrideWithValue(repository),
+        skillRepositoryProvider.overrideWithValue(skillRepository),
         skillCategoriesProvider.overrideWith((ref) async => testCategories),
         citiesProvider.overrideWith((ref) async => testCities),
       ];
@@ -163,7 +171,7 @@ void main() {
       await pump(tester);
       when(
         () => repository.discover(
-          filters: (query: 'zeynep', categoryId: null, city: null, mode: null),
+          filters: (query: 'zeynep', skillId: null, categoryId: null, city: null, mode: null),
           cursor: any(named: 'cursor'),
         ),
       ).thenAnswer((_) async => const DiscoveryUserCursorPage(items: []));
@@ -182,15 +190,47 @@ void main() {
 
       await tester.tap(find.widgetWithText(ChoiceChip, l10n.profileModeOnline));
       await tester.pumpAndSettle();
+      // The categories follow the other filters in a row that scrolls sideways.
+      await tester.dragUntilVisible(
+        find.widgetWithText(ChoiceChip, 'Müzik'),
+        find.byType(ListView).first,
+        const Offset(-200, 0),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ChoiceChip, 'Müzik'));
       await tester.pumpAndSettle();
 
       verify(
         () => repository.discover(
-          filters: (query: '', categoryId: 'category-music', city: null, mode: SessionMode.online),
+          filters: (query: '', skillId: null, categoryId: 'category-music', city: null, mode: SessionMode.online),
           cursor: any(named: 'cursor'),
         ),
       ).called(1);
+    });
+
+    testWidgets('filters by a skill picked from the catalog, and clears it again', (tester) async {
+      stubPage([]);
+      await pump(tester);
+
+      await tester.tap(find.text(l10n.discoverAllSkills));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Gitar'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ActionChip, 'Gitar'), findsOneWidget);
+      verify(
+        () => repository.discover(
+          filters: (query: '', skillId: 'skill-gitar', categoryId: null, city: null, mode: null),
+          cursor: any(named: 'cursor'),
+        ),
+      ).called(1);
+
+      await tester.tap(find.widgetWithText(ActionChip, 'Gitar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, l10n.discoverAllSkills));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ActionChip, l10n.discoverAllSkills), findsOneWidget);
     });
 
     testWidgets('filters by the chosen city', (tester) async {
@@ -205,7 +245,7 @@ void main() {
       expect(find.widgetWithText(ActionChip, 'Ankara'), findsOneWidget);
       verify(
         () => repository.discover(
-          filters: (query: '', categoryId: null, city: '06', mode: null),
+          filters: (query: '', skillId: null, categoryId: null, city: '06', mode: null),
           cursor: any(named: 'cursor'),
         ),
       ).called(1);

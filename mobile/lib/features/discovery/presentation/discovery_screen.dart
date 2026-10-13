@@ -36,6 +36,9 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   Timer? _debounce;
   DiscoveryFilters _filters = noDiscoveryFilters;
 
+  /// The skill behind `_filters.skillId`, kept for its name.
+  Skill? _skill;
+
   @override
   void initState() {
     super.initState();
@@ -59,7 +62,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   void _onSearchChanged(String value) {
     // Waiting for a pause in typing avoids one request per keystroke.
     _debounce?.cancel();
-    _debounce = Timer(_searchDelay, () => _setFilters((query: value.trim(), categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode)));
+    _debounce = Timer(_searchDelay, () => _setFilters((query: value.trim(), skillId: _filters.skillId, categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode)));
   }
 
   void _setFilters(DiscoveryFilters filters) {
@@ -83,12 +86,25 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
       ),
     );
     if (code != null) {
-      _setFilters((query: _filters.query, categoryId: _filters.categoryId, city: code.isEmpty ? null : code, mode: _filters.mode));
+      _setFilters((query: _filters.query, skillId: _filters.skillId, categoryId: _filters.categoryId, city: code.isEmpty ? null : code, mode: _filters.mode));
+    }
+  }
+
+  Future<void> _pickSkill() async {
+    final choice = await showDialog<({Skill? skill})>(
+      context: context,
+      builder: (context) => const _SkillFilterDialog(),
+    );
+    if (choice != null) {
+      _skill = choice.skill;
+      _setFilters(
+        (query: _filters.query, skillId: choice.skill?.id, categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode),
+      );
     }
   }
 
   void _toggleMode(SessionMode mode) => _setFilters(
-        (query: _filters.query, categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode == mode ? null : mode),
+        (query: _filters.query, skillId: _filters.skillId, categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode == mode ? null : mode),
       );
 
   @override
@@ -129,6 +145,12 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                       onPressed: () => _pickCity(cities),
                     ),
                   const SizedBox(width: AppSpacing.sm),
+                  ActionChip(
+                    avatar: const Icon(Icons.school_outlined),
+                    label: Text(_skill?.name ?? l10n.discoverAllSkills),
+                    onPressed: _pickSkill,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
                   ChoiceChip(
                     label: Text(l10n.profileModeOnline),
                     selected: _filters.mode == SessionMode.online,
@@ -146,7 +168,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                       label: Text(category.name),
                       selected: category.id == _filters.categoryId,
                       onSelected: (selected) => _setFilters(
-                        (query: _filters.query, categoryId: selected ? category.id : null, city: _filters.city, mode: _filters.mode),
+                        (query: _filters.query, skillId: _filters.skillId, categoryId: selected ? category.id : null, city: _filters.city, mode: _filters.mode),
                       ),
                     ),
                   ],
@@ -200,6 +222,92 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Lets the user search the catalog for the skill to filter by. Pops with the chosen
+/// skill, or with a null skill for "all skills"; dismissing it pops with nothing.
+class _SkillFilterDialog extends ConsumerStatefulWidget {
+  const _SkillFilterDialog();
+
+  @override
+  ConsumerState<_SkillFilterDialog> createState() => _SkillFilterDialogState();
+}
+
+class _SkillFilterDialogState extends ConsumerState<_SkillFilterDialog> {
+  static const _searchDelay = Duration(milliseconds: 350);
+  static const _listHeight = 320.0;
+
+  Timer? _debounce;
+  String _query = '';
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final results = ref.watch(skillSearchProvider(categoryId: null, query: _query));
+
+    return AlertDialog(
+      title: Text(l10n.discoverSkillFilterTitle),
+      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: _listHeight,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: TextField(
+                autofocus: true,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(labelText: l10n.skillSearchLabel, prefixIcon: const Icon(Icons.search)),
+                onChanged: (value) {
+                  _debounce?.cancel();
+                  _debounce = Timer(_searchDelay, () {
+                    if (mounted) {
+                      setState(() => _query = value.trim());
+                    }
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: switch (results) {
+                AsyncData(:final value) => ListView(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.clear_all),
+                        title: Text(l10n.discoverAllSkills),
+                        onTap: () => Navigator.pop(context, (skill: null)),
+                      ),
+                      for (final skill in value.items)
+                        ListTile(title: Text(skill.name), onTap: () => Navigator.pop(context, (skill: skill))),
+                      if (value.items.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Text(l10n.skillSearchEmpty, textAlign: TextAlign.center),
+                        ),
+                    ],
+                  ),
+                AsyncError(:final error) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Text(errorMessage(l10n, error), textAlign: TextAlign.center),
+                    ),
+                  ),
+                _ => const Center(child: CircularProgressIndicator()),
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel))],
     );
   }
 }

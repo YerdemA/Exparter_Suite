@@ -22,6 +22,7 @@ class ApiDiscoveryRepository implements DiscoveryRepository {
   Future<DiscoveryUserCursorPage> discover({required DiscoveryFilters filters, String? cursor}) => guardApiCall(
         () => _api.discovery.discoverUsers(
           q: filters.query.isEmpty ? null : filters.query,
+          skillId: filters.skillId,
           categoryId: filters.categoryId,
           city: filters.city,
           mode: filters.mode,

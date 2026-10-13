@@ -168,6 +168,8 @@
   "errorRetry": "Tekrar dene",
   "discoverSearchLabel": "Ad veya kullanıcı adı arayın",
   "discoverAllCities": "Tüm şehirler",
+  "discoverAllSkills": "Tüm yetenekler",
+  "discoverSkillFilterTitle": "Sunulan yeteneğe göre filtreleyin",
   "discoverEmpty": "Şu anda gösterilecek kullanıcı yok. Filtreleri değiştirmeyi deneyin.",
   "discoverSearchEmpty": "Aramanızla eşleşen kullanıcı bulunamadı.",
   "discoverLoadMoreFailed": "Devamı yüklenemedi.",
