@@ -1,11 +1,13 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Profiles;
+using Exparter.Application.Skills;
 using Exparter.Infrastructure.Email;
 using Exparter.Infrastructure.Identity;
 using Exparter.Infrastructure.Persistence;
 using Exparter.Infrastructure.Persistence.Identity;
 using Exparter.Infrastructure.Persistence.Profiles;
+using Exparter.Infrastructure.Persistence.Skills;
 using Exparter.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +47,8 @@ public static class DependencyInjection
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
         services.AddScoped<IProfileRepository, ProfileRepository>();
+        services.AddScoped<ISkillRepository, SkillRepository>();
+        services.AddScoped<IUserSkillRepository, UserSkillRepository>();
 
         services.AddOptions<StorageOptions>()
             .Bind(configuration.GetSection(StorageOptions.SectionName))

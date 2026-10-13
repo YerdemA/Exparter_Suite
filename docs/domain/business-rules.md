@@ -52,9 +52,11 @@ Durum: **Onaylandı (2026-10-07).**
 | SK-02 | Kullanıcı katalogda olmayan bir yeteneği önerebilir. Öneri admin onaylayana kadar katalogda görünmez. | Domain |
 | SK-03 | Aynı ada (slug) sahip ikinci bir yetenek oluşturulamaz veya önerilemez. | Application, DB |
 | SK-04 | Bir kullanıcı aynı yeteneği her tipte (sunulan/istenen) en fazla bir kez ekleyebilir. | DB |
+| SK-08 | Bir kullanıcı en fazla 5 sunulan ve 5 istenen yetenek ekleyebilir. Sınır ileride ödeme planlarına bağlanacak; şimdilik herkes için aynıdır. | Domain |
+| SK-09 | Yetenek önermek için doğrulanmış e-posta yeterlidir; diğer etkileşim koşulları aranmaz (kataloğunda yeteneği olmayan kullanıcı önce öneri yapabilmelidir). | Application |
 | SK-07 | Aynı yetenek hem sunulan hem istenen olabilir; bu durumda istenen seviye sunulan seviyeden yüksek olmalıdır. Seviyelerden biri değiştirildiğinde de kural korunur. | Application |
 | SK-05 | Sunulan yetenekte seviye kullanıcının kendi seviyesidir. İstenen yetenekte seviye, aranan öğreticinin en düşük seviyesidir. | — |
-| SK-06 | Aktif bir eşleşmede veya bekleyen bir istekte kullanılan sunulan yetenek profilden kaldırılamaz. | Application |
+| SK-06 | Aktif bir eşleşmede veya bekleyen bir istekte kullanılan sunulan yetenek profilden kaldırılamaz. (Eşleşmelerin geldiği dilim 4'te uygulanır.) | Application |
 
 ## Takas isteği
 

@@ -66,11 +66,10 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `token_expired` | 401 | Access token'ın süresi dolmuş; istemci yenilemelidir. |
 | `refresh_token_invalid` | 401 | Refresh token geçersiz, iptal edilmiş veya süresi dolmuş; kullanıcı yeniden giriş yapmalıdır. |
 | `account_suspended` | 403 | Hesap askıya alınmış. |
-| `email_not_verified` | 403 | İşlem doğrulanmış e-posta gerektiriyor. |
-| `profile_incomplete` | 403 | İşlem tamamlanmış profil gerektiriyor. |
+| `email_not_verified` | 403 | İşlem doğrulanmış e-posta gerektiriyor (yetenek önerisi). |
+| `interaction_requirements_not_met` | 403 | Etkileşim için e-posta doğrulaması, tamamlanmış profil ve en az bir sunulan yetenek gerekiyor. Eksikler `GET /me/interaction-requirements` ile öğrenilir. |
 | `admin_required` | 403 | İşlem admin yetkisi gerektiriyor. |
 | `not_participant` | 403 | Çağıran bu işlemi yapabilecek taraf değil (ör. isteği gönderen kabul edemez). |
-| `forbidden` | 403 | Çağıranın rolü bu işleme izin vermiyor. |
 | `not_found` | 404 | Kaynak veya adres bulunamadı. |
 | `email_already_registered` | 409 | E-posta kullanımda. |
 | `username_already_taken` | 409 | Kullanıcı adı kullanımda. |
@@ -83,6 +82,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `skill_not_approved` | 409 | Yetenek henüz onaylanmamış. |
 | `user_skill_already_exists` | 409 | Yetenek bu tipte zaten ekli. |
 | `wanted_level_not_higher` | 409 | İstenen seviye, aynı yeteneğin sunulan seviyesinden yüksek olmalı. |
+| `skill_limit_reached` | 409 | Bu tipte eklenebilecek en fazla yetenek sayısına (5) ulaşıldı. |
 | `user_skill_in_use` | 409 | Yetenek bekleyen bir istekte veya aktif eşleşmede kullanılıyor. |
 | `swap_request_to_self` | 409 | Kullanıcı kendine istek gönderemez. |
 | `skill_not_offered` | 409 | Seçilen yetenek ilgili kullanıcının sunduğu yetenekler arasında değil. |

@@ -80,7 +80,7 @@ public class ProfileApiTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Public_profile_appears_only_once_email_is_verified_and_profile_is_complete()
+    public async Task Public_profile_appears_only_once_every_interaction_requirement_is_met()
     {
         var viewer = await TestSession.RegisterAsync(_client);
         var subject = await TestSession.RegisterAsync(_client);
@@ -92,6 +92,9 @@ public class ProfileApiTests(ApiFixture fixture)
         await ProblemAssert.IsAsync(await viewer.SendAsync(HttpMethod.Get, path), HttpStatusCode.NotFound, "not_found");
 
         await subject.VerifyEmailAsync(fixture);
+        await ProblemAssert.IsAsync(await viewer.SendAsync(HttpMethod.Get, path), HttpStatusCode.NotFound, "not_found");
+
+        await subject.AddSkillAsync("gitar", "Offered", "Advanced");
         var profile = await viewer.GetJsonAsync(path);
 
         Assert.Equal(subject.Username, profile.GetProperty("username").GetString());

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Exparter.Api.Common;
+using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Mediator;
 
@@ -75,6 +76,9 @@ internal static class IdentityEndpoints
 
         me.MapGet("", async (ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
             Results.Ok(await sender.Send(new GetAccountQuery(user.GetUserId()), cancellationToken)));
+
+        me.MapGet("/interaction-requirements", async (ClaimsPrincipal user, IInteractionRequirements requirements, CancellationToken cancellationToken) =>
+            Results.Ok(await requirements.GetAsync(user.GetUserId(), cancellationToken)));
 
         me.MapPut("/username", async (ChangeUsernameRequest request, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
             Results.Ok(await sender.Send(new ChangeUsernameCommand(user.GetUserId(), request.Username), cancellationToken)));

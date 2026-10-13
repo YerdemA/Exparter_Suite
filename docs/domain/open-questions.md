@@ -64,6 +64,9 @@
 | Tamamlanmış profil | Görünen ad, en az bir takas tercihi (yüz yüze ise şehir) ve en az bir sunulan yetenek. |
 | Hitap | Uygulamanın tamamında ve e-postalarda "siz" hitabı kullanılır. Düğme etiketleri kısa emir kipinde kalır ("Giriş yap", "Kaydet"). Etkileşim uyarısı: "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." |
 | Gönderiler | MVP sonrası. Yapısı aşağıda. |
+| Yetenek kataloğu | MVP'de 10 kategori ve 68 yetenek (başlangıç verisi). Tam sürümde çok daha kapsamlı bir kategori yapısı kurulacak. |
+| Yetenek sınırı | 5 sunulan, 5 istenen. İleride ödeme planlarına bağlanacak. |
+| Admin | Hesap veritabanında elle admin yapılır; öneriler bir PowerShell betiğiyle listelenip onaylanır. |
 
 ## Onaylanan ayrıntılar (2026-10-07)
 
@@ -114,5 +117,6 @@ Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir 
 - Metin alanlarının uzunluk sınırları: Faz 2 (sözleşme).
 - E-posta sağlayıcısı: Faz 3 (ADR).
 - Gönderi akışı: MVP sonrası, takas akışı (Faz 5 dilim 2–8) bittikten sonra ayrı bir dilim olarak. Kullanıcı sunduğu yeteneklerden birini seçer ve o yetenekle ilgili paylaşım yapar. Paylaşım metin, görsel veya video olabilir; metin + görsel ve metin + video birlikte de olabilir. Akış, Keşfet'ten bağımsız ayrı bir ekrandır. Beğeni ve yorum etkileşim sayılır; tamamlanmış profil ve doğrulanmış e-posta gerektirir. Ayrıntılar (video sınırları, moderasyon, sıralama) o dilimin başında netleştirilecek.
+- Kapsamlı yetenek kataloğu (alt kategoriler, çok daha fazla yetenek) ve yetenek sınırının ödeme planlarına bağlanması: MVP sonrası.
 - Reşit olmayan (13–17 yaş) kullanıcılar: MVP sonrası. Yetişkinlerle eşleşme, özel mesajlaşma ve yüz yüze oturum için koruma kuralları, yaş bilgisinin toplanması ve veli onayı o zaman kararlaştırılacak.
 

@@ -1,6 +1,7 @@
 using Exparter.Application.Common;
 using Exparter.Domain.Identity;
 using Exparter.Domain.Profiles;
+using Exparter.Domain.Skills;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -15,6 +16,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<OneTimeToken> OneTimeTokens => Set<OneTimeToken>();
 
     public DbSet<Profile> Profiles => Set<Profile>();
+
+    public DbSet<SkillCategory> SkillCategories => Set<SkillCategory>();
+
+    public DbSet<Skill> Skills => Set<Skill>();
+
+    public DbSet<UserSkill> UserSkills => Set<UserSkill>();
 
     async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {

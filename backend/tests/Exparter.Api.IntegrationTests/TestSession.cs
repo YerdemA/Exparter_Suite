@@ -43,7 +43,7 @@ public sealed class TestSession
             body.GetProperty("accessToken").GetString()!);
     }
 
-    /// <summary>A user other people can see: verified email and a complete profile.</summary>
+    /// <summary>A user who meets every interaction requirement, and is therefore visible to others.</summary>
     public static async Task<TestSession> RegisterVisibleAsync(HttpClient client, ApiFixture fixture)
     {
         var session = await RegisterAsync(client);
@@ -53,7 +53,35 @@ public sealed class TestSession
             "/api/v1/me/profile",
             new { displayName = "Test Kullanıcı", bio = "Merhaba", city = "34", acceptsOnline = true, acceptsInPerson = true });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await session.AddSkillAsync("gitar", "Offered", "Advanced");
         return session;
+    }
+
+    /// <summary>Adds a catalog skill, found by searching for <paramref name="search"/>.</summary>
+    /// <returns>The id of the new user skill.</returns>
+    public async Task<Guid> AddSkillAsync(string search, string type, string level)
+    {
+        var response = await SendAsync(
+            HttpMethod.Post,
+            "/api/v1/me/skills",
+            new { skillId = await FindSkillIdAsync(search), type, level });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+    }
+
+    public async Task<Guid> FindSkillIdAsync(string search)
+    {
+        var skills = await _client.GetFromJsonAsync<JsonElement>($"/api/v1/skills?q={Uri.EscapeDataString(search)}");
+        return skills.GetProperty("items")[0].GetProperty("id").GetGuid();
+    }
+
+    /// <summary>Signs in again, for a token that reflects a role changed after registration.</summary>
+    public async Task<TestSession> SignInAgainAsync()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/login", new { identifier = Username, password = Password });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return new TestSession(_client, UserId, Email, Username, body.GetProperty("accessToken").GetString()!);
     }
 
     public async Task VerifyEmailAsync(ApiFixture fixture)

@@ -2,12 +2,8 @@ using Exparter.Domain.Identity;
 
 namespace Exparter.Application.Identity;
 
-/// <param name="CanInteract">
-/// Whether the account is active and its email verified. Other modules combine this
-/// with their own conditions (such as a complete profile) before showing the user to
-/// others or letting them act.
-/// </param>
-public sealed record UserInfo(Guid Id, string Username, bool CanInteract);
+/// <param name="IsActive">False for suspended accounts and accounts pending deletion.</param>
+public sealed record UserInfo(Guid Id, string Username, bool IsActive, bool IsEmailVerified);
 
 /// <summary>What other modules may know about a user account.</summary>
 public interface IUserDirectory
@@ -22,7 +18,7 @@ internal sealed class UserDirectory(IUserRepository users) : IUserDirectory
         var user = await users.GetByIdAsync(userId, cancellationToken);
         return user is null
             ? null
-            : new UserInfo(user.Id, user.Username, user.Status == UserStatus.Active && user.IsEmailVerified);
+            : new UserInfo(user.Id, user.Username, user.Status == UserStatus.Active, user.IsEmailVerified);
     }
 }
 
