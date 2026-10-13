@@ -12,6 +12,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/recovery_controller.dart';
+import '../../reviews/presentation/user_reviews_section.dart';
 import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/own_skills_section.dart';
 import '../data/api_profile_repository.dart';
@@ -206,6 +207,8 @@ class _ProfileBody extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.lg),
               ],
               const OwnSkillsSection(),
+              const SizedBox(height: AppSpacing.xl),
+              UserReviewsSection(userId: profile.userId, rating: profile.rating),
               const SizedBox(height: AppSpacing.xl),
               if (restored) ...[
                 _StatusTile(icon: Icons.restore, color: brand.success, text: l10n.homeAccountRestored),

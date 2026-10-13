@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/generated/export.dart';
 import '../../../core/riverpod.dart';
+import '../../reviews/presentation/review_controller.dart';
 import '../data/api_session_repository.dart';
 import '../domain/session_repository.dart';
 
@@ -72,6 +73,8 @@ class SessionActions extends _$SessionActions {
         // (the other user answered first, a deadline passed).
         ref.invalidate(matchSessionsProvider);
         ref.invalidate(userStatsProvider);
+        // A completed session is what lets the two users review each other.
+        ref.invalidate(reviewEligibilityProvider);
         if (state.isLoading) {
           state = const AsyncData(null);
         }

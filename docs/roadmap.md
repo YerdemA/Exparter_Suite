@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0–6 tamamlandı |
+| 5 | Dikey dilimler | Sürüyor: dilim 0–6 tamamlandı; dilim 7 onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -98,7 +98,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 4 | Takas isteği ve eşleşme | Tamamlandı (2026-10-13) |
 | 5 | Gerçek zamanlı mesajlaşma | Tamamlandı (2026-10-13) |
 | 6 | Takas oturumları | Tamamlandı (2026-10-13) |
-| 7 | Değerlendirmeler | Başlamadı |
+| 7 | Değerlendirmeler | Tamamlandı, onay bekliyor |
 | 8 | Bildirimler | Başlamadı |
 
 ### Dilim 0 — E-posta doğrulama ve parola sıfırlama
@@ -181,6 +181,16 @@ dotnet user-secrets set --project src/Exparter.Api "Storage:SecretKey" "<.env i�
 - Mobil: eşleşme ayrıntısında oturum listesi, "Çevrimiçi oturum öner" formu, "Yüz yüze buluştuk" bildirimi ve oturum kartlarındaki işlemler; kendi profilinde ve başka kullanıcıların profilinde istatistik kartı.
 - Testler (2026-10-13): backend 413 (140 domain, 188 uygulama, 85 entegrasyon), mobil 162. Uçtan uca test emülatörde geçti: yüz yüze buluşma bildirimi, karşı tarafın onayı, çevrimiçi oturum önerisi ve profildeki istatistik.
 - Sonraya bırakılan: uygulamaya gömülü görüntülü görüşme modülü (çevrimiçi oturumlar yalnızca planlanan saatte bu modülle yapılacak; zamanlaması kararlaştırılacak, o zamana kadar taraflar bağlantıyı nota yazar); iptal sebebinin ve hatırlatmaların bildirim olarak gitmesi (dilim 8); iptal sebeplerinin admin tarafından görülmesi (moderasyon); bütün eşleşmelerdeki oturumları gösteren takvim ekranı (API hazır: `GET /api/v1/sessions`).
+
+### Dilim 7 — Değerlendirmeler
+
+- Değerlendirme: 1–10 puan ve isteğe bağlı, en fazla 500 karakterlik yorum. Aralarında tamamlanmış en az bir oturum olan iki kullanıcı, eşleşme sürerken de birbirini bir kez değerlendirir. Anında herkese görünür, düzenlenemez; yazarı silebilir, silinenin yerine yenisi yazılamaz. Değerlendirilen kişi cevap yazamaz.
+- Sözleşme değişikliği: `createReview` isteği oturum yerine değerlendirilen kullanıcıyı (`revieweeId`) alır; hakkı doğuran tamamlanmış oturumu sunucu bulur ve kayda yazar. Yeni `GET /api/v1/users/{userId}/review-eligibility` istemciye formu sunup sunmayacağını söyler.
+- Puan: ortalama ve değerlendirme sayısı silinmemiş değerlendirmelerden her okumada hesaplanır (özet tablosu yok); profilde, kendi profilinde ve keşfet kartlarında görünür.
+- Keşfet sıralaması: uyum ve tercih eşitse ortalaması yüksek olan önce gelir; hiç değerlendirmesi olmayanlar değerlendirilmişlerden sonra. Değerlendirme sayısı sıralamayı etkilemez.
+- Mobil: profillerde "Değerlendirmeler" bölümü (ortalama, liste, kendi değerlendirmeni silme), değerlendirme yazma ekranı, eşleşme ayrıntısında ve karşı tarafın profilinde yalnızca değerlendirme hakkı varken görünen "Değerlendir" düğmesi.
+- Testler (2026-10-13): backend 437 (152 domain, 196 uygulama, 89 entegrasyon), mobil 175. Uçtan uca test emülatörde geçti: tamamlanan buluşmadan sonra eşleşmeden değerlendirme yazma, karşı tarafın profilinde ortalamanın görünmesi ve kendi profilinde alınan değerlendirme.
+- Sonraya bırakılan: değerlendirme bildirimi (dilim 8); değerlendirmeyi şikâyet etme (moderasyon); silinen hesabın yazdığı değerlendirmelerin "Silinmiş kullanıcı" adıyla kalması ve aldıklarının silinmesi (dilim 8, kalıcı hesap silme); profilde yalnızca ilk 50 değerlendirme listelenir.
 
 ## Geliştirme ortamı
 

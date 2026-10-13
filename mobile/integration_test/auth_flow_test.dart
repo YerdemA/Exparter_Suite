@@ -364,6 +364,30 @@ void main() {
     expect(find.text(l10n.sessionStatusCompleted), findsOneWidget);
     await waitForNotices(tester);
 
+    // The completed meeting lets both sides review each other: write one from the
+    // match, which lands on the peer's profile with the new average.
+    await tapVisible(tester, find.text(l10n.reviewWrite));
+    await pumpUntilFound(tester, find.text(l10n.reviewRatingLabel));
+    await tapVisible(tester, find.widgetWithText(ChoiceChip, '9'));
+    await tester.enterText(find.byType(TextField), 'Anlatımı çok açıktı.');
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.reviewSubmit));
+    await pumpUntilFound(tester, find.text(l10n.ratingSummary(9, 1)));
+    await tester.ensureVisible(find.text('Anlatımı çok açıktı.'));
+    expect(find.text(l10n.reviewRatingOutOf(9)), findsOneWidget);
+    expect(find.text(l10n.reviewDelete), findsOneWidget);
+    await waitForNotices(tester);
+    final peerId = (registered.data!['account'] as Map<String, dynamic>)['id'] as String;
+    final sides = [for (final side in ['userA', 'userB']) (accepted.data![side] as Map<String, dynamic>)['userId'] as String];
+    final accountId = sides.firstWhere((id) => id != peerId);
+    await api.post<void>(
+      '/api/v1/reviews',
+      data: {'revieweeId': accountId, 'rating': 7, 'comment': 'Güzel bir buluşmaydı.'},
+      options: peerAuth,
+    );
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navMatches)));
+    await pumpUntilFound(tester, find.text(l10n.matchEndRequest));
+    expect(find.text(l10n.reviewWrite), findsNothing);
+
     await tapVisible(tester, find.text(l10n.matchEndRequest));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, l10n.matchEndRequest));
@@ -373,6 +397,8 @@ void main() {
     await openProfileTab(tester);
     await pumpUntilFound(tester, find.text(l10n.statsCompletedSessions(1)));
     expect(find.text(l10n.statsTotalMatches), findsOneWidget);
+    await pumpUntilFound(tester, find.text('Güzel bir buluşmaydı.'));
+    expect(find.text(l10n.ratingSummary(7, 1)), findsOneWidget);
 
     // Sign out, and stay signed out after another restart.
     await tapVisible(tester, find.widgetWithText(OutlinedButton, l10n.homeLogout));

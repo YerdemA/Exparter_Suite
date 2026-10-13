@@ -12,6 +12,7 @@ import 'package:exparter/features/matches/presentation/match_labels.dart';
 import 'package:exparter/features/matches/presentation/matches_screen.dart';
 import 'package:exparter/features/matches/presentation/send_request_screen.dart';
 import 'package:exparter/features/profile/data/api_profile_repository.dart';
+import 'package:exparter/features/reviews/data/api_review_repository.dart';
 import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/features/skills/data/api_skill_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
@@ -96,6 +97,7 @@ void main() {
 
   List<Override> overrides() => [
         sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
+        reviewRepositoryProvider.overrideWithValue(quietReviewRepository()),
         matchRepositoryProvider.overrideWithValue(repository),
         discoveryRepositoryProvider.overrideWithValue(discoveryRepository),
         skillRepositoryProvider.overrideWithValue(skillRepository),

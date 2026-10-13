@@ -9,6 +9,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
+import '../../reviews/presentation/user_reviews_section.dart';
 import '../../sessions/presentation/match_sessions_section.dart';
 import 'match_controller.dart';
 import 'match_labels.dart';
@@ -128,6 +129,7 @@ class _Content extends ConsumerWidget {
                   child: Text(l10n.matchViewProfile),
                 ),
               ),
+              Center(child: ReviewPromptButton(userId: view.other.userId)),
               const SizedBox(height: AppSpacing.md),
               ListTile(
                 leading: const Icon(Icons.north_east),
