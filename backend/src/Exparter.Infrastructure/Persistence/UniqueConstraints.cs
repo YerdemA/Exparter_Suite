@@ -14,6 +14,9 @@ internal static class UniqueConstraints
     public const string PendingSwapRequestPerPair = "ix_swap_requests_pending_pair";
     public const string OpenMatchPerPair = "ix_matches_open_pair";
 
+    public const string ConversationPerPair = "ix_conversations_pair";
+    public const string MessagePerClientId = "ix_messages_client_id";
+
     public static AppException? ToAppException(string? constraintName) => constraintName switch
     {
         UserEmail => AppException.Conflict("email_already_registered", "The email address is already registered."),
@@ -22,6 +25,8 @@ internal static class UniqueConstraints
         UserSkillPerType => AppException.Conflict("user_skill_already_exists", "The skill is already on the profile with this type."),
         PendingSwapRequestPerPair => AppException.Conflict("swap_request_already_pending", "The two users already have a pending swap request."),
         OpenMatchPerPair => AppException.Conflict("match_already_exists", "The two users already have a match that has not ended."),
+        // Both mean the same request arrived twice at once; the client's retry finds what the first one stored.
+        ConversationPerPair or MessagePerClientId => AppException.Conflict("concurrent_update", "The resource was changed by another request."),
         _ => null,
     };
 }

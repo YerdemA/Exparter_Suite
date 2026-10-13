@@ -147,6 +147,7 @@ public sealed class AcceptSwapRequestCommandHandler(
     ISwapRequestRepository requests,
     IMatchRepository matches,
     MatchingDtoFactory dtos,
+    IPublisher publisher,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<AcceptSwapRequestCommand, MatchDto>
 {
@@ -157,8 +158,9 @@ public sealed class AcceptSwapRequestCommandHandler(
 
         var match = request.Accept(command.UserId, timeProvider.GetUtcNow());
         matches.Add(match);
+        await publisher.Publish(new MatchCreated(match.Id, match.UserAId, match.UserBId), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return await dtos.ToDtoAsync(match, cancellationToken);
+        return await dtos.ToDtoAsync(match, command.UserId, cancellationToken);
     }
 }
 

@@ -885,7 +885,7 @@ paths:
       tags: [Conversations]
       operationId: sendMessage
       summary: Send a text message
-      description: Requires a verified email. Rejected with 409 if the conversation is closed.
+      description: Only the two users of the conversation can send. Rejected with 409 if the conversation is closed.
       parameters:
         - $ref: '#/components/parameters/ConversationId'
       requestBody:
@@ -2128,7 +2128,7 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: The conversation between the two users; null until they have one.
+          description: The conversation between the two users. Every match has one.
         endRequestedByUserId:
           type: string
           format: uuid
@@ -2204,6 +2204,11 @@ components:
           allOf:
             - $ref: '#/components/schemas/Message'
         unreadCount: { type: integer, format: int32 }
+        otherUserLastReadAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the other user last read the conversation; messages sent up to then have been seen. Null if never.
         createdAt: { type: string, format: date-time }
 
     ConversationPage:

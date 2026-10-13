@@ -89,7 +89,7 @@ public class SwapApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.Equal(ayse.UserId, match.GetProperty("userB").GetProperty("userId").GetGuid());
         Assert.Equal("Gitar", match.GetProperty("skillTaughtByA").GetProperty("name").GetString());
         Assert.Equal("İspanyolca", match.GetProperty("skillTaughtByB").GetProperty("name").GetString());
-        Assert.Equal(JsonValueKind.Null, match.GetProperty("conversationId").ValueKind);
+        Assert.NotEqual(JsonValueKind.Null, match.GetProperty("conversationId").ValueKind);
 
         var matches = await ali.GetJsonAsync("/api/v1/matches?status=Active");
         Assert.Equal(IdOf(match), IdOf(Assert.Single(matches.GetProperty("items").EnumerateArray())));

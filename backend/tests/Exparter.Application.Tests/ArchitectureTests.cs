@@ -21,6 +21,9 @@ public class ArchitectureTests
         typeof(Exparter.Application.Profiles.ProfileCard),
         typeof(Exparter.Application.Skills.IUserSkillDirectory),
         typeof(Exparter.Application.Matching.ISkillUsage),
+        typeof(Exparter.Application.Matching.IMatchDirectory),
+        typeof(Exparter.Application.Matching.MatchCreated),
+        typeof(Exparter.Application.Messaging.IConversationDirectory),
     ];
 
     private const BindingFlags AllMembers =

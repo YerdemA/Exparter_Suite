@@ -102,6 +102,10 @@ Durum: **Onaylandı (2026-10-07).**
 | MS-05 | Aktif eşleşme yokken taraflardan biri sohbeti tek başına kapatabilir. Kapatılan sohbet salt okunur olur; geçmiş mesajlar iki tarafta da görünür kalır. | Domain |
 | MS-06 | Engelleme ve hesap silme sohbeti kapatır. | Application |
 | MS-07 | Aynı iki kullanıcı yeniden eşleşirse kapalı sohbet geçmişiyle birlikte yeniden açılır. | Application |
+| MS-08 | Mesaj göndermek için sohbetin tarafı olmak yeterlidir; ayrıca etkileşim koşulu aranmaz (sohbet zaten eşleşmeyle açılır). | Application |
+| MS-09 | Gönderilen mesaj düzenlenemez ve silinemez. | — |
+| MS-10 | Her taraf için sohbeti en son okuduğu an saklanır; okunmamış sayısı ve "Görüldü" bilgisi bundan türetilir. Mesaj gönderen, o ana kadarki mesajları okumuş sayılır. | Domain |
+| MS-11 | Aynı `clientMessageId` ile yinelenen gönderim yeni mesaj oluşturmaz, ilk mesajı döndürür. | Application, DB |
 
 ## Takas oturumu
 

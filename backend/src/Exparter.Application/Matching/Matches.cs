@@ -21,7 +21,11 @@ public sealed class ListMatchesQueryHandler(IMatchRepository matches, MatchingDt
     public async ValueTask<PagedList<MatchDto>> Handle(ListMatchesQuery query, CancellationToken cancellationToken)
     {
         var page = await matches.ListAsync(query.UserId, query.Status, PageRequest.From(query.Page, query.PageSize), cancellationToken);
-        return new PagedList<MatchDto>(await dtos.ToDtosAsync(page.Items, cancellationToken), page.Page, page.PageSize, page.TotalCount);
+        return new PagedList<MatchDto>(
+            await dtos.ToDtosAsync(page.Items, query.UserId, cancellationToken),
+            page.Page,
+            page.PageSize,
+            page.TotalCount);
     }
 }
 
@@ -30,7 +34,10 @@ public sealed record GetMatchQuery(Guid UserId, Guid MatchId) : IQuery<MatchDto>
 public sealed class GetMatchQueryHandler(IMatchRepository matches, MatchingDtoFactory dtos) : IQueryHandler<GetMatchQuery, MatchDto>
 {
     public async ValueTask<MatchDto> Handle(GetMatchQuery query, CancellationToken cancellationToken) =>
-        await dtos.ToDtoAsync(await matches.GetForParticipantAsync(query.MatchId, query.UserId, cancellationToken), cancellationToken);
+        await dtos.ToDtoAsync(
+            await matches.GetForParticipantAsync(query.MatchId, query.UserId, cancellationToken),
+            query.UserId,
+            cancellationToken);
 }
 
 public enum MatchEndAction
@@ -81,7 +88,7 @@ public sealed class ChangeMatchEndCommandHandler(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return await dtos.ToDtoAsync(match, cancellationToken);
+        return await dtos.ToDtoAsync(match, command.UserId, cancellationToken);
     }
 }
 

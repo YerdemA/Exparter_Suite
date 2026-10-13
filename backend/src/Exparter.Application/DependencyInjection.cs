@@ -2,6 +2,7 @@ using System.Globalization;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Matching;
+using Exparter.Application.Messaging;
 using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
 using FluentValidation;
@@ -25,6 +26,9 @@ public static class DependencyInjection
         services.AddScoped<IUserSummaries, UserSummaries>();
         services.AddScoped<ISkillUsage, SkillUsage>();
         services.AddScoped<MatchingDtoFactory>();
+        services.AddScoped<IMatchDirectory, MatchDirectory>();
+        services.AddScoped<IConversationDirectory, ConversationDirectory>();
+        services.AddScoped<ConversationDtoFactory>();
         return services;
     }
 }
