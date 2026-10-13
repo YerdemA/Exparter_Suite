@@ -41,7 +41,7 @@ Durum: **Onaylandı (2026-10-07).**
 | PR-04 | Yüz yüze tercihi seçiliyse şehir zorunludur. | Domain |
 | PR-05 | Profil, eşleşme için gereken bilgiler girildiğinde tamamlanmış sayılır: görünen ad, en az bir takas tercihi (yüz yüze ise şehirle birlikte) ve en az bir sunulan yetenek. (Yetenek koşulu, yeteneklerin geldiği dilim 2'de uygulanır.) | Application |
 | PR-06 | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı başkalarına görünmez: profili açılamaz ve keşfette listelenmez. | Application |
-| PR-07 | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir (keşfet dahil), ama başkalarıyla etkileşime giremez (bkz. ID-04). Etkileşim denemesinde "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." uyarısı gösterilir. | Application |
+| PR-07 | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir (keşfet dahil), başka kullanıcıların profillerine ve yeteneklerine bakabilir, ama başkalarıyla etkileşime giremez (bkz. ID-04). Koşul yalnızca başka kullanıcıları etkileyen işlemlerde aranır: istek, eşleşme, mesaj, oturum, değerlendirme ve ileride beğeni ile yorum. Etkileşim denemesinde "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." uyarısı gösterilir. | Application |
 | PR-08 | Avatar JPEG, PNG veya WebP olabilir ve en fazla 5 MB'tır. Dosya doğrudan depolamaya yüklenir; sınırlar yüklenen dosya üzerinde denetlenir. | Application |
 
 ## Yetenekler

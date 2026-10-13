@@ -104,6 +104,22 @@ public class ProfileApiTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task A_user_who_cannot_interact_yet_can_still_browse_other_users()
+    {
+        // The requirements gate what a user does to others, never what they may look at.
+        var newcomer = await TestSession.RegisterAsync(_client);
+        var established = await TestSession.RegisterVisibleAsync(_client, fixture);
+        var requirements = await newcomer.GetJsonAsync("/api/v1/me/interaction-requirements");
+        Assert.False(requirements.GetProperty("canInteract").GetBoolean());
+
+        var profile = await newcomer.GetJsonAsync($"/api/v1/users/{established.UserId}");
+        var skills = await newcomer.GetJsonAsync($"/api/v1/users/{established.UserId}/skills");
+
+        Assert.Equal(established.Username, profile.GetProperty("username").GetString());
+        Assert.Equal(1, skills.GetProperty("totalCount").GetInt32());
+    }
+
+    [Fact]
     public async Task Public_profile_of_an_unknown_or_malformed_id_is_rejected()
     {
         var viewer = await TestSession.RegisterAsync(_client);
