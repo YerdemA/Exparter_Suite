@@ -48,6 +48,7 @@ public sealed record DiscoveredUser(
     bool AcceptsOnline,
     bool AcceptsInPerson,
     Compatibility Compatibility,
+    RatingSummaryDto Rating,
     IReadOnlyList<DiscoveredSkill> OfferedSkills,
     IReadOnlyList<DiscoveredSkill> WantedSkills);
 
@@ -203,7 +204,7 @@ public sealed class DiscoverUsersQueryHandler(IDiscoveryReadModel readModel, IOb
             user.AcceptsOnline,
             user.AcceptsInPerson,
             user.Compatibility,
-            RatingSummaryDto.None,
+            user.Rating,
             user.OfferedSkills.Select(ToDto).ToList(),
             user.WantedSkills.Select(ToDto).ToList());
 

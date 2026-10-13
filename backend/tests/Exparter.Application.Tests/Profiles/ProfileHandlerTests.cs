@@ -49,12 +49,21 @@ internal sealed class FakeUserDirectory : IUserDirectory
         Task.FromResult<IReadOnlyList<UserInfo>>(Users.Values.Where(user => userIds.Contains(user.Id)).ToList());
 }
 
+internal sealed class FakeReviewDirectory : Exparter.Application.Reviews.IReviewDirectory
+{
+    public Dictionary<Guid, RatingSummaryDto> Ratings { get; } = [];
+
+    public Task<RatingSummaryDto> GetRatingAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult(Ratings.GetValueOrDefault(userId, RatingSummaryDto.None));
+}
+
 public class ProfileHandlerTests
 {
     private readonly Guid _userId = Guid.NewGuid();
     private readonly InMemoryProfiles _profiles = new();
     private readonly FakeObjectStorage _storage = new();
     private readonly FakeUserDirectory _users = new();
+    private readonly FakeReviewDirectory _reviews = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
 
@@ -95,7 +104,7 @@ public class ProfileHandlerTests
     {
         AddProfile();
 
-        var dto = await new GetOwnProfileQueryHandler(_profiles, _storage)
+        var dto = await new GetOwnProfileQueryHandler(_profiles, _storage, _reviews)
             .Handle(new GetOwnProfileQuery(_userId), CancellationToken.None);
 
         Assert.Null(dto.DisplayName);
@@ -109,7 +118,7 @@ public class ProfileHandlerTests
     {
         AddProfile();
 
-        var dto = await new UpdateOwnProfileCommandHandler(_profiles, _storage, _unitOfWork, _clock)
+        var dto = await new UpdateOwnProfileCommandHandler(_profiles, _storage, _reviews, _unitOfWork, _clock)
             .Handle(UpdateCommand(), CancellationToken.None);
 
         Assert.Equal("Ayşe Yılmaz", dto.DisplayName);
@@ -148,11 +157,17 @@ public class ProfileHandlerTests
         AddProfile(complete);
         _users.Users[_userId] = new UserInfo(_userId, "ayse", IsActive: true, IsEmailVerified: false);
 
-        var dto = await new GetUserProfileQueryHandler(_profiles, _users, _storage)
+        var dto = await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
             .Handle(new GetUserProfileQuery(_userId), CancellationToken.None);
 
         Assert.Equal("ayse", dto.Username);
         Assert.Equal(displayName, dto.DisplayName);
+        Assert.Equal(RatingSummaryDto.None, dto.Rating);
+
+        _reviews.Ratings[_userId] = new RatingSummaryDto(3, 8.5);
+        var rated = await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
+            .Handle(new GetUserProfileQuery(_userId), CancellationToken.None);
+        Assert.Equal(new RatingSummaryDto(3, 8.5), rated.Rating);
     }
 
     [Fact]
@@ -162,7 +177,7 @@ public class ProfileHandlerTests
         _users.Users[_userId] = new UserInfo(_userId, "ayse", IsActive: false, IsEmailVerified: true);
 
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage)
+            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
                 .Handle(new GetUserProfileQuery(_userId), CancellationToken.None));
 
         Assert.Equal(AppErrorKind.NotFound, exception.Kind);
@@ -172,7 +187,7 @@ public class ProfileHandlerTests
     public async Task Public_profile_of_an_unknown_user_is_not_found()
     {
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage)
+            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
                 .Handle(new GetUserProfileQuery(Guid.NewGuid()), CancellationToken.None));
 
         Assert.Equal(AppErrorKind.NotFound, exception.Kind);
@@ -204,7 +219,7 @@ public class ProfileHandlerTests
         var profile = AddProfile();
         var first = Upload();
         var second = Upload();
-        var handler = new SetAvatarCommandHandler(_profiles, _storage, _unitOfWork, _clock);
+        var handler = new SetAvatarCommandHandler(_profiles, _storage, _reviews, _unitOfWork, _clock);
 
         await handler.Handle(new SetAvatarCommand(_userId, first), CancellationToken.None);
         var dto = await handler.Handle(new SetAvatarCommand(_userId, second), CancellationToken.None);
@@ -223,7 +238,7 @@ public class ProfileHandlerTests
         _storage.Objects[foreignKey] = new StoredObjectInfo(1024, "image/jpeg");
 
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new SetAvatarCommandHandler(_profiles, _storage, _unitOfWork, _clock)
+            async () => await new SetAvatarCommandHandler(_profiles, _storage, _reviews, _unitOfWork, _clock)
                 .Handle(new SetAvatarCommand(_userId, foreignKey), CancellationToken.None));
 
         Assert.Equal("avatar_not_uploaded", exception.Code);
@@ -236,7 +251,7 @@ public class ProfileHandlerTests
         AddProfile();
 
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new SetAvatarCommandHandler(_profiles, _storage, _unitOfWork, _clock)
+            async () => await new SetAvatarCommandHandler(_profiles, _storage, _reviews, _unitOfWork, _clock)
                 .Handle(new SetAvatarCommand(_userId, $"avatars/{_userId:N}/missing.jpg"), CancellationToken.None));
 
         Assert.Equal("avatar_not_uploaded", exception.Code);
@@ -252,7 +267,7 @@ public class ProfileHandlerTests
         var key = Upload(length, contentType);
 
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new SetAvatarCommandHandler(_profiles, _storage, _unitOfWork, _clock)
+            async () => await new SetAvatarCommandHandler(_profiles, _storage, _reviews, _unitOfWork, _clock)
                 .Handle(new SetAvatarCommand(_userId, key), CancellationToken.None));
 
         Assert.Equal("avatar_invalid", exception.Code);

@@ -99,6 +99,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `in_person_already_reported` | 409 | İki kullanıcı arasında iptal edilmemiş bir yüz yüze buluşma bildirimi zaten var. |
 | `review_already_exists` | 409 | Bu kullanıcı daha önce değerlendirilmiş. |
 | `session_not_completed` | 409 | Değerlendirme için tamamlanmış oturum gerekir. |
+| `review_of_self` | 409 | Kullanıcı kendini değerlendiremez. |
 | `already_blocked` | 409 | Kullanıcı zaten engellenmiş. |
 | `age_not_confirmed` | 409 | 18 yaş onayı verilmemiş. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `concurrent_update` | 409 | Kaynak aynı anda başka bir istekle değişti; istemci yeniden deneyebilir. |

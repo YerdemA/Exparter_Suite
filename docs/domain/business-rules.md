@@ -148,13 +148,15 @@ Durum: **Onaylandı (2026-10-07).**
 | No | Kural | Katman |
 |---|---|---|
 | RV-01 | Bir kullanıcı başka bir kullanıcıyı yalnızca bir kez değerlendirebilir. | Application, DB |
-| RV-02 | Değerlendirme için iki kullanıcı arasında en az bir `Completed` oturum olmalıdır. | Application |
+| RV-02 | Değerlendirme için iki kullanıcı arasında en az bir `Completed` oturum olmalıdır (kendiliğinden tamamlanan dahil). Eşleşmenin bitmesi beklenmez: ilk oturum tamamlanır tamamlanmaz iki taraf da değerlendirebilir. | Application |
 | RV-03 | Kullanıcı kendini değerlendiremez. | Domain |
-| RV-04 | Puan 1–10 arasında tam sayıdır. Yorum isteğe bağlıdır. | Domain |
+| RV-04 | Puan 1–10 arasında tam sayıdır. Yorum isteğe bağlıdır ve en fazla 500 karakterdir. | Domain |
 | RV-05 | Değerlendirme yapıldığı anda herkese görünür olur. | — |
 | RV-06 | Değerlendirme düzenlenemez. Yazarı silebilir. | Domain |
 | RV-07 | Silinen değerlendirmenin yerine yenisi yazılamaz. | DB |
-| RV-08 | Ortalama puan yalnızca silinmemiş değerlendirmelerden hesaplanır. | Application |
+| RV-08 | Ortalama puan yalnızca silinmemiş değerlendirmelerden hesaplanır; ayrı bir özet tablosu tutulmaz. İlk değerlendirmeden itibaren değerlendirme sayısıyla birlikte gösterilir. | Application |
+| RV-09 | Değerlendirilen kullanıcı değerlendirmeye cevap yazamaz (MVP). | — |
+| RV-10 | Değerlendirme yazmak için etkileşim koşulu aranır (bkz. ID-04). | Application |
 
 ## Moderasyon
 
@@ -172,7 +174,7 @@ Ayrıntılı skor formülü Faz 5.3'te belirlenir. Sıralama önceliği:
 1. **Karşılıklı uyum:** Benim sunduğum onun istediği **ve** onun sunduğu benim istediğim.
 2. **Tek yönlü uyum:** Onun sunduğu benim istediğim.
 3. **Tercih uyumu:** Yüz yüze için aynı şehir veya iki tarafın da çevrimiçi tercihi.
-4. **Puan:** Ortalama değerlendirme puanı (değerlendirmeler dilim 7'de gelene kadar etkisiz).
+4. **Puan:** Ortalama değerlendirme puanı yüksek olan önce; hiç değerlendirmesi olmayan, değerlendirilmiş olanlardan sonra. Değerlendirme sayısı sıralamayı etkilemez.
 5. **Yenilik:** Profili daha yeni güncellenen önce.
 
 Seviye uyumu: Bir yetenek, sunulan seviye istenen en düşük seviyeye eşit veya ondan yüksekse uyum sayılır. Seviyesi yetmeyen kullanıcı listeden çıkmaz, yalnızca uyumlu sayılmaz.

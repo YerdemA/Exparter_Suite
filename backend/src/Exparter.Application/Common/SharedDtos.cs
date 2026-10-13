@@ -1,6 +1,6 @@
 namespace Exparter.Application.Common;
 
-/// <summary>Placeholder until the Reviews module provides real figures.</summary>
+/// <summary>How a user has been rated. The average is null for a user without reviews.</summary>
 public sealed record RatingSummaryDto(int ReviewCount, double? AverageRating)
 {
     public static RatingSummaryDto None { get; } = new(0, null);

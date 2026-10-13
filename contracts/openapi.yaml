@@ -584,7 +584,8 @@ paths:
         and returns every active user that matches, whether or not they can interact yet.
 
         Ranking in both cases: mutual compatibility first, then one-way compatibility,
-        then matching preferences (same city for in-person, or both online), then the most
+        then matching preferences (same city for in-person, or both online), then the
+        higher average rating (users without reviews after those with), then the most
         recently updated profile. A skill counts towards compatibility only if the level
         offered is at least the minimum level wanted. The caller and suspended or leaving
         accounts are never returned. Any signed-in user may call this, including one who
@@ -1179,10 +1180,13 @@ paths:
     post:
       tags: [Reviews]
       operationId: createReview
-      summary: Review the other user of a completed session
+      summary: Review a user the caller has completed a session with
       description: |
-        Requires a verified email. A user can review another user only once, ever;
-        a deleted review cannot be replaced. Reviews are visible immediately and cannot be edited.
+        The caller must meet the interaction requirements, and the two users must have
+        at least one completed session (`session_not_completed` otherwise), whether or
+        not their match is still running. A user can review another user only once,
+        ever; a deleted review cannot be replaced (`review_already_exists`). Reviews are
+        visible immediately and cannot be edited.
       requestBody:
         required: true
         content:
@@ -1231,6 +1235,23 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ReviewPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/users/{userId}/review-eligibility:
+    get:
+      tags: [Reviews]
+      operationId: getReviewEligibility
+      summary: Tell whether the signed-in user can review a user
+      description: Lets a client decide whether to offer the review form. Answers 404 for unknown ids and suspended or leaving accounts.
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Whether a review can be written, and if not, why.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewEligibility' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
@@ -2391,14 +2412,31 @@ components:
     # ----------------------------------------------------------- Reviews
     CreateReviewRequest:
       type: object
-      required: [sessionId, rating]
+      required: [revieweeId, rating]
       properties:
-        sessionId:
+        revieweeId:
           type: string
           format: uuid
-          description: A completed session between the caller and the user being reviewed.
+          description: The user being reviewed.
         rating: { type: integer, format: int32, minimum: 1, maximum: 10 }
-        comment: { type: string, maxLength: 1000 }
+        comment: { type: string, maxLength: 500 }
+
+    ReviewEligibility:
+      type: object
+      required: [canReview]
+      properties:
+        canReview: { type: boolean }
+        reason:
+          allOf:
+            - $ref: '#/components/schemas/ReviewBlockReason'
+          nullable: true
+          description: Why a review cannot be written. Null when it can.
+
+    ReviewBlockReason:
+      type: string
+      enum: [Self, AlreadyReviewed, NoCompletedSession]
+      description: |
+        `AlreadyReviewed` also covers a review that was written and then deleted.
 
     Review:
       type: object
@@ -2407,7 +2445,10 @@ components:
         id: { type: string, format: uuid }
         reviewer: { $ref: '#/components/schemas/UserSummary' }
         revieweeId: { type: string, format: uuid }
-        sessionId: { type: string, format: uuid }
+        sessionId:
+          type: string
+          format: uuid
+          description: The completed session that gave the right to review.
         rating: { type: integer, format: int32, minimum: 1, maximum: 10 }
         comment: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }

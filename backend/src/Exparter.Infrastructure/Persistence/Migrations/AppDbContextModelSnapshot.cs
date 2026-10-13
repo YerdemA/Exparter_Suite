@@ -475,6 +475,54 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.ToTable("profiles", "profiles");
                 });
 
+            modelBuilder.Entity("Exparter.Domain.Reviews.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<Guid>("RevieweeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewee_id");
+
+                    b.Property<Guid>("ReviewerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewer_id");
+
+                    b.Property<Guid>("SwapSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("swap_session_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reviews");
+
+                    b.HasIndex("RevieweeId", "CreatedAt")
+                        .HasDatabaseName("ix_reviews_reviewee_id_created_at");
+
+                    b.HasIndex("ReviewerId", "RevieweeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reviews_reviewer_id_reviewee_id");
+
+                    b.ToTable("reviews", "reviews");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Sessions.SwapSession", b =>
                 {
                     b.Property<Guid>("Id")

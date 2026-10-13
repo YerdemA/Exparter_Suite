@@ -113,6 +113,15 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
                     || (x.ProposedByUserId == otherUserId && x.OtherUserId == userId)),
             cancellationToken);
 
+    public async Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, DateTimeOffset now, CancellationToken cancellationToken) =>
+        await Completed(
+                dbContext.SwapSessions.Where(x => (x.ProposedByUserId == userId && x.OtherUserId == otherUserId)
+                    || (x.ProposedByUserId == otherUserId && x.OtherUserId == userId)),
+                now)
+            .OrderBy(x => x.Id)
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
     public void Add(SwapSession session) => dbContext.SwapSessions.Add(session);
 
     private static IQueryable<SwapSession> Completed(IQueryable<SwapSession> sessions, DateTimeOffset now) =>

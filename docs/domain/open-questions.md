@@ -15,7 +15,7 @@
 | İstek süresi | 3 gün sonra `Expired`. Gönderen geri çekebilir. |
 | Oturum tamamlama | Karşılıklı onayla. |
 | Oturum iptali | Tek taraflı; sebep metni zorunlu, karşı tarafa bildirilir ve admine düşer. |
-| Değerlendirme | 1–10 puan ve yorum. Anında görünür, düzenlenemez, silinebilir. Bir kullanıcı diğerini yalnızca bir kez değerlendirir. |
+| Değerlendirme | 1–10 puan ve yorum. Anında görünür, düzenlenemez, silinebilir. Bir kullanıcı diğerini yalnızca bir kez değerlendirir. Eşleşme sürerken de, ilk oturum tamamlanır tamamlanmaz değerlendirilebilir; yorum en fazla 500 karakter; ortalama ilk değerlendirmeden itibaren sayısıyla birlikte görünür; değerlendirilen kişi cevap yazamaz (2026-10-13). |
 | Yetenek kataloğu | Kullanıcı yeni yetenek önerebilir; admin onayı gerekir. |
 | E-posta doğrulaması | Başkalarıyla her türlü etkileşim için zorunlu. |
 | Mesaj içeriği | MVP'de yalnızca metin. |
