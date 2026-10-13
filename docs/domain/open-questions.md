@@ -67,6 +67,8 @@
 | Yetenek kataloğu | MVP'de 10 kategori ve 68 yetenek (başlangıç verisi). Tam sürümde çok daha kapsamlı bir kategori yapısı kurulacak. |
 | Yetenek sınırı | 5 sunulan, 5 istenen. İleride ödeme planlarına bağlanacak. |
 | Admin | Hesap veritabanında elle admin yapılır; öneriler bir PowerShell betiğiyle listelenip onaylanır. |
+| Görünürlük | Etkileşim koşulunu sağlamayan kullanıcı gezebilir ve başkalarına bakabilir. Kendisi keşfette öneri olarak çıkmaz, ama ad veya kullanıcı adıyla aranınca bulunur ve profili açılabilir. Koşul yalnızca başkalarını etkileyen işlemlerde aranır. |
+| Keşfet sıralaması | Karşılıklı uyum, tek yönlü uyum, tercih uyumu, puan, yenilik. Seviyesi yetmeyen yetenek uyum sayılmaz. Uyumsuz kullanıcılar listenin sonunda gösterilir. |
 
 ## Onaylanan ayrıntılar (2026-10-07)
 

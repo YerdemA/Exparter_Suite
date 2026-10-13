@@ -80,21 +80,17 @@ public class ProfileApiTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Public_profile_appears_only_once_every_interaction_requirement_is_met()
+    public async Task Public_profile_can_be_opened_before_the_user_meets_the_interaction_requirements()
     {
         var viewer = await TestSession.RegisterAsync(_client);
         var subject = await TestSession.RegisterAsync(_client);
         var path = $"/api/v1/users/{subject.UserId}";
 
-        await ProblemAssert.IsAsync(await viewer.SendAsync(HttpMethod.Get, path), HttpStatusCode.NotFound, "not_found");
+        var blank = await viewer.GetJsonAsync(path);
+        Assert.Equal(subject.Username, blank.GetProperty("username").GetString());
+        Assert.Equal(JsonValueKind.Null, blank.GetProperty("displayName").ValueKind);
 
         await subject.SendAsync(HttpMethod.Put, "/api/v1/me/profile", ValidProfile);
-        await ProblemAssert.IsAsync(await viewer.SendAsync(HttpMethod.Get, path), HttpStatusCode.NotFound, "not_found");
-
-        await subject.VerifyEmailAsync(fixture);
-        await ProblemAssert.IsAsync(await viewer.SendAsync(HttpMethod.Get, path), HttpStatusCode.NotFound, "not_found");
-
-        await subject.AddSkillAsync("gitar", "Offered", "Advanced");
         var profile = await viewer.GetJsonAsync(path);
 
         Assert.Equal(subject.Username, profile.GetProperty("username").GetString());

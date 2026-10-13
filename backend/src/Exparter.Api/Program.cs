@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Exparter.Api.Common;
 using Exparter.Api.Identity;
+using Exparter.Api.Matching;
 using Exparter.Api.Profiles;
 using Exparter.Api.Skills;
 using Exparter.Application;
@@ -51,6 +52,7 @@ var api = app.MapGroup("/api/v1");
 api.MapIdentityEndpoints();
 api.MapProfileEndpoints();
 api.MapSkillEndpoints();
+api.MapDiscoveryEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

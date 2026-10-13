@@ -347,8 +347,8 @@ paths:
       operationId: getUserProfile
       summary: Get another user's public profile
       description: |
-        Answers 404 for users who are not visible to others: unknown ids, users who do not
-        meet the interaction requirements yet, and suspended or leaving accounts.
+        Any active user can be looked up, including one who does not meet the interaction
+        requirements yet. Answers 404 for unknown ids and suspended or leaving accounts.
       parameters:
         - $ref: '#/components/parameters/UserId'
       responses:
@@ -559,9 +559,16 @@ paths:
       operationId: discoverUsers
       summary: Find users ranked by compatibility with the signed-in user
       description: |
-        Ranking: mutual compatibility first, then one-way compatibility, then
-        matching preferences (same city or both online), then rating. The caller,
-        blocked users and suspended or deleted accounts are never returned.
+        Without `q` this is a list of suggestions: only users who meet the interaction
+        requirements are returned. With `q` it is a search by username or display name
+        and returns every active user that matches, whether or not they can interact yet.
+
+        Ranking in both cases: mutual compatibility first, then one-way compatibility,
+        then matching preferences (same city for in-person, or both online), then the most
+        recently updated profile. A skill counts towards compatibility only if the level
+        offered is at least the minimum level wanted. The caller and suspended or leaving
+        accounts are never returned. Any signed-in user may call this, including one who
+        cannot interact yet.
       parameters:
         - name: skillId
           in: query
@@ -580,7 +587,7 @@ paths:
           schema: { $ref: '#/components/schemas/SessionMode' }
         - name: q
           in: query
-          description: Case-insensitive match on username, display name or offered skill name.
+          description: Search text matched against username and display name, ignoring case and Turkish accents.
           schema: { type: string, maxLength: 60 }
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Limit'
@@ -1639,7 +1646,7 @@ components:
         displayName:
           type: string
           nullable: true
-          description: Null for deleted users; clients show a localized placeholder.
+          description: Null for deleted users and for users who have not filled in their profile; clients show a placeholder or the username.
         avatarUrl: { type: string, format: uri, nullable: true }
         isDeleted: { type: boolean }
 
@@ -1863,11 +1870,14 @@ components:
 
     PublicProfile:
       type: object
-      required: [userId, username, displayName, acceptsOnline, acceptsInPerson, rating]
+      required: [userId, username, acceptsOnline, acceptsInPerson, rating]
       properties:
         userId: { type: string, format: uuid }
         username: { type: string }
-        displayName: { type: string }
+        displayName:
+          type: string
+          nullable: true
+          description: Null if the user has not filled in their profile yet.
         bio: { type: string, nullable: true }
         avatarUrl: { type: string, format: uri, nullable: true }
         city:

@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Identity;
 using Exparter.Domain.Skills;
 using FluentValidation;
 using Mediator;
@@ -20,13 +21,13 @@ public sealed class ListOwnSkillsQueryHandler(IUserSkillRepository userSkills)
 
 public sealed record ListUserSkillsQuery(Guid UserId, UserSkillType? Type, int? Page, int? PageSize) : IQuery<PagedList<UserSkillDto>>;
 
-public sealed class ListUserSkillsQueryHandler(IUserSkillRepository userSkills, IInteractionRequirements requirements)
+public sealed class ListUserSkillsQueryHandler(IUserSkillRepository userSkills, IUserDirectory users)
     : IQueryHandler<ListUserSkillsQuery, PagedList<UserSkillDto>>
 {
     public async ValueTask<PagedList<UserSkillDto>> Handle(ListUserSkillsQuery query, CancellationToken cancellationToken)
     {
-        // Same visibility as the public profile: a user who cannot interact yet is not shown.
-        if (!(await requirements.GetAsync(query.UserId, cancellationToken)).CanInteract)
+        // Same visibility as the public profile: any active user.
+        if (await users.FindAsync(query.UserId, cancellationToken) is not { IsActive: true })
         {
             throw SkillAppErrors.UserNotFound();
         }

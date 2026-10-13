@@ -40,7 +40,7 @@ Durum: **Onaylandı (2026-10-07).**
 | PR-03 | Çevrimiçi ve yüz yüze tercihlerinden en az biri seçili olmalıdır. | Domain |
 | PR-04 | Yüz yüze tercihi seçiliyse şehir zorunludur. | Domain |
 | PR-05 | Profil, eşleşme için gereken bilgiler girildiğinde tamamlanmış sayılır: görünen ad, en az bir takas tercihi (yüz yüze ise şehirle birlikte) ve en az bir sunulan yetenek. (Yetenek koşulu, yeteneklerin geldiği dilim 2'de uygulanır.) | Application |
-| PR-06 | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı başkalarına görünmez: profili açılamaz ve keşfette listelenmez. | Application |
+| PR-06 | Etkileşim koşullarını sağlamayan kullanıcı keşfette öneri olarak gösterilmez. Ama gizli değildir: kullanıcı adı veya görünen adla aranınca bulunur ve profili açılabilir. Askıya alınmış ve silinmekte olan hesaplar hiçbir yerde görünmez. | Application |
 | PR-07 | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir (keşfet dahil), başka kullanıcıların profillerine ve yeteneklerine bakabilir, ama başkalarıyla etkileşime giremez (bkz. ID-04). Koşul yalnızca başka kullanıcıları etkileyen işlemlerde aranır: istek, eşleşme, mesaj, oturum, değerlendirme ve ileride beğeni ile yorum. Etkileşim denemesinde "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." uyarısı gösterilir. | Application |
 | PR-08 | Avatar JPEG, PNG veya WebP olabilir ve en fazla 5 MB'tır. Dosya doğrudan depolamaya yüklenir; sınırlar yüklenen dosya üzerinde denetlenir. | Application |
 
@@ -145,7 +145,14 @@ Ayrıntılı skor formülü Faz 5.3'te belirlenir. Sıralama önceliği:
 
 1. **Karşılıklı uyum:** Benim sunduğum onun istediği **ve** onun sunduğu benim istediğim.
 2. **Tek yönlü uyum:** Onun sunduğu benim istediğim.
-3. **Tercih uyumu:** Aynı şehir veya iki tarafın da çevrimiçi tercihi.
-4. **Puan:** Ortalama değerlendirme puanı.
+3. **Tercih uyumu:** Yüz yüze için aynı şehir veya iki tarafın da çevrimiçi tercihi.
+4. **Puan:** Ortalama değerlendirme puanı (değerlendirmeler dilim 7'de gelene kadar etkisiz).
+5. **Yenilik:** Profili daha yeni güncellenen önce.
 
-Kullanıcının kendisi, engellediği/engellendiği kullanıcılar ve askıya alınmış hesaplar listede görünmez.
+Seviye uyumu: Bir yetenek, sunulan seviye istenen en düşük seviyeye eşit veya ondan yüksekse uyum sayılır. Seviyesi yetmeyen kullanıcı listeden çıkmaz, yalnızca uyumlu sayılmaz.
+
+Hiç uyumu olmayan kullanıcılar da listenin sonunda gösterilir; yeteneği olmayan biri keşfette boş ekran görmez.
+
+Arama: Ad veya kullanıcı adıyla arama yapıldığında etkileşim koşulu aranmaz (bkz. PR-06); sıralama aynıdır.
+
+Kullanıcının kendisi, engellediği/engellendiği kullanıcılar (engelleme geldiğinde) ve askıya alınmış veya silinmekte olan hesaplar listede görünmez.
