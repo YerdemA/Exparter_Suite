@@ -16,6 +16,7 @@ import '../../features/messages/presentation/conversation_screen.dart';
 import '../../features/messages/presentation/conversations_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/sessions/presentation/propose_session_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/skills/presentation/skill_picker_screen.dart';
 import '../api/generated/export.dart';
@@ -122,6 +123,13 @@ GoRouter appRouter(Ref ref) {
                     path: AppRoutes.matchDetailSegment,
                     builder: (context, state) =>
                         MatchDetailScreen(matchId: state.pathParameters[AppRoutes.matchIdParameter]!),
+                    routes: [
+                      GoRoute(
+                        path: AppRoutes.proposeSessionSegment,
+                        builder: (context, state) =>
+                            ProposeSessionScreen(matchId: state.pathParameters[AppRoutes.matchIdParameter]!),
+                      ),
+                    ],
                   ),
                 ],
               ),

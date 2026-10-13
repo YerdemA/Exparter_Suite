@@ -3,6 +3,7 @@ using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
+using Exparter.Application.Sessions;
 using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
 using FluentValidation;
@@ -29,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IMatchDirectory, MatchDirectory>();
         services.AddScoped<IConversationDirectory, ConversationDirectory>();
         services.AddScoped<ConversationDtoFactory>();
+        services.AddScoped<ISessionDirectory, SessionDirectory>();
+        services.AddScoped<IUserStats, UserStats>();
         return services;
     }
 }

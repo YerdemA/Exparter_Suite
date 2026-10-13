@@ -13,6 +13,7 @@ import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/features/profile/presentation/profile_controller.dart';
 import 'package:exparter/features/profile/presentation/profile_form_screen.dart';
 import 'package:exparter/features/profile/presentation/profile_screen.dart';
+import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/features/skills/data/api_skill_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,7 @@ void main() {
   List<Override> overrides({AvatarPicker? picker, InteractionRequirements? requirements}) => [
         profileRepositoryProvider.overrideWithValue(repository),
         skillRepositoryProvider.overrideWithValue(skillRepository),
+        sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
         interactionRequirementsProvider.overrideWith((ref) async => requirements ?? testRequirements()),
         authRepositoryProvider.overrideWithValue(MockAuthRepository()),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),

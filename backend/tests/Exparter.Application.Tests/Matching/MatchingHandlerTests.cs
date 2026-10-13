@@ -75,6 +75,9 @@ internal sealed class InMemoryMatches : IMatchRepository
         return Task.FromResult(new PagedList<Match>(all, page.Page, page.PageSize, all.Count));
     }
 
+    public Task<IReadOnlyList<Match>> ListAllAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Match>>(Items.Where(x => x.IsParticipant(userId)).ToList());
+
     public Task<IReadOnlyList<Match>> ListWithOverdueEndRequestAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<Match>>(
             Items.Where(x => x.Status == MatchStatus.EndRequested && x.EndRequestExpiresAt <= now).Take(limit).ToList());
@@ -205,11 +208,11 @@ public class MatchingHandlerTests
             .Handle(new CancelSwapRequestCommand(userId ?? _ali, requestId), CancellationToken.None).AsTask();
 
     private Task<MatchDto> ChangeEndAsync(Guid matchId, Guid userId, MatchEndAction action) =>
-        new ChangeMatchEndCommandHandler(_matches, _dtos, _unitOfWork, _clock)
+        new ChangeMatchEndCommandHandler(_matches, _dtos, _publisher, _unitOfWork, _clock)
             .Handle(new ChangeMatchEndCommand(userId, matchId, action), CancellationToken.None).AsTask();
 
     private Task<int> ProcessDeadlinesAsync() =>
-        new ProcessMatchingDeadlinesCommandHandler(_requests, _matches, _unitOfWork, _clock)
+        new ProcessMatchingDeadlinesCommandHandler(_requests, _matches, _publisher, _unitOfWork, _clock)
             .Handle(new ProcessMatchingDeadlinesCommand(), CancellationToken.None).AsTask();
 
     private static async Task<string> AppCodeOfAsync(Func<Task> action) => (await Assert.ThrowsAsync<AppException>(action)).Code;
@@ -377,6 +380,29 @@ public class MatchingHandlerTests
     }
 
     [Fact]
+    public async Task The_match_directory_describes_a_match_and_lists_a_users_history()
+    {
+        var directory = new MatchDirectory(_matches);
+        var match = await AcceptAsync((await SendAsync()).Id);
+
+        var info = await directory.FindAsync(match.Id, CancellationToken.None);
+        Assert.Equal(new MatchInfo(match.Id, _ali, _ayse, IsActive: true, HasPendingEndRequest: false), info);
+        Assert.Equal(_ayse, info!.OtherThan(_ali));
+        Assert.False(info.IsParticipant(Guid.NewGuid()));
+        Assert.Null(await directory.FindAsync(Guid.NewGuid(), CancellationToken.None));
+
+        await ChangeEndAsync(match.Id, _ali, MatchEndAction.Request);
+        Assert.Equal(
+            (false, true),
+            await directory.FindAsync(match.Id, CancellationToken.None) is { } pending ? (pending.IsActive, pending.HasPendingEndRequest) : default);
+        Assert.Equal([new MatchSummary(match.Id, IsEnded: false)], await directory.ListForUserAsync(_ayse, CancellationToken.None));
+
+        await ChangeEndAsync(match.Id, _ayse, MatchEndAction.Accept);
+        Assert.Equal([new MatchSummary(match.Id, IsEnded: true)], await directory.ListForUserAsync(_ali, CancellationToken.None));
+        Assert.Empty(await directory.ListForUserAsync(Guid.NewGuid(), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task The_match_directory_names_the_users_someone_is_still_matched_with()
     {
         var directory = new MatchDirectory(_matches);
@@ -467,9 +493,11 @@ public class MatchingHandlerTests
         Assert.Equal(_ali, waiting.EndRequestedByUserId);
         Assert.Equal(_clock.GetUtcNow().AddDays(7), waiting.EndRequestExpiresAt);
 
+        Assert.DoesNotContain(_publisher.Published, published => published is MatchEnded);
         var ended = await ChangeEndAsync(match.Id, _ayse, MatchEndAction.Accept);
         Assert.Equal(MatchStatus.Ended, ended.Status);
         Assert.Equal(MatchEndReason.MutualConsent, ended.EndReason);
+        Assert.Equal(new MatchEnded(match.Id), Assert.Single(_publisher.Published.OfType<MatchEnded>()));
 
         // The pair is free to match again.
         Assert.Equal(SwapRequestStatus.Pending, (await SendBackAsync()).Status);
@@ -545,6 +573,7 @@ public class MatchingHandlerTests
         Assert.Equal(2, await ProcessDeadlinesAsync());
         Assert.Equal(MatchStatus.Ended, Assert.Single(_matches.Items).Status);
         Assert.Equal(MatchEndReason.EndRequestExpired, _matches.Items[0].EndReason);
+        Assert.Equal(new MatchEnded(match.Id), Assert.Single(_publisher.Published.OfType<MatchEnded>()));
         Assert.Equal(SwapRequestStatus.Expired, _requests.Items.Last().Status);
         Assert.Equal(0, await ProcessDeadlinesAsync());
     }

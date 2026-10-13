@@ -9,6 +9,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
+import '../../sessions/presentation/match_sessions_section.dart';
 import 'match_controller.dart';
 import 'match_labels.dart';
 
@@ -145,6 +146,8 @@ class _Content extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
               ],
+              MatchSessionsSection(match: match),
+              const SizedBox(height: AppSpacing.lg),
               if (busy) const LinearProgressIndicator(),
               ...switch (match.status) {
                 MatchStatus.active => [

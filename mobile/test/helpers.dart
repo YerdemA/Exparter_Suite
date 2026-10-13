@@ -12,6 +12,7 @@ import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/matches/domain/match_repository.dart';
 import 'package:exparter/features/messages/domain/message_repository.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
+import 'package:exparter/features/sessions/domain/session_repository.dart';
 import 'package:exparter/features/skills/domain/skill_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,18 @@ class MockDiscoveryRepository extends Mock implements DiscoveryRepository {}
 class MockMatchRepository extends Mock implements MatchRepository {}
 
 class MockMessageRepository extends Mock implements MessageRepository {}
+
+class MockSessionRepository extends Mock implements SessionRepository {}
+
+const testStats = UserStats(totalMatches: 5, completedMatches: 3, cancelledMatches: 1, completedSessions: 9);
+
+/// A session repository for tests that are about something else: no sessions, fixed statistics.
+MockSessionRepository quietSessionRepository() {
+  final repository = MockSessionRepository();
+  when(() => repository.listMatchSessions(any())).thenAnswer((_) async => []);
+  when(() => repository.getUserStats(any())).thenAnswer((_) async => testStats);
+  return repository;
+}
 
 /// A real-time connection that tests drive by hand.
 class FakeRealtimeClient implements RealtimeClient {

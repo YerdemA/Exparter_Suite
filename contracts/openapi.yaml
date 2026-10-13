@@ -533,6 +533,26 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
+  /api/v1/users/{userId}/stats:
+    get:
+      tags: [Profiles]
+      operationId: getUserStats
+      summary: Get what a user's history of swaps says about them
+      description: |
+        Shown on profiles to help others decide whether to trust the user. Derived from
+        the records of matches and sessions. Answers 404 for unknown ids and suspended or
+        leaving accounts.
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: The user's statistics.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserStats' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /api/v1/users/{userId}/skills:
     get:
       tags: [Skills]
@@ -949,7 +969,7 @@ paths:
         - $ref: '#/components/parameters/PageSize'
       responses:
         '200':
-          description: A page of sessions ordered by scheduled time, latest first.
+          description: A page of sessions, newest first by scheduled time (in-person meetings by when they were reported).
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SwapSessionPage' }
@@ -960,9 +980,11 @@ paths:
       operationId: proposeSession
       summary: Propose a session to the other user of a match
       description: |
-        Requires a verified email. The match must be active and must not have a pending
-        end request. The other user accepts or declines; a proposal that is not accepted
-        before its start time is declined automatically.
+        Plans an online session. The match must be active and must not have a pending end
+        request. The other user accepts or declines; a proposal that is not accepted
+        before its start time is declined automatically. In-person meetings are not
+        planned here: the two users arrange them in their conversation and report them
+        afterwards (`reportInPersonSession`).
       parameters:
         - $ref: '#/components/parameters/MatchId'
       requestBody:
@@ -979,6 +1001,34 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/matches/{matchId}/sessions/in-person:
+    post:
+      tags: [Sessions]
+      operationId: reportInPersonSession
+      summary: Report that the two users of a match met in person
+      description: |
+        In-person meetings are arranged by the users themselves; neither time nor place
+        is kept. The report creates a session that waits for the other user's
+        confirmation, exactly like an online session marked as completed: the other user
+        confirms it or disputes it by cancelling with a reason, and without an answer
+        within 72 hours it is completed automatically. The match must be active and must
+        not have a pending end request.
+
+        Two users can have only one in-person meeting on record across all their
+        matches; a further report is refused with `in_person_already_reported` unless the
+        earlier one was cancelled.
+      parameters:
+        - $ref: '#/components/parameters/MatchId'
+      responses:
+        '201':
+          description: The session, waiting for the other user's confirmation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SwapSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
@@ -1090,7 +1140,7 @@ paths:
     post:
       tags: [Sessions]
       operationId: markSessionCompleted
-      summary: Mark a scheduled session as completed
+      summary: Mark a scheduled online session as completed
       description: |
         Allowed only after the scheduled start time. The other user confirms; without an
         answer within 72 hours the session is completed automatically.
@@ -2242,18 +2292,21 @@ components:
 
     ProposeSessionRequest:
       type: object
-      required: [scheduledAt, durationMinutes, mode]
+      required: [scheduledAt, durationMinutes]
       properties:
         scheduledAt:
           type: string
           format: date-time
           description: Must be in the future.
-        durationMinutes: { type: integer, format: int32, minimum: 15, maximum: 480 }
-        mode: { $ref: '#/components/schemas/SessionMode' }
+        durationMinutes:
+          type: integer
+          format: int32
+          enum: [30, 45, 60, 90, 120]
         note:
           type: string
+          nullable: true
           maxLength: 500
-          description: Free text such as a meeting link or a place.
+          description: Free text such as a meeting link.
 
     CancelSessionRequest:
       type: object
@@ -2263,13 +2316,24 @@ components:
 
     SwapSession:
       type: object
-      required: [id, matchId, proposedByUserId, scheduledAt, durationMinutes, mode, status, completedAutomatically, createdAt]
+      required: [id, matchId, proposedByUserId, mode, status, completedAutomatically, createdAt]
       properties:
         id: { type: string, format: uuid }
         matchId: { type: string, format: uuid }
-        proposedByUserId: { type: string, format: uuid }
-        scheduledAt: { type: string, format: date-time }
-        durationMinutes: { type: integer, format: int32 }
+        proposedByUserId:
+          type: string
+          format: uuid
+          description: Who proposed the online session or reported the in-person meeting.
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Null for in-person meetings.
+        durationMinutes:
+          type: integer
+          format: int32
+          nullable: true
+          description: Null for in-person meetings.
         mode: { $ref: '#/components/schemas/SessionMode' }
         note: { type: string, nullable: true }
         status: { $ref: '#/components/schemas/SwapSessionStatus' }
@@ -2284,10 +2348,35 @@ components:
         completedAutomatically:
           type: boolean
           description: True when the confirmation was given by the system because the deadline passed.
-        cancelledByUserId: { type: string, format: uuid, nullable: true }
+        cancelledByUserId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Null for a cancelled session means it was cancelled because the match ended.
         cancelReason: { type: string, nullable: true }
         cancelledAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
+
+    UserStats:
+      type: object
+      required: [totalMatches, completedMatches, cancelledMatches, completedSessions]
+      properties:
+        totalMatches:
+          type: integer
+          format: int32
+          description: Matches that have ended. A running match is not counted until it is over.
+        completedMatches:
+          type: integer
+          format: int32
+          description: Ended matches in which at least one session was completed.
+        cancelledMatches:
+          type: integer
+          format: int32
+          description: Ended matches in which no session was completed.
+        completedSessions:
+          type: integer
+          format: int32
+          description: Sessions completed across all matches.
 
     SwapSessionPage:
       allOf:

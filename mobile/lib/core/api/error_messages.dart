@@ -38,6 +38,10 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_state' || 'concurrent_update' => l10n.errorInvalidState,
     'not_participant' => l10n.errorNotParticipant,
     'conversation_closed' => l10n.errorConversationClosed,
+    'session_in_past' => l10n.errorSessionInPast,
+    'session_not_started' => l10n.errorSessionNotStarted,
+    'match_end_pending' => l10n.errorMatchEndPending,
+    'in_person_already_reported' => l10n.errorInPersonAlreadyReported,
     'conversation_has_active_match' => l10n.errorConversationHasActiveMatch,
     _ => l10n.errorUnknown,
   };

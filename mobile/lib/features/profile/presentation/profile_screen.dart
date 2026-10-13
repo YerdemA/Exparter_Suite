@@ -12,6 +12,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/recovery_controller.dart';
+import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/own_skills_section.dart';
 import '../data/api_profile_repository.dart';
 import '../data/avatar_picker.dart';
@@ -200,6 +201,10 @@ class _ProfileBody extends ConsumerWidget {
                 label: Text(profile.isComplete ? l10n.profileEdit : l10n.profileFillIn),
               ),
               const SizedBox(height: AppSpacing.xl),
+              if (account != null) ...[
+                UserStatsCard(userId: account.id),
+                const SizedBox(height: AppSpacing.lg),
+              ],
               const OwnSkillsSection(),
               const SizedBox(height: AppSpacing.xl),
               if (restored) ...[

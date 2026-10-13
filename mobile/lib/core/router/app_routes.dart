@@ -11,6 +11,7 @@ abstract final class AppRoutes {
   static const matches = '/matches';
   static const matchDetailSegment = ':$matchIdParameter';
   static const matchIdParameter = 'matchId';
+  static const proposeSessionSegment = 'sessions/new';
   static const messages = '/messages';
   static const conversationSegment = ':$conversationIdParameter';
   static const conversationIdParameter = 'conversationId';
@@ -28,6 +29,8 @@ abstract final class AppRoutes {
   static String sendRequest(String userId) => '/users/$userId/$sendRequestSegment';
 
   static String matchDetail(String matchId) => '$matches/$matchId';
+
+  static String proposeSession(String matchId) => '$matches/$matchId/$proposeSessionSegment';
 
   static String conversation(String conversationId) => '$messages/$conversationId';
 

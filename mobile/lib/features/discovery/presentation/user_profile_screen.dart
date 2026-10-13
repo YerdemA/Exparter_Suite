@@ -11,6 +11,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
+import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/skill_labels.dart';
 import 'discovery_controller.dart';
 import 'discovery_labels.dart';
@@ -118,6 +119,8 @@ class _Content extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.lg),
                 Text(profile.bio!, style: theme.textTheme.bodyLarge),
               ],
+              const SizedBox(height: AppSpacing.lg),
+              UserStatsCard(userId: profile.userId),
               if (!isOwnProfile) ...[
                 const SizedBox(height: AppSpacing.lg),
                 FilledButton.icon(

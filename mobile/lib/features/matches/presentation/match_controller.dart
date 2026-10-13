@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/api/generated/export.dart';
 import '../../../core/riverpod.dart';
 import '../data/api_match_repository.dart';
+import '../../sessions/presentation/session_controller.dart';
 import '../domain/match_repository.dart';
 
 part 'match_controller.g.dart';
@@ -72,6 +73,8 @@ class MatchActions extends _$MatchActions {
         ref.invalidate(pendingRequestsProvider);
         ref.invalidate(matchesProvider);
         ref.invalidate(matchProvider);
+        // Starting or ending a match changes both users' statistics.
+        ref.invalidate(userStatsProvider);
         if (state.isLoading) {
           state = const AsyncData(null);
         }

@@ -57,6 +57,14 @@ void main() {
     );
   }
 
+  /// A notice floats over the bottom of the screen for a few seconds; a tap there
+  /// would land on it instead of the button underneath.
+  Future<void> waitForNotices(WidgetTester tester) async {
+    for (var i = 0; i < 50 && find.byType(SnackBar).evaluate().isNotEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+  }
+
   Future<void> tapVisible(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);
     await tester.pumpAndSettle();
@@ -299,11 +307,8 @@ void main() {
     await tapVisible(tester, find.text(l10n.matchSendMessage));
     await pumpUntilFound(tester, find.text(l10n.conversationNoMessages));
     await tester.enterText(find.byType(TextField), 'Merhaba, ne zaman başlayalım?');
-    // The "request sent" notice from a moment ago floats over the send button until it
-    // times out; a tap now would land on it.
-    for (var i = 0; i < 50 && find.byType(SnackBar).evaluate().isNotEmpty; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    // The "request sent" notice from a moment ago floats over the send button.
+    await waitForNotices(tester);
 
     await tester.tap(find.byTooltip(l10n.messageSend));
     // The text is also in the input box until it is sent, so wait for the pending
@@ -338,12 +343,36 @@ void main() {
     }
 
     await pumpUntilFound(tester, find.text(l10n.matchEndRequest));
+
+    // Sessions: report an in-person meeting, which the peer confirms, and propose an
+    // online session for tomorrow evening.
+    await tapVisible(tester, find.text(l10n.sessionInPersonReport));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, l10n.sessionInPersonReport));
+    await pumpUntilFound(tester, find.textContaining(l10n.sessionWaitingConfirmation));
+    final matchId = accepted.data!['id'] as String;
+    final sessions = await api.get<Map<String, dynamic>>('/api/v1/matches/$matchId/sessions', options: peerAuth);
+    await api.post<void>(
+      '/api/v1/sessions/${(sessions.data!['items'] as List<dynamic>).first['id']}/completion/confirm',
+      options: peerAuth,
+    );
+    await tapVisible(tester, find.text(l10n.sessionProposeOnline));
+    await pumpUntilFound(tester, find.text(l10n.sessionProposeTitle));
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.sessionProposeSubmit));
+    // Back on the match: the reloaded list has the new proposal and the confirmed meeting.
+    await pumpUntilFound(tester, find.text(l10n.sessionStatusProposed));
+    expect(find.text(l10n.sessionStatusCompleted), findsOneWidget);
+    await waitForNotices(tester);
+
     await tapVisible(tester, find.text(l10n.matchEndRequest));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, l10n.matchEndRequest));
     await pumpUntilFound(tester, find.text(l10n.matchEndWaitingOther));
 
+    // The profile counts the match and the meeting that was completed in it.
     await openProfileTab(tester);
+    await pumpUntilFound(tester, find.text(l10n.statsCompletedSessions(1)));
+    expect(find.text(l10n.statsTotalMatches), findsOneWidget);
 
     // Sign out, and stay signed out after another restart.
     await tapVisible(tester, find.widgetWithText(OutlinedButton, l10n.homeLogout));

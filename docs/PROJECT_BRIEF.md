@@ -196,7 +196,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 - Takas isteği gönderme, kabul etme, reddetme
 - Eşleşmeler listesi
 - Gerçek zamanlı mesajlaşma
-- Takas oturumu planlama ve tamamlandı olarak işaretleme
+- Çevrimiçi takas oturumu planlama, yüz yüze buluşmayı sonradan bildirme ve tamamlandı olarak işaretleme
 - Değerlendirme
 - Uygulama içi ve push bildirimler
 
