@@ -81,6 +81,11 @@ internal sealed class FakeMatchDirectory : IMatchDirectory
 {
     public HashSet<Guid> Matched { get; } = [];
 
+    public Task<MatchInfo?> FindAsync(Guid matchId, CancellationToken cancellationToken) => Task.FromResult<MatchInfo?>(null);
+
+    public Task<IReadOnlyList<MatchSummary>> ListForUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<MatchSummary>>([]);
+
     public Task<IReadOnlySet<Guid>> GetUsersWithOpenMatchAsync(
         Guid userId,
         IReadOnlyCollection<Guid> otherUserIds,

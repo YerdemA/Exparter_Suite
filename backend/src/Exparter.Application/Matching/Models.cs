@@ -56,6 +56,9 @@ public interface IMatchRepository
     /// <summary>Newest first.</summary>
     Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, PageRequest page, CancellationToken cancellationToken);
 
+    /// <summary>Every match of the user, in no particular order.</summary>
+    Task<IReadOnlyList<Match>> ListAllAsync(Guid userId, CancellationToken cancellationToken);
+
     /// <summary>Matches whose end request was not answered in time, oldest first.</summary>
     Task<IReadOnlyList<Match>> ListWithOverdueEndRequestAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
 
@@ -77,9 +80,30 @@ public interface IMatchRepository
 /// </summary>
 public sealed record MatchCreated(Guid MatchId, Guid UserAId, Guid UserBId) : Mediator.INotification;
 
+/// <summary>
+/// Published while a match is being ended, however it ends, so that handlers in other
+/// modules take part in the same transaction.
+/// </summary>
+public sealed record MatchEnded(Guid MatchId) : Mediator.INotification;
+
+/// <param name="IsActive">Running, with no request to end it pending.</param>
+public sealed record MatchInfo(Guid Id, Guid UserAId, Guid UserBId, bool IsActive, bool HasPendingEndRequest)
+{
+    public bool IsParticipant(Guid userId) => userId == UserAId || userId == UserBId;
+
+    public Guid OtherThan(Guid userId) => userId == UserAId ? UserBId : UserAId;
+}
+
+public sealed record MatchSummary(Guid Id, bool IsEnded);
+
 /// <summary>What other modules may know about matches.</summary>
 public interface IMatchDirectory
 {
+    Task<MatchInfo?> FindAsync(Guid matchId, CancellationToken cancellationToken);
+
+    /// <summary>Every match the user has had, in no particular order.</summary>
+    Task<IReadOnlyList<MatchSummary>> ListForUserAsync(Guid userId, CancellationToken cancellationToken);
+
     /// <summary>Those of the other users with whom the user has a match that has not ended.</summary>
     Task<IReadOnlySet<Guid>> GetUsersWithOpenMatchAsync(
         Guid userId,
@@ -89,6 +113,21 @@ public interface IMatchDirectory
 
 internal sealed class MatchDirectory(IMatchRepository matches) : IMatchDirectory
 {
+    public async Task<MatchInfo?> FindAsync(Guid matchId, CancellationToken cancellationToken) =>
+        await matches.GetByIdAsync(matchId, cancellationToken) is { } match
+            ? new MatchInfo(
+                match.Id,
+                match.UserAId,
+                match.UserBId,
+                match.Status == MatchStatus.Active,
+                match.Status == MatchStatus.EndRequested)
+            : null;
+
+    public async Task<IReadOnlyList<MatchSummary>> ListForUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        (await matches.ListAllAsync(userId, cancellationToken))
+        .Select(match => new MatchSummary(match.Id, match.Status == MatchStatus.Ended))
+        .ToList();
+
     public Task<IReadOnlySet<Guid>> GetUsersWithOpenMatchAsync(
         Guid userId,
         IReadOnlyCollection<Guid> otherUserIds,

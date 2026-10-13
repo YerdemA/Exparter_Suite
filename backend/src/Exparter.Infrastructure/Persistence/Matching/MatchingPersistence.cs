@@ -135,6 +135,9 @@ internal sealed class MatchRepository(AppDbContext dbContext) : IMatchRepository
         return matches.OrderByDescending(x => x.CreatedAt).ToPageAsync(page, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Match>> ListAllAsync(Guid userId, CancellationToken cancellationToken) =>
+        await dbContext.Matches.AsNoTracking().Where(x => x.UserAId == userId || x.UserBId == userId).ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<Match>> ListWithOverdueEndRequestAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
         await dbContext.Matches
             .Where(x => x.Status == MatchStatus.EndRequested && x.EndRequestExpiresAt <= now)

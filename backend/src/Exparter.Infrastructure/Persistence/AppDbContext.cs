@@ -2,6 +2,7 @@ using Exparter.Application.Common;
 using Exparter.Domain.Identity;
 using Exparter.Domain.Matching;
 using Exparter.Domain.Messaging;
+using Exparter.Domain.Sessions;
 using Exparter.Domain.Profiles;
 using Exparter.Domain.Skills;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<SwapSession> SwapSessions => Set<SwapSession>();
 
     async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {

@@ -13,7 +13,7 @@ public class ContractConformanceTests(ApiFixture fixture)
 {
     // Contract tags whose operations are implemented. Add a tag when its module is built;
     // from then on a contract operation without a route fails the build.
-    private static readonly string[] ImplementedTags = ["Auth", "Account", "Profiles", "Skills", "Discovery", "SwapRequests", "Matches", "Conversations"];
+    private static readonly string[] ImplementedTags = ["Auth", "Account", "Profiles", "Skills", "Discovery", "SwapRequests", "Matches", "Conversations", "Sessions"];
 
     private static readonly string[] HttpMethods = ["get", "put", "post", "delete", "patch"];
 

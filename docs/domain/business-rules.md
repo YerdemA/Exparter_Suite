@@ -124,6 +124,23 @@ Durum: **Onaylandı (2026-10-07).**
 | SS-11 | Tamamlandı işaretine itirazı olan taraf oturumu sebep yazarak iptal eder. | Domain |
 | SS-12 | Kendiliğinden tamamlanan oturum da değerlendirme hakkı doğurur. | Application |
 | SS-13 | Karşı taraf kabul etmeden başlangıç zamanı geçen oturum önerisi kendiliğinden `Declined` olur. | Domain |
+| SS-14 | Uygulamada yalnızca çevrimiçi oturum planlanır (süre: 30, 45, 60, 90 veya 120 dakika). Yüz yüze buluşmalar kullanıcıların inisiyatifindedir: sohbette ayarlanır, tarih ve yer uygulamada tutulmaz. | Domain |
+| SS-15 | Yüz yüze buluşma sonradan bildirilir: taraflardan biri "buluştuk" der, oturum doğrudan `CompletionPending` durumunda oluşur ve SS-05, SS-10 ile SS-11 aynen uygulanır. | Domain |
+| SS-16 | Bekleyen sonlandırma isteği olan veya sona ermiş eşleşmeye oturum eklenemez (planlama da bildirim de). | Application |
+| SS-17 | SS-09'daki iptal yalnızca henüz gerçekleşmemiş (önerilmiş veya planlanmış) oturumları kapsar; onay bekleyen tamamlandı işareti eşleşme bittikten sonra da onaylanabilir. | Domain |
+| SS-18 | Süresi geçen öneri ve onay, arka plan işi kaydetmeden önce de her okumada ve işlemde sonuçlanmış sayılır. | Domain |
+
+### Kullanıcı istatistikleri
+
+İstatistikler ayrı sayaçlarda tutulmaz; eşleşme ve oturum kayıtlarından hesaplanır (`GET /api/v1/users/{userId}/stats`).
+
+| No | Kural |
+|---|---|
+| ST-01 | Toplam eşleşme: kullanıcının devam edenler dahil bütün eşleşmeleri. |
+| ST-02 | Tamamlanan eşleşme: en az bir oturumu tamamlanmış, sona ermiş eşleşme. |
+| ST-03 | İptal edilen (tamamlanmamış) eşleşme: hiçbir oturumu tamamlanmadan sona ermiş eşleşme. |
+| ST-04 | Tamamlanan oturum: kullanıcının bütün eşleşmelerindeki tamamlanmış oturumlar (kendiliğinden tamamlananlar dahil). |
+| ST-05 | Toplam ile diğer ikisinin farkı, devam eden eşleşmelerin sayısıdır. |
 
 ## Değerlendirme
 

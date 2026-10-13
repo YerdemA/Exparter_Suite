@@ -23,6 +23,10 @@ public class ArchitectureTests
         typeof(Exparter.Application.Matching.ISkillUsage),
         typeof(Exparter.Application.Matching.IMatchDirectory),
         typeof(Exparter.Application.Matching.MatchCreated),
+        typeof(Exparter.Application.Matching.MatchEnded),
+        typeof(Exparter.Application.Matching.MatchInfo),
+        typeof(Exparter.Application.Matching.MatchSummary),
+        typeof(Exparter.Application.Sessions.ISessionDirectory),
         typeof(Exparter.Application.Messaging.IConversationDirectory),
     ];
 

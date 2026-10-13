@@ -16,7 +16,7 @@ public static class MatchingErrors
     public const string SwapRequestToSelfCode = "swap_request_to_self";
     public const string SwapRequestCooldownCode = "swap_request_cooldown";
     public const string InvalidStateCode = "invalid_state";
-    public const string NotParticipantCode = "not_participant";
+    public const string NotParticipantCode = DomainErrorCodes.NotParticipant;
 
     public static DomainException SwapRequestToSelf() =>
         new(SwapRequestToSelfCode, "A user cannot send a swap request to themselves.");

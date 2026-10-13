@@ -475,6 +475,108 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.ToTable("profiles", "profiles");
                 });
 
+            modelBuilder.Entity("Exparter.Domain.Sessions.SwapSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("cancel_reason");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelled_by_user_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<bool>("CompletedAutomatically")
+                        .HasColumnType("boolean")
+                        .HasColumnName("completed_automatically");
+
+                    b.Property<DateTimeOffset?>("CompletionConfirmDeadline")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completion_confirm_deadline");
+
+                    b.Property<DateTimeOffset?>("CompletionMarkedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completion_marked_at");
+
+                    b.Property<Guid?>("CompletionMarkedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("completion_marked_by_user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_minutes");
+
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("mode");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<Guid>("OtherUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("other_user_id");
+
+                    b.Property<Guid>("ProposedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("proposed_by_user_id");
+
+                    b.Property<DateTimeOffset?>("ScheduledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scheduled_at");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_swap_sessions");
+
+                    b.HasIndex("OtherUserId")
+                        .HasDatabaseName("ix_swap_sessions_other_user_id");
+
+                    b.HasIndex("ProposedByUserId")
+                        .HasDatabaseName("ix_swap_sessions_proposed_by_user_id");
+
+                    b.HasIndex("MatchId", "CreatedAt")
+                        .HasDatabaseName("ix_swap_sessions_match_id_created_at");
+
+                    b.HasIndex("Status", "CompletionConfirmDeadline")
+                        .HasDatabaseName("ix_swap_sessions_status_completion_confirm_deadline");
+
+                    b.HasIndex("Status", "ScheduledAt")
+                        .HasDatabaseName("ix_swap_sessions_status_scheduled_at");
+
+                    b.ToTable("swap_sessions", "sessions");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Skills.Skill", b =>
                 {
                     b.Property<Guid>("Id")

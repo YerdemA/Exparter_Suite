@@ -60,6 +60,7 @@ public sealed record ChangeMatchEndCommand(Guid UserId, Guid MatchId, MatchEndAc
 public sealed class ChangeMatchEndCommandHandler(
     IMatchRepository matches,
     MatchingDtoFactory dtos,
+    IPublisher publisher,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ChangeMatchEndCommand, MatchDto>
 {
@@ -87,6 +88,11 @@ public sealed class ChangeMatchEndCommandHandler(
                 break;
         }
 
+        if (match.Status == MatchStatus.Ended)
+        {
+            await publisher.Publish(new MatchEnded(match.Id), cancellationToken);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtos.ToDtoAsync(match, command.UserId, cancellationToken);
     }
@@ -98,6 +104,7 @@ public sealed record ProcessMatchingDeadlinesCommand : ICommand<int>;
 public sealed class ProcessMatchingDeadlinesCommandHandler(
     ISwapRequestRepository requests,
     IMatchRepository matches,
+    IPublisher publisher,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ProcessMatchingDeadlinesCommand, int>
 {
@@ -118,6 +125,7 @@ public sealed class ProcessMatchingDeadlinesCommandHandler(
         foreach (var match in overdueMatches)
         {
             match.EndIfEndRequestOverdue(now);
+            await publisher.Publish(new MatchEnded(match.Id), cancellationToken);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -3,6 +3,7 @@ using Exparter.Api.Common;
 using Exparter.Api.Identity;
 using Exparter.Api.Matching;
 using Exparter.Api.Messaging;
+using Exparter.Api.Sessions;
 using Exparter.Api.Profiles;
 using Exparter.Api.Skills;
 using Exparter.Application;
@@ -61,6 +62,7 @@ api.MapSkillEndpoints();
 api.MapDiscoveryEndpoints();
 api.MapSwapEndpoints();
 api.MapConversationEndpoints();
+api.MapSessionEndpoints();
 app.MapHub<RealtimeHub>(RealtimeHub.Path);
 
 if (app.Environment.IsDevelopment())
