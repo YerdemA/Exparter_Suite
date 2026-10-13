@@ -16,6 +16,7 @@ public class ArchitectureTests
         typeof(IUserDirectory),
         typeof(UserInfo),
         typeof(UserRegistered),
+        typeof(Exparter.Domain.Skills.SkillLevel),
     ];
 
     private const BindingFlags AllMembers =

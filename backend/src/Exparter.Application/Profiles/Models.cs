@@ -10,12 +10,6 @@ public interface IProfileRepository
     void Add(Profile profile);
 }
 
-/// <summary>Placeholder until the Reviews module provides real figures.</summary>
-public sealed record RatingSummaryDto(int ReviewCount, double? AverageRating)
-{
-    public static RatingSummaryDto None { get; } = new(0, null);
-}
-
 public sealed record ProfileDto(
     Guid UserId,
     string? DisplayName,
@@ -29,10 +23,11 @@ public sealed record ProfileDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
+/// <param name="DisplayName">Null if the user has not filled in their profile yet.</param>
 public sealed record PublicProfileDto(
     Guid UserId,
     string Username,
-    string DisplayName,
+    string? DisplayName,
     string? Bio,
     Uri? AvatarUrl,
     string? City,

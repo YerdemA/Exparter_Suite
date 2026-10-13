@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:exparter/app.dart';
 import 'package:exparter/core/api/generated/export.dart';
+import 'package:exparter/core/config/app_config.dart';
 import 'package:exparter/core/router/app_routes.dart';
 import 'package:exparter/features/profile/data/avatar_picker.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
@@ -165,6 +166,30 @@ void main() {
     expect(find.text(l10n.interactionRequirements), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
 
+    // Discovery: someone who registered but cannot interact yet is not suggested, but is
+    // found by name, and their profile opens.
+    final peer = 'peer_$id';
+    final api = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
+    final registered = await api.post<Map<String, dynamic>>(
+      '/api/v1/auth/register',
+      data: {'email': '$peer@example.com', 'username': peer, 'password': password, 'ageConfirmed': true},
+    );
+    await api.put<void>(
+      '/api/v1/me/profile',
+      data: {'displayName': 'Keşif Arkadaşı', 'acceptsOnline': true, 'acceptsInPerson': false},
+      options: Options(headers: {'Authorization': 'Bearer ${registered.data!['accessToken']}'}),
+    );
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navDiscover)));
+    // The list has loaded once the pull-to-refresh wrapper is there.
+    await pumpUntilFound(tester, find.byType(RefreshIndicator));
+    expect(find.text('@$peer'), findsNothing);
+    await tester.enterText(find.byType(TextField), peer.toUpperCase());
+    await pumpUntilFound(tester, find.text('@$peer'));
+    await tester.tap(find.text('Keşif Arkadaşı'));
+    await pumpUntilFound(tester, find.text(l10n.userOfferedTitle));
+    expect(find.text('@$peer'), findsOneWidget);
+    expect(find.text(l10n.profileModeOnline), findsOneWidget);
+
     // The session, the saved profile and the skills survive a restart.
     await launchApp(tester);
     await openProfileTab(tester);
@@ -207,6 +232,11 @@ void main() {
     await pumpUntilFound(tester, find.text(l10n.verifyEmailSuccess));
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionContinue));
     await openProfileTab(tester);
+    // The requirements are reloaded after the verification; give the answer time to arrive.
+    for (var i = 0; i < 50 && find.text(l10n.interactionRequirements).evaluate().isNotEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
     expect(find.text(l10n.homeEmailVerified), findsOneWidget);
     expect(find.text(l10n.homeResendVerification), findsNothing);
     expect(find.text(l10n.interactionRequirements), findsNothing);

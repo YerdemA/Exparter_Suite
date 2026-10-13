@@ -170,16 +170,13 @@ public class SkillApiTests(ApiFixture fixture)
             "/api/v1/me/profile",
             new { displayName = "Ayşe", acceptsOnline = true, acceptsInPerson = false });
         await AssertRequirementsAsync(false, true, true);
-        await ProblemAssert.IsAsync(
-            await viewer.SendAsync(HttpMethod.Get, $"/api/v1/users/{session.UserId}/skills"),
-            HttpStatusCode.NotFound,
-            "not_found");
+
+        // Not being able to interact yet does not hide the user's skills from others.
+        var skills = await viewer.GetJsonAsync($"/api/v1/users/{session.UserId}/skills?type=Offered");
+        Assert.Equal("Gitar", Assert.Single(skills.GetProperty("items").EnumerateArray()).GetProperty("skill").GetProperty("name").GetString());
 
         await session.VerifyEmailAsync(fixture);
         await AssertRequirementsAsync(true, true, true);
-
-        var skills = await viewer.GetJsonAsync($"/api/v1/users/{session.UserId}/skills?type=Offered");
-        Assert.Equal("Gitar", Assert.Single(skills.GetProperty("items").EnumerateArray()).GetProperty("skill").GetProperty("name").GetString());
     }
 
     [Fact]

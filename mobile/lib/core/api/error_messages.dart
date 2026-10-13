@@ -29,6 +29,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'skill_not_approved' => l10n.errorSkillNotApproved,
     'avatar_invalid' || 'avatar_not_uploaded' => l10n.errorAvatarInvalid,
     'email_already_verified' => l10n.errorEmailAlreadyVerified,
+    'not_found' => l10n.errorNotFound,
     _ => l10n.errorUnknown,
   };
 }

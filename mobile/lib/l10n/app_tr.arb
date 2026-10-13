@@ -164,5 +164,21 @@
   "errorEmailAlreadyVerified": "E-posta adresiniz zaten doğrulanmış.",
   "errorAvatarInvalid": "Bu fotoğraf kullanılamıyor. JPEG, PNG veya WebP biçiminde ve en fazla 5 MB olmalı.",
   "errorSessionExpired": "Oturumunuz sona erdi. Lütfen yeniden giriş yapın.",
-  "errorRetry": "Tekrar dene"
+  "errorNotFound": "Aradığınız içerik bulunamadı.",
+  "errorRetry": "Tekrar dene",
+  "discoverSearchLabel": "Ad veya kullanıcı adı arayın",
+  "discoverAllCities": "Tüm şehirler",
+  "discoverAllSkills": "Tüm yetenekler",
+  "discoverSkillFilterTitle": "Sunulan yeteneğe göre filtreleyin",
+  "discoverEmpty": "Şu anda gösterilecek kullanıcı yok. Filtreleri değiştirmeyi deneyin.",
+  "discoverSearchEmpty": "Aramanızla eşleşen kullanıcı bulunamadı.",
+  "discoverLoadMoreFailed": "Devamı yüklenemedi.",
+  "discoverMutual": "Karşılıklı uyum",
+  "discoverOneWay": "Aradığınız yeteneği sunuyor",
+  "discoverOffers": "Sunuyor",
+  "discoverWants": "İstiyor",
+  "userOfferedTitle": "Sunduğu yetenekler",
+  "userWantedTitle": "Öğrenmek istedikleri",
+  "userSkillsEmpty": "Henüz eklenmemiş.",
+  "userProfileIncomplete": "Bu kullanıcı profilini henüz doldurmamış."
 }

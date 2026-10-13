@@ -6,6 +6,7 @@ import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/core/theme/app_theme.dart';
 import 'package:exparter/features/auth/domain/auth_repository.dart';
+import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/features/skills/domain/skill_repository.dart';
 import 'package:exparter/l10n/app_localizations.dart';
@@ -18,6 +19,8 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 class MockProfileRepository extends Mock implements ProfileRepository {}
 
 class MockSkillRepository extends Mock implements SkillRepository {}
+
+class MockDiscoveryRepository extends Mock implements DiscoveryRepository {}
 
 class InMemorySessionPersistence implements SessionPersistence {
   InMemorySessionPersistence([this.value]);
@@ -97,6 +100,27 @@ InteractionRequirements testRequirements({
       hasOfferedSkill: hasOfferedSkill,
       canInteract: emailVerified && profileCompleted && hasOfferedSkill,
     );
+
+DiscoveryUser testDiscoveryUser(
+  String username, {
+  String? displayName,
+  Compatibility compatibility = Compatibility.none,
+  List<DiscoveryUserSkill> offered = const [],
+  List<DiscoveryUserSkill> wanted = const [],
+}) =>
+    DiscoveryUser(
+      user: UserSummary(userId: 'user-$username', isDeleted: false, username: username, displayName: displayName),
+      acceptsOnline: true,
+      acceptsInPerson: true,
+      city: '34',
+      compatibility: compatibility,
+      rating: const RatingSummary(reviewCount: 0),
+      offeredSkills: offered,
+      wantedSkills: wanted,
+    );
+
+DiscoveryUserSkill testDiscoverySkill(String name, {SkillLevel level = SkillLevel.intermediate}) =>
+    DiscoveryUserSkill(skill: SkillRef(id: 'skill-${name.toLowerCase()}', name: name), level: level);
 
 const testCities = [City(code: '06', name: 'Ankara'), City(code: '34', name: 'İstanbul')];
 

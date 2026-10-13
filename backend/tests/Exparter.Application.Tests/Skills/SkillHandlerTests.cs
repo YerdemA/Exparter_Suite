@@ -96,7 +96,6 @@ public class SkillHandlerTests
     private readonly InMemorySkills _skills = new();
     private readonly InMemoryUserSkills _userSkills;
     private readonly FakeUserDirectory _users = new();
-    private readonly FakeInteractionRequirements _requirements = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
 
@@ -218,18 +217,20 @@ public class SkillHandlerTests
     }
 
     [Fact]
-    public async Task Another_users_skills_are_listed_only_if_that_user_can_interact()
+    public async Task Another_users_skills_are_listed_only_while_that_account_is_active()
     {
         await AddAsync(_skills.AddApproved("Gitar"));
-        var handler = new ListUserSkillsQueryHandler(_userSkills, _requirements);
+        var handler = new ListUserSkillsQueryHandler(_userSkills, _users);
 
+        // An unverified email does not hide the user; only an inactive account does.
+        _users.Users[_userId] = new UserInfo(_userId, "ayse", IsActive: true, IsEmailVerified: false);
+        var page = await handler.Handle(new ListUserSkillsQuery(_userId, null, null, null), CancellationToken.None);
+        Assert.Single(page.Items);
+
+        _users.Users[_userId] = new UserInfo(_userId, "ayse", IsActive: false, IsEmailVerified: true);
         var exception = await Assert.ThrowsAsync<AppException>(
             async () => await handler.Handle(new ListUserSkillsQuery(_userId, null, null, null), CancellationToken.None));
         Assert.Equal(AppErrorKind.NotFound, exception.Kind);
-
-        _requirements.Statuses[_userId] = new InteractionStatus(true, true, true, true);
-        var page = await handler.Handle(new ListUserSkillsQuery(_userId, null, null, null), CancellationToken.None);
-        Assert.Single(page.Items);
     }
 
     [Fact]
