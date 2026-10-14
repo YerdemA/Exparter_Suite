@@ -316,14 +316,19 @@ Karar (kullanıcı, 2026-10-14): Sentry, AB veri bölgesi. Gerekçe ve kurallar:
 - DSN yokken Sentry kapalıdır (CI, testler, DSN'siz lokal çalıştırma).
 - Paketler: Sentry.AspNetCore 6.12.1, Sentry.Serilog 6.12.1, Serilog.Formatting.Compact 3.0.0, sentry_flutter 9.30.1 (10.x Android 8 ve üstünü istiyor; uygulama Android 7.0 ve üstünü desteklediği için 9.x seçildi).
 - Testler (2026-10-14): backend 510 (169 domain, 232 uygulama, 109 entegrasyon), mobil 218.
-- Kalan: Sentry hesabı ve iki proje (ASP.NET Core, Flutter) açılınca DSN'ler bağlanacak ve bir deneme hatasıyla uçtan uca doğrulanacak.
+- Sentry: `exparter` kuruluşu (AB bölgesi, `de.sentry.io`), projeler `exparter-api` (ASP.NET Core) ve `exparter-mobile` (Flutter). Uçtan uca doğrulandı (2026-10-14): Mailpit durdurulunca e-posta gönderim hatası `EXPARTER-API-1` olarak, `adb shell am crash` ile çökertilen uygulama `EXPARTER-MOBILE-1` olarak geldi; ikisinde de kullanıcıdan yalnızca kimliği vardı. İki deneme kaydı çözüldü olarak işaretlendi.
+- Kalan (dilim 6): Sentry, olayı gönderenin IP adresinden konum çıkarıyor; kuruluş ayarlarında IP saklama kapatılmalı (aşağıda). Release derlemesinde Android eşleme dosyalarının (R8) Sentry'ye yüklenmesi; ortam ve sürüm etiketlerinin canlı ortamda ayarlanması.
 
 #### Sentry için lokal ayar
 
 ```powershell
-dotnet user-secrets set --project src/Exparter.Api "Sentry:Dsn" "<ASP.NET Core projesinin DSN'i>"
-flutter run --dart-define=SENTRY_DSN=<Flutter projesinin DSN'i>
+dotnet user-secrets set --project src/Exparter.Api "Sentry:Dsn" "<exparter-api projesinin DSN'i>"
+flutter run --dart-define=SENTRY_DSN=<exparter-mobile projesinin DSN'i>
 ```
+
+DSN'ler Sentry'de proje ayarlarında, "Client Keys (DSN)" altında. Mobil DSN uygulamaya gömülür ve Sentry'ye göre gizli değildir; backend DSN'i yine de user-secrets'ta tutulur.
+
+IP saklamayı kapatmak için: Sentry → Settings → Organization (`exparter`) → Security & Privacy → "Prevent Storing of IP Addresses" açık.
 
 ## Geliştirme ortamı
 

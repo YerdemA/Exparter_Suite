@@ -21,6 +21,7 @@ Seçenekler: Sentry (hizmet), GlitchTip (Sentry SDK'larıyla uyumlu, kendi sunuc
 
 ## Sonuçlar
 
+- Uygulama IP adresi göndermese de Sentry, olayı gönderen bağlantının adresinden konum çıkarır; mobilde bu kullanıcının konumudur. Kuruluş ayarlarında "Prevent Storing of IP Addresses" açık tutulur.
 - Sentry'nin ücretsiz planında aylık olay sınırı vardır; aşılırsa fazlası atılır. Kapalı testte yeterlidir, yayından önce kullanım yeniden değerlendirilir.
 - GlitchTip'e geçmek yalnızca DSN değişikliğidir; SDK'lar aynı kalır.
 - JSON kayıtların nerede toplanacağı canlı ortamla birlikte (dilim 6) seçilir.
