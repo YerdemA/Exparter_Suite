@@ -125,6 +125,15 @@ api.MapNotificationEndpoints();
 api.MapModerationEndpoints();
 app.MapHub<RealtimeHub>(RealtimeHub.Path);
 
+// The deployment applies migrations as a step of its own, before the new version starts:
+// `dotnet Exparter.Api.dll --migrate` migrates the database and exits (docs/deployment.md).
+if (args.Contains("--migrate"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+    return;
+}
+
 if (app.Environment.IsDevelopment())
 {
     // Production migrations are a deliberate deployment step; only local runs migrate on start.

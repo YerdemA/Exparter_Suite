@@ -1,0 +1,14 @@
+# Caddy gets and renews the HTTPS certificates of both names by itself.
+
+# The API, and the real-time hub over WebSocket.
+{$API_HOST} {
+	encode zstd gzip
+	reverse_proxy api:8080
+}
+
+# Public pages the store listing links to: the privacy policy and the data notice.
+{$SITE_HOST} {
+	encode zstd gzip
+	root * /srv/site
+	file_server
+}

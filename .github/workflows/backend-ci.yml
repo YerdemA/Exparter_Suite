@@ -45,3 +45,19 @@ jobs:
       - run: dotnet build --no-restore --configuration Release
       # Integration tests start PostgreSQL through Testcontainers; the runner's Docker is enough.
       - run: dotnet test --no-build --configuration Release
+
+  image:
+    name: Build the container image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      # Built for the server's architecture but not published: the Deploy workflow
+      # publishes from main.
+      - uses: docker/build-push-action@v7
+        with:
+          context: backend
+          platforms: linux/arm64
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
