@@ -9,6 +9,7 @@ import '../../../core/auth/session_controller.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../moderation/presentation/moderation_menu.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
 import '../../reviews/presentation/user_reviews_section.dart';
@@ -32,8 +33,21 @@ class UserProfileScreen extends ConsumerWidget {
     final skills = ref.watch(userSkillsProvider(userId));
     final error = profile.error ?? skills.error;
 
+    final loaded = profile.value;
+
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navProfile)),
+      appBar: AppBar(
+        title: Text(l10n.navProfile),
+        actions: [
+          if (loaded != null)
+            UserModerationMenu(
+              userId: userId,
+              name: loaded.displayName ?? '@${loaded.username}',
+              // Their profile is gone for the blocker too.
+              onBlocked: () => context.canPop() ? context.pop() : context.go(AppRoutes.home),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: switch ((profile.value, skills.value)) {
           (final PublicProfile loadedProfile, final List<UserSkill> loadedSkills) when error == null =>

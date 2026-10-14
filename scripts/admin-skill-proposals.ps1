@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Lists pending skill proposals and lets an administrator approve or reject them.
 

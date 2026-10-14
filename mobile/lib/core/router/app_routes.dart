@@ -26,6 +26,8 @@ abstract final class AppRoutes {
   static const skillTypeParameter = 'type';
   static const skillProposalsSegment = 'skills/proposals';
   static const skillProposals = '$profile/$skillProposalsSegment';
+  static const blockedUsersSegment = 'blocked';
+  static const blockedUsers = '$profile/$blockedUsersSegment';
 
   static String userProfile(String userId) => '/users/$userId';
 

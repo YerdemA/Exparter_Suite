@@ -12,7 +12,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
-| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1 tamamlandı |
+| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1 tamamlandı; dilim 2 onay bekliyor |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -237,7 +237,7 @@ Plan 2026-10-14'te onaylandı. Her dilim kendi branch'inde (`phase-6/<n>-<konu>`
 | Dilim | Konu | Durum |
 |---|---|---|
 | 1 | Yeni renk paleti, açık ve koyu tema, logo | Tamamlandı (2026-10-14) |
-| 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Başlamadı |
+| 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Tamamlandı, onay bekliyor |
 | 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Başlamadı |
 | 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Başlamadı |
 | 5 | Hata izleme ve kayıtlar | Başlamadı |
@@ -261,6 +261,20 @@ Kararlar (kullanıcı, 2026-10-14):
 - Android açılış ekranı ve pencere zemini iki temada da paletle aynı.
 - Testler (2026-10-14): mobil 208. Emülatörde iki temada Keşfet, Profil ve giriş ekranı, uygulama simgesi ve bildirim simgesi ekran görüntüsüyle kontrol edildi.
 - Sonraya bırakılan: Play Store için 512 px simge ve mağaza görselleri (dilim 6).
+
+### Dilim 2 — Moderasyon
+
+Kararlar (kullanıcı, 2026-10-14): engellenen kişi engellendiğini görmez; askıya alınan hesap giriş yapamaz ve görünmez olur, paylaştıkları olduğu gibi kalır; şikâyet sebepleri sözleşmedeki beş sebep, şikâyet kapanınca şikâyet edene bildirim gider; admin işleri API ve betiklerle yapılır.
+
+- Backend: `Moderation` modülü (`moderation` şeması, `blocks` ve `reports` tabloları). Engelleme bekleyen isteği iptal eder, eşleşmeyi bitirir, oturumları iptal eder ve sohbeti kapatır; bunlar engellemeyle aynı işlemde olur. Engel sürerken taraflar keşfette, aramada ve profilde birbirini görmez, istek ve değerlendirme gönderemez. Kurallar: MD-01–MD-11.
+- Eşleşmeyi kimin engellediği eşleşmede saklanır (`ended_by_user_id`); `Blocked` sebebini yalnızca engelleyen görür.
+- Şikâyet, şikâyet edilen metni o anki haliyle saklar; admin listesi hedefin sahibini ve bu metni gösterir. Silinen hesaplar hakkındaki şikâyetler silinmez.
+- Admin: şikâyetleri listeleme ve kapatma, oturum iptal sebepleri, hesabı askıya alma ve askıyı kaldırma (sözleşmeye yeni uç eklendi). Yetenek önerisi uçları dilim 2'den beri vardı. Betikler: `scripts/admin-skill-proposals.ps1` ve yeni `scripts/admin-moderation.ps1` (Windows PowerShell'de Türkçe karakterler bozulmasın diye ikisi de BOM'lu UTF-8).
+- Askıya alınan veya silme isteği veren kullanıcının açık canlı bağlantıları kapatılır ve yeniden bağlanamaz (8A'dan kalan iş).
+- Mobil: başka bir kullanıcının profilinde ve sohbet menüsünde "Şikâyet et" ve "Engelle"; karşı tarafın mesajına basılı tutunca ve değerlendirme kartının menüsünden "Şikâyet et"; profilde "Engellenen kullanıcılar" ve engeli kaldırma; "Şikâyetiniz incelendi" bildirimi.
+- Paket: `dotnet-ef` aracı 10.0.13'e yükseltildi (çalışma zamanıyla aynı sürüm).
+- Testler (2026-10-14): backend 502 (169 domain, 232 uygulama, 101 entegrasyon), mobil 216.
+- Bilinen sınırlar: askıya alınan kullanıcının elindeki access token süresi dolana kadar (en fazla 15 dakika) REST isteklerinde geçerli kalır; bağlantısı ve oturum yenilemesi ise hemen kapanır. Engellenen kullanıcının yetenek ve değerlendirme listesi uçları kimliğiyle çağrılırsa yanıt verir (profil 404 döndüğü için uygulamada görünmez).
 
 ## Geliştirme ortamı
 

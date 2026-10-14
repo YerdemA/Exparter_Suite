@@ -46,6 +46,10 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'review_already_exists' => l10n.errorReviewAlreadyExists,
     'session_not_completed' => l10n.errorSessionNotCompleted,
     'in_person_already_reported' => l10n.errorInPersonAlreadyReported,
+    'user_blocked' => l10n.errorUserBlocked,
+    'already_blocked' => l10n.errorAlreadyBlocked,
+    'report_already_open' => l10n.errorReportAlreadyOpen,
+    'report_self' => l10n.errorReportSelf,
     'conversation_has_active_match' => l10n.errorConversationHasActiveMatch,
     _ => l10n.errorUnknown,
   };

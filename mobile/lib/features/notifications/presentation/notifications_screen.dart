@@ -39,6 +39,7 @@ String notificationTarget(api.Notification notification) => targetOf(notificatio
 String targetOf(NotificationType type, String? matchId) => switch (type) {
       NotificationType.reviewReceived => AppRoutes.profile,
       NotificationType.skillProposalApproved || NotificationType.skillProposalRejected => AppRoutes.skillProposals,
+      NotificationType.reportReviewed => AppRoutes.notifications,
       _ when matchId != null => AppRoutes.matchDetail(matchId),
       _ => AppRoutes.matches,
     };
@@ -86,6 +87,7 @@ String notificationText(
     NotificationType.reviewReceived => l10n.notificationReviewReceived(name),
     NotificationType.skillProposalApproved => l10n.notificationSkillProposalApproved,
     NotificationType.skillProposalRejected => l10n.notificationSkillProposalRejected,
+    NotificationType.reportReviewed => l10n.notificationReportReviewed,
     NotificationType.$unknown => l10n.notificationUnknown,
   };
 }
@@ -104,6 +106,7 @@ IconData _iconOf(NotificationType type) => switch (type) {
       NotificationType.matchEnded =>
         Icons.handshake_outlined,
       NotificationType.reviewReceived => Icons.star_outline,
+      NotificationType.reportReviewed => Icons.flag_outlined,
       NotificationType.skillProposalApproved || NotificationType.skillProposalRejected => Icons.lightbulb_outline,
       _ => Icons.event_outlined,
     };

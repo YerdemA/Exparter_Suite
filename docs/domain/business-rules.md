@@ -183,6 +183,13 @@ Durum: **Onaylandı (2026-10-07).**
 | MD-02 | Engelleme tek yönlü kaydedilir ama etkisi iki yönlüdür: taraflar keşfette birbirini görmez ve birbirine istek gönderemez. | Application |
 | MD-03 | Engelleme, aradaki bekleyen istekleri iptal eder. | Application |
 | MD-04 | Şikâyet bir kullanıcıya, mesaja veya değerlendirmeye yapılabilir. | Domain |
+| MD-05 | Engelleme aktif eşleşmeyi `Blocked` sebebiyle bitirir (gerçekleşmemiş oturumlar iptal olur) ve sohbeti kapatır. Kimseye bildirim gitmez. | Application |
+| MD-06 | Engellenen kişi engellendiğini görmez: eşleşmesi sebepsiz "sona erdi" görünür; engelleyeni bulamaz, profili 404 döner, istek veya değerlendirme denemesi 404 alır. Engelleyen ise `user_blocked` ile nedenini öğrenir. | Application |
+| MD-07 | Engel istendiği zaman kaldırılabilir; kapanan istek, eşleşme ve sohbet geri gelmez. | Application |
+| MD-08 | Şikâyet için doğrulanmış e-posta gerekir. Mesajı yalnızca sohbetin iki tarafı şikâyet edebilir. Kişi kendini veya kendi yazdığını şikâyet edemez. Aynı hedef için kişi başına bir açık şikâyet olur. | Application, DB |
+| MD-09 | Sebepler: Spam, Taciz, Uygunsuz içerik, Sahte profil, Diğer. "Diğer"de açıklama zorunludur (en fazla 1000 karakter). Şikâyet edilen metin, şikâyet anındaki haliyle saklanır. | Application |
+| MD-10 | Admin şikâyeti "sonuçlandı" veya "yersiz" olarak kapatır; şikâyet edene ayrıntısız bildirim gider ("Şikâyetiniz incelendi"). Şikâyet edilene bildirim gitmez. | Application |
+| MD-11 | Askıya alınan hesap her yerden çıkış yapar, giriş yapamaz ve kimse onu bulamaz. Eşleşme ve sohbetleri olduğu gibi kalır; askı kalkınca kaldığı yerden devam eder. Yalnızca etkin hesap askıya alınır; admin kendini askıya alamaz. | Domain, Application |
 
 ## Keşfet sıralaması (MVP: kural tabanlı)
 

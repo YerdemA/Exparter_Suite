@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/error_messages.dart';
+import '../../../core/api/generated/export.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../matches/presentation/match_labels.dart';
+import '../../moderation/presentation/moderation_menu.dart';
 import 'message_controller.dart';
 
 /// One conversation: its messages, newest at the bottom, and the box to write in.
@@ -77,6 +79,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     }
   }
 
+  /// Closing is offered only when it is allowed: no unfinished match, not closed already.
+  static bool _canClose(Conversation conversation) => !conversation.isClosed && !conversation.hasActiveMatch;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -92,10 +97,19 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                 child: Text(userLabel(l10n, conversation.otherUser)),
               ),
         actions: [
-          // Closing is offered only when it is allowed: no unfinished match, not closed already.
-          if (conversation != null && !conversation.isClosed && !conversation.hasActiveMatch)
+          if (conversation != null && (!conversation.otherUser.isDeleted || _canClose(conversation)))
             PopupMenuButton<void>(
-              itemBuilder: (context) => [PopupMenuItem(onTap: _close, child: Text(l10n.conversationClose))],
+              itemBuilder: (menuContext) => [
+                if (_canClose(conversation)) PopupMenuItem(onTap: _close, child: Text(l10n.conversationClose)),
+                if (!conversation.otherUser.isDeleted)
+                  ...userModerationItems(
+                    context,
+                    ref,
+                    userId: conversation.otherUser.userId,
+                    name: userLabel(l10n, conversation.otherUser),
+                    onBlocked: () => context.go(AppRoutes.messages),
+                  ),
+              ],
             ),
         ],
       ),
@@ -215,10 +229,15 @@ class _MessageList extends ConsumerWidget {
 
         final message = state.messages[messageIndex];
         final time = TimeOfDay.fromDateTime(message.sentAt.toLocal()).format(context);
+        final own = message.senderId != otherId;
         return _Bubble(
           body: message.body,
-          own: message.senderId != otherId,
+          own: own,
           footer: message.id == seenMessageId ? '$time · ${l10n.messageSeen}' : time,
+          // Only what the other user wrote can be reported.
+          onLongPress: own
+              ? null
+              : () => reportContent(context, ref, targetType: ReportTargetType.message, targetId: message.id),
         );
       },
     );
@@ -226,7 +245,14 @@ class _MessageList extends ConsumerWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.body, required this.own, required this.footer, this.failed = false, this.onTap});
+  const _Bubble({
+    required this.body,
+    required this.own,
+    required this.footer,
+    this.failed = false,
+    this.onTap,
+    this.onLongPress,
+  });
 
   /// Bubbles stop short of the far edge so it stays clear whose side they are on.
   static const _widthFactor = 0.8;
@@ -236,6 +262,7 @@ class _Bubble extends StatelessWidget {
   final String footer;
   final bool failed;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -262,6 +289,7 @@ class _Bubble extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: onTap,
+                    onLongPress: onLongPress,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                       child: Text(body, style: theme.textTheme.bodyLarge?.copyWith(color: foreground)),

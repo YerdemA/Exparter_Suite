@@ -12,6 +12,7 @@ import 'package:exparter/features/auth/domain/auth_repository.dart';
 import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/matches/domain/match_repository.dart';
 import 'package:exparter/features/messages/domain/message_repository.dart';
+import 'package:exparter/features/moderation/domain/moderation_repository.dart';
 import 'package:exparter/features/notifications/domain/notification_repository.dart';
 import 'package:exparter/features/notifications/domain/push_client.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
@@ -40,6 +41,8 @@ class MockSessionRepository extends Mock implements SessionRepository {}
 class MockReviewRepository extends Mock implements ReviewRepository {}
 
 class MockNotificationRepository extends Mock implements NotificationRepository {}
+
+class MockModerationRepository extends Mock implements ModerationRepository {}
 
 /// A notification repository for tests that are about something else: nothing to show.
 MockNotificationRepository quietNotificationRepository() {

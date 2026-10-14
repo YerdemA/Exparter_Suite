@@ -6,6 +6,7 @@ import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/core/realtime/realtime_client.dart';
 import 'package:exparter/features/matches/data/api_match_repository.dart';
 import 'package:exparter/features/matches/presentation/match_detail_screen.dart';
+import 'package:exparter/features/moderation/data/api_moderation_repository.dart';
 import 'package:exparter/features/messages/data/api_message_repository.dart';
 import 'package:exparter/features/messages/presentation/conversation_screen.dart';
 import 'package:exparter/features/messages/presentation/conversations_screen.dart';
@@ -28,6 +29,7 @@ void main() {
   final start = DateTime.utc(2026, 10, 13, 9);
 
   late MockMessageRepository repository;
+  late MockModerationRepository moderation;
   late FakeRealtimeClient realtime;
   late InMemorySessionPersistence persistence;
 
@@ -76,6 +78,7 @@ void main() {
 
   setUp(() async {
     repository = MockMessageRepository();
+    moderation = MockModerationRepository();
     realtime = FakeRealtimeClient();
     persistence = InMemorySessionPersistence();
     await SessionStore(persistence).save(testSession());
@@ -89,6 +92,7 @@ void main() {
         messageRepositoryProvider.overrideWithValue(repository),
         realtimeClientProvider.overrideWithValue(realtime),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),
+        moderationRepositoryProvider.overrideWithValue(moderation),
       ];
 
   ProviderContainer container() {
@@ -451,6 +455,41 @@ void main() {
       verify(() => repository.listMessages('conversation-1')).called(1);
     });
 
+    testWidgets('a message from the other user can be reported by holding it', (tester) async {
+      stubThread(conversation(), [message('m1', 'Kaba söz'), message('m2', 'Benim mesajım', mine: true)]);
+      when(
+        () => moderation.report(
+          targetType: ReportTargetType.message,
+          targetId: 'm1',
+          reason: ReportReason.harassment,
+          description: null,
+        ),
+      ).thenAnswer((_) async {});
+      await pump(tester);
+
+      await tester.longPress(find.text('Benim mesajım'));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.reportMessageTitle), findsNothing);
+
+      await tester.longPress(find.text('Kaba söz'));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.reportMessageTitle), findsOneWidget);
+      await tester.tap(find.text(l10n.reportReasonHarassment));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, l10n.reportSubmit));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => moderation.report(
+          targetType: ReportTargetType.message,
+          targetId: 'm1',
+          reason: ReportReason.harassment,
+          description: null,
+        ),
+      ).called(1);
+      expect(find.text(l10n.reportSent), findsOneWidget);
+    });
+
     testWidgets('a closed conversation is read-only', (tester) async {
       stubThread(conversation(isClosed: true, hasActiveMatch: false), [message('m1', 'Bir')]);
 
@@ -458,15 +497,23 @@ void main() {
 
       expect(find.text(l10n.conversationClosedBanner), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
-      expect(find.byType(PopupMenuButton<void>), findsNothing);
+
+      // Only reporting and blocking are left in the menu.
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.conversationClose), findsNothing);
+      expect(find.text(l10n.moderationBlock), findsOneWidget);
     });
 
     testWidgets('closing is not offered while the two users are matched', (tester) async {
       stubThread(conversation(), [message('m1', 'Bir')]);
 
       await pump(tester);
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await tester.pumpAndSettle();
 
-      expect(find.byType(PopupMenuButton<void>), findsNothing);
+      expect(find.text(l10n.conversationClose), findsNothing);
+      expect(find.text(l10n.moderationReport), findsOneWidget);
     });
 
     testWidgets('a conversation without a match can be closed after confirming', (tester) async {

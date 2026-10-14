@@ -76,7 +76,10 @@
 | Kullanıcı istatistikleri | Kullanıcı başına istatistik tutulacak ve ileride profilde güven puanının yanında gösterilecek: "Tamamlanan Eşleşme", "İptal Edilen Eşleşme" gibi sayılar. Amaç karşı tarafa güvenip güvenmemeye yardımcı olmak; rozet/başarım modülü de bu veriye dayanacak. Dilim 4 (eşleşmeler), 6 (oturumlar) ve 7 (değerlendirmeler) bu sayıların çıkarılabileceği biçimde tasarlanır: her eşleşme ve oturumun nasıl ve kim tarafından bittiği ile zamanı saklanır. |
 | Yetenek kataloğu | MVP'de 10 kategori ve 68 yetenek (başlangıç verisi). Tam sürümde çok daha kapsamlı bir kategori yapısı kurulacak. |
 | Yetenek sınırı | 5 sunulan, 5 istenen. İleride ödeme planlarına bağlanacak. |
-| Admin | Hesap veritabanında elle admin yapılır; öneriler bir PowerShell betiğiyle listelenip onaylanır. |
+| Admin | Hesap veritabanında elle admin yapılır; öneriler bir PowerShell betiğiyle listelenip onaylanır. Şikâyetler, askıya alma ve oturum iptal sebepleri de betikle yönetilir (`scripts/admin-moderation.ps1`); admin paneli MVP sonrası (2026-10-14). |
+| Engelleme | Engellenen kişi engellendiğini görmez; eşleşmesi sebepsiz sona ermiş görünür (2026-10-14). |
+| Askıya alma | Giriş kapanır ve hesap görünmez olur; eşleşme ve sohbetler olduğu gibi kalır (2026-10-14). |
+| Şikâyet | Sebepler: Spam, Taciz, Uygunsuz içerik, Sahte profil, Diğer (Diğer'de açıklama zorunlu). Şikâyet kapanınca şikâyet edene ayrıntısız bildirim gider (2026-10-14). |
 | Görünürlük | Etkileşim koşulunu sağlamayan kullanıcı gezebilir ve başkalarına bakabilir. Kendisi keşfette öneri olarak çıkmaz, ama ad veya kullanıcı adıyla aranınca bulunur ve profili açılabilir. Koşul yalnızca başkalarını etkileyen işlemlerde aranır. |
 | Keşfet sıralaması | Karşılıklı uyum, tek yönlü uyum, tercih uyumu, puan, yenilik. Seviyesi yetmeyen yetenek uyum sayılmaz. Uyumsuz kullanıcılar listenin sonunda gösterilir. |
 

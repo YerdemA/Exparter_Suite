@@ -102,6 +102,10 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `session_not_completed` | 409 | Değerlendirme için tamamlanmış oturum gerekir. |
 | `review_of_self` | 409 | Kullanıcı kendini değerlendiremez. |
 | `already_blocked` | 409 | Kullanıcı zaten engellenmiş. |
+| `block_self` | 409 | Kullanıcı kendini engelleyemez. |
+| `report_self` | 409 | Kullanıcı kendini veya kendi yazdığını şikâyet edemez. |
+| `report_already_open` | 409 | Aynı hedef için incelenmeyi bekleyen bir şikâyet zaten var. |
+| `report_already_closed` | 409 | Şikâyet zaten kapatılmış. |
 | `age_not_confirmed` | 409 | 18 yaş onayı verilmemiş. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `concurrent_update` | 409 | Kaynak aynı anda başka bir istekle değişti; istemci yeniden deneyebilir. |
 | `internal_error` | 500 | Beklenmeyen sunucu hatası. |
