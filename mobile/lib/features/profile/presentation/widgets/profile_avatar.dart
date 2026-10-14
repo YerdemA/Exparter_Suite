@@ -1,6 +1,15 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+
+/// The address of a photo without its signature. The API signs the address anew on
+/// every response, but the file behind it only changes with a new upload, which gets a
+/// new object key; so this names the photo, and the photo is downloaded once.
+String avatarCacheKey(String url) {
+  final uri = Uri.parse(url);
+  return '${uri.origin}${uri.path}';
+}
 
 /// A user's photo, or their initial on the brand gradient when there is none or it
 /// fails to load.
@@ -37,12 +46,13 @@ class ProfileAvatar extends StatelessWidget {
         dimension: size,
         child: imageUrl == null
             ? fallback
-            : Image.network(
-                imageUrl!,
+            : CachedNetworkImage(
+                imageUrl: imageUrl!,
+                cacheKey: avatarCacheKey(imageUrl!),
                 // Photos are not cropped on upload; this shows the centre square.
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => fallback,
-                loadingBuilder: (context, child, progress) => progress == null ? child : fallback,
+                errorWidget: (context, url, error) => fallback,
+                placeholder: (context, url) => fallback,
               ),
       ),
     );

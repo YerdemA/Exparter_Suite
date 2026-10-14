@@ -12,7 +12,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
-| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–3 tamamlandı |
+| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–4 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -239,7 +239,7 @@ Plan 2026-10-14'te onaylandı. Her dilim kendi branch'inde (`phase-6/<n>-<konu>`
 | 1 | Yeni renk paleti, açık ve koyu tema, logo | Tamamlandı (2026-10-14) |
 | 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Tamamlandı (2026-10-14) |
 | 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Tamamlandı (2026-10-14) |
-| 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Başlamadı |
+| 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Tamamlandı (2026-10-14) |
 | 5 | Hata izleme ve kayıtlar | Başlamadı |
 | 6 | Canlı ortam ve Google Play kapalı test sürümü | Başlamadı |
 
@@ -285,6 +285,26 @@ Kararlar (kullanıcı, 2026-10-14): engellenen kişi engellendiğini görmez; as
 - Yerleşik güvenlik incelemesi bu dilimin değişikliklerinde yüksek veya orta düzeyde bulgu çıkarmadı.
 - Testler (2026-10-14): backend 507 (169 domain, 232 uygulama, 106 entegrasyon), mobil 216.
 - Sonraya bırakılan (dilim 6): ters vekil arkasında gerçek istemci adresinin alınması (forwarded headers), `AllowedHosts` kısıtı, HTTPS. Hesap başına giriş denemesi sınırı (şu an adres başına).
+
+### Dilim 4 — Performans
+
+- N+1 taraması: entegrasyon testlerine EF Core komut sayacı eklendi. Dokuz liste uç noktası (eşleşmeler, sohbetler, bildirimler, alınan değerlendirmeler, oturumlar, engellenenler, keşfet, istatistik, gelen istekler) 1 ve 4 kayıtla aynı sayıda sorgu çalıştırıyor; N+1 yok. Test kalıcı (`QueryCountTests`).
+- Index'ler: sorguların hepsi index kullanıyor; tek eksik, kalıcı silme işinin her dakika aradığı silinmeyi bekleyen hesaplardı (kısmi index eklendi).
+- Keşfet: 10 000 kullanıcıyla ölçüldü. Sorgu her çağrıda PostgreSQL'in JIT derlemesini tetikliyordu (yaklaşık 750 ms derleme, 150 ms iş). API'nin bağlantılarında JIT kapatıldı; kısa ve sık sorgular JIT'ten kazanç sağlamaz.
+- Yük denemesi (2026-10-14, bu geliştirme makinesi, 10 eşzamanlı istemci, uç başına 300 istek; 10 000 kullanıcı, 40 000 kullanıcı yeteneği, 30 000 değerlendirme):
+
+| Uç | p50 (ms) | p95 (ms) |
+|---|---|---|
+| Keşfet, ilk sayfa (önce / sonra) | 1354 / 270 | 1591 / 369 |
+| Keşfet, ikinci sayfa | 313 | 369 |
+| Keşfet, şehir ve yetenek süzgeciyle | 22 | 28 |
+| Keşfet, ad araması | 65 | 76 |
+| Profil, değerlendirmeler, yetenekler, istatistik | 16–19 | 20–25 |
+| Yetenek araması, bildirimler | 11–12 | 15 |
+
+- Mobil: avatarlar önbelleğe alınıyor (`cached_network_image` 4.0.4). İmzalı adres her yanıtta değiştiği için önbellek anahtarı adresin imzasız halidir; yeni yükleme yeni nesne anahtarı aldığından eski fotoğraf gösterilmez.
+- Testler (2026-10-14): backend 509 (169 domain, 232 uygulama, 108 entegrasyon), mobil 217.
+- Bilinen sınırlar: süzgeçsiz keşfet tüm adayları sıraladığı için kullanıcı sayısıyla doğrusal büyür (10 000 kullanıcıda tek başına yaklaşık 145 ms). Kullanıcı sayısı onlarca bine çıktığında sıralamanın önceden hesaplanması gerekir (ADR 0011). Ad araması index kullanmaz (`pg_trgm` aynı ADR'de not edildi). Avatar önbelleği telefonda bir fotoğrafla elle denenmedi; davranışı birim testiyle doğrulandı.
 
 ## Geliştirme ortamı
 

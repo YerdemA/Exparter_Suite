@@ -22,5 +22,6 @@ Modüller birbirinin tablolarına erişmez (ADR 0006). Bu kuralı keşfette harf
 
 - Bir modülün tablo veya sütun adı değişirse bu sorgu derleme zamanında değil çalışma zamanında bozulur. Sorgu gerçek PostgreSQL'e karşı entegrasyon testleriyle korunur.
 - Konuma dayalı cursor, sayfalar arasında liste değişirse (yeni kullanıcı, güncellenen profil) bir kaydı yineleyebilir veya atlayabilir. Keşfet bir öneri listesi olduğu için MVP'de kabul edilebilir; istemci yinelenen kullanıcıyı eler.
+- 10 000 kullanıcıda süzgeçsiz keşfet tek başına yaklaşık 145 ms sürer (2026-10-14, dilim 6/4). PostgreSQL bu sorgunun maliyetini yüksek tahmin ettiği için JIT derlemesini tetikliyordu; API bağlantılarında JIT kapalıdır. Kullanıcı sayısı onlarca bine çıktığında sıralama önceden hesaplanmalıdır.
 - Görünen ad araması dizin kullanmaz. Kullanıcı sayısı büyüdüğünde `pg_trgm` dizini veya ayrı bir arama sütunu eklenir.
 - Engelleme (`Moderation`) ve puan (`Reviews`) geldiğinde aynı sorguya eklenir.

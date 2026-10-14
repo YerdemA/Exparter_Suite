@@ -48,6 +48,7 @@ dependencies:
   signalr_netcore: ^1.4.4
   firebase_core: 4.15.0
   firebase_messaging: 16.7.0
+  cached_network_image: 4.0.4
 
 dev_dependencies:
   flutter_test:

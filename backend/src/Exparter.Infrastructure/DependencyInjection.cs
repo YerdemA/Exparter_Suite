@@ -26,6 +26,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Npgsql;
 
 namespace Exparter.Infrastructure;
 
@@ -38,7 +39,7 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) => options
-            .UseNpgsql(serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionStringName))
+            .UseNpgsql(WithoutJit(serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionStringName)))
             .UseSnakeCaseNamingConvention());
         services.AddScoped<IUnitOfWork>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
 
@@ -92,4 +93,15 @@ public static class DependencyInjection
 
         return services;
     }
+
+    /// <summary>
+    /// Turns PostgreSQL's JIT compilation off for the API's connections. The discovery
+    /// query is estimated as expensive, so PostgreSQL compiled it on every call: about
+    /// 750 ms of compiling for 150 ms of work at 10 000 users. Short, frequent queries
+    /// never gain from JIT.
+    /// </summary>
+    private static string? WithoutJit(string? connectionString) =>
+        connectionString is null
+            ? null
+            : new NpgsqlConnectionStringBuilder(connectionString) { Options = "-c jit=off" }.ConnectionString;
 }

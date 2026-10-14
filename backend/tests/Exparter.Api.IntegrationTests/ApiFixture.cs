@@ -60,6 +60,11 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("RateLimits:EmailsPerQuarterHour", "1000000");
     }
 
+    /// <summary>What a fixture of a particular kind of test adds to the API's services.</summary>
+    protected virtual void ConfigureTestServices(IServiceCollection services)
+    {
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -84,6 +89,8 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
             services.RemoveAll<IPushSender>();
             services.AddSingleton<IPushSender>(Pushes);
+
+            ConfigureTestServices(services);
         });
     }
 }
