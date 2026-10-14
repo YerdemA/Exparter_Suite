@@ -25,6 +25,10 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Role).HasConversion<string>().HasMaxLength(32);
         builder.HasIndex(x => x.Email).IsUnique().HasDatabaseName(UniqueConstraints.UserEmail);
         builder.HasIndex(x => x.Username).IsUnique().HasDatabaseName(UniqueConstraints.UserUsername);
+
+        // The erasure job looks for due deletions every minute; only the few accounts
+        // waiting to be deleted belong in the index.
+        builder.HasIndex(x => x.DeletionRequestedAt).HasFilter("status = 'PendingDeletion'");
     }
 }
 

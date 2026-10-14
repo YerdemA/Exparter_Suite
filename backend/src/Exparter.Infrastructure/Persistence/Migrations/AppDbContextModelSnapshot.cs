@@ -204,6 +204,10 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_users");
 
+                    b.HasIndex("DeletionRequestedAt")
+                        .HasDatabaseName("ix_users_deletion_requested_at")
+                        .HasFilter("status = 'PendingDeletion'");
+
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");

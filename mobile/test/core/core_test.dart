@@ -3,6 +3,7 @@ import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/error_messages.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
+import 'package:exparter/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers.dart';
@@ -65,6 +66,14 @@ void main() {
       expect(errorMessage(l10n, const ApiException(code: 'some_new_backend_code')), l10n.errorUnknown);
       expect(errorMessage(l10n, StateError('secret internals')), l10n.errorUnknown);
     });
+  });
+
+  test('an avatar is cached under its address without the signature', () {
+    expect(
+      avatarCacheKey('http://10.0.2.2:3900/exparter/avatars/u1/a.jpg?X-Amz-Signature=abc&X-Amz-Date=1'),
+      'http://10.0.2.2:3900/exparter/avatars/u1/a.jpg',
+    );
+    expect(avatarCacheKey('https://cdn.example.com/a.png?X-Amz-Signature=def'), avatarCacheKey('https://cdn.example.com/a.png?x=1'));
   });
 
   group('SessionStore', () {
