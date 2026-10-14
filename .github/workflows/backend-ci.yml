@@ -7,6 +7,10 @@ on:
     paths: ['backend/**', 'contracts/**', 'redocly.yaml', '.redocly.lint-ignore.yaml', '.github/workflows/backend-ci.yml']
   pull_request:
     paths: ['backend/**', 'contracts/**', 'redocly.yaml', '.redocly.lint-ignore.yaml', '.github/workflows/backend-ci.yml']
+  # Weekly as well: a vulnerability published for a package fails the restore even when
+  # nobody has pushed since.
+  schedule:
+    - cron: '0 6 * * 1'
 
 permissions:
   contents: read

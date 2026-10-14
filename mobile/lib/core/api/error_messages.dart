@@ -47,6 +47,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'session_not_completed' => l10n.errorSessionNotCompleted,
     'in_person_already_reported' => l10n.errorInPersonAlreadyReported,
     'user_blocked' => l10n.errorUserBlocked,
+    'rate_limited' => l10n.errorRateLimited,
+    'payload_too_large' => l10n.errorPayloadTooLarge,
     'already_blocked' => l10n.errorAlreadyBlocked,
     'report_already_open' => l10n.errorReportAlreadyOpen,
     'report_self' => l10n.errorReportSelf,

@@ -27,6 +27,10 @@ internal sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) :
                     errors);
                 return true;
 
+            case BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge }:
+                await ApiProblem.WriteAsync(httpContext, StatusCodes.Status413PayloadTooLarge, Hardening.PayloadTooLargeCode);
+                return true;
+
             case BadHttpRequestException badRequest:
                 await ApiProblem.WriteAsync(
                     httpContext,

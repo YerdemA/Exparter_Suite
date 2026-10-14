@@ -34,43 +34,45 @@ internal static class IdentityEndpoints
                 new RegisterCommand(request.Email, request.Username, request.Password, request.AgeConfirmed),
                 cancellationToken);
             return Results.Created("/api/v1/me", result);
-        });
+        }).RequireRateLimiting(Hardening.EmailPolicy);
 
         auth.MapPost("/login", async (LoginRequest request, ISender sender, CancellationToken cancellationToken) =>
-            Results.Ok(await sender.Send(new LoginCommand(request.Identifier, request.Password), cancellationToken)));
+            Results.Ok(await sender.Send(new LoginCommand(request.Identifier, request.Password), cancellationToken)))
+            .RequireRateLimiting(Hardening.CredentialsPolicy);
 
         auth.MapPost("/refresh", async (RefreshTokenRequest request, ISender sender, CancellationToken cancellationToken) =>
-            Results.Ok(await sender.Send(new RefreshTokenCommand(request.RefreshToken), cancellationToken)));
+            Results.Ok(await sender.Send(new RefreshTokenCommand(request.RefreshToken), cancellationToken)))
+            .RequireRateLimiting(Hardening.CredentialsPolicy);
 
         auth.MapPost("/logout", async (RefreshTokenRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             await sender.Send(new LogoutCommand(request.RefreshToken), cancellationToken);
             return Results.NoContent();
-        });
+        }).RequireRateLimiting(Hardening.CredentialsPolicy);
 
         auth.MapPost("/email-verification/request", async (ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
         {
             await sender.Send(new RequestEmailVerificationCommand(user.GetUserId()), cancellationToken);
             return Results.Accepted();
-        }).RequireAuthorization();
+        }).RequireAuthorization().RequireRateLimiting(Hardening.EmailPolicy);
 
         auth.MapPost("/email-verification/confirm", async (OneTimeTokenRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             await sender.Send(new ConfirmEmailVerificationCommand(request.Token), cancellationToken);
             return Results.NoContent();
-        });
+        }).RequireRateLimiting(Hardening.CredentialsPolicy);
 
         auth.MapPost("/password-reset/request", async (PasswordResetRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             await sender.Send(new RequestPasswordResetCommand(request.Email), cancellationToken);
             return Results.Accepted();
-        });
+        }).RequireRateLimiting(Hardening.EmailPolicy);
 
         auth.MapPost("/password-reset/confirm", async (PasswordResetConfirmRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             await sender.Send(new ConfirmPasswordResetCommand(request.Token, request.NewPassword), cancellationToken);
             return Results.NoContent();
-        });
+        }).RequireRateLimiting(Hardening.CredentialsPolicy);
 
         var me = routes.MapGroup("/me").RequireAuthorization();
 
@@ -89,7 +91,7 @@ internal static class IdentityEndpoints
                 new RequestAccountDeletionCommand(user.GetUserId(), request.Password),
                 cancellationToken);
             return Results.Accepted(value: result);
-        });
+        }).RequireRateLimiting(Hardening.CredentialsPolicy);
 
         return routes;
     }

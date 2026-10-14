@@ -50,6 +50,23 @@ Tüm hatalar RFC 9457 ProblemDetails biçimindedir ve `application/problem+json`
 
 Bir kullanıcının görmemesi gereken kaynak için 403 değil 404 döner; böylece kaynağın varlığı açığa çıkmaz.
 
+## Sınırlar
+
+Sunucu kötüye kullanıma karşı istek sayısını ve boyutunu sınırlar. Aşılırsa `429 rate_limited` döner ve `Retry-After` başlığı kaç saniye beklenmesi gerektiğini söyler.
+
+| Ne | Sınır | Kime göre |
+|---|---|---|
+| Tüm API | Dakikada 300 istek | Giriş yapmış kullanıcı |
+| Tüm API | Dakikada 120 istek | Giriş yapmamış istemcinin adresi |
+| Giriş, token yenileme, çıkış, tek kullanımlık token onayı, parola sıfırlama onayı, hesap silme isteği | Dakikada 30 deneme | İstemcinin adresi |
+| Kayıt, doğrulama e-postası, parola sıfırlama e-postası | 15 dakikada 10 istek | İstemcinin adresi |
+
+- İstek gövdesi en fazla 64 KB'tır; aşan istek okunmadan `413 payload_too_large` alır. Dosyalar API'ye değil, presigned URL ile doğrudan nesne depolamaya yüklenir.
+- Gerçek zamanlı hub'a istemciden giden mesaj en fazla 4 KB'tır (istemci yalnızca bağlantı el sıkışmasını gönderir).
+- Sınırlar `RateLimits:*` ayarlarıyla değiştirilebilir.
+- Yanıtlar `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` ve kısıtlayıcı bir `Content-Security-Policy` taşır. Canlı ortamda HSTS de gönderilir.
+- CORS açık değildir: tarayıcıdan çalışan bir istemci yok. Web istemcisi (Faz 7) gelince izin verilen kökenler o zaman belirlenir.
+
 ## Hata kodları
 
 Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya eklenir.
@@ -57,6 +74,8 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | Kod | Durum | Açıklama |
 |---|---|---|
 | `validation_failed` | 400 | Doğrulama hatası; ayrıntılar `errors` alanında. |
+| `payload_too_large` | 413 | İstek gövdesi 64 KB'tan büyük. |
+| `rate_limited` | 429 | Kısa sürede çok fazla istek; `Retry-After` kadar beklenmeli. |
 | `invalid_token` | 400 | Tek kullanımlık token geçersiz, kullanılmış veya süresi dolmuş. |
 | `avatar_not_uploaded` | 400 | Verilen anahtar altında yüklenmiş dosya yok. |
 | `avatar_invalid` | 400 | Yüklenen dosya izin verilen bir görsel değil veya 5 MB'tan büyük. |

@@ -41,10 +41,12 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 // Throwing everywhere sends it through the exception handler, so the client always gets problem details.
 builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = true);
 builder.Services.AddApiAuthentication();
+builder.Services.AddApiRateLimits(builder.Configuration);
+builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = Hardening.MaxRequestBodyBytes);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddHostedService<MatchingDeadlineWorker>();
-builder.Services.AddSignalR()
+builder.Services.AddSignalR(hub => hub.MaximumReceiveMessageSize = Hardening.MaxHubMessageBytes)
     .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, SubjectUserIdProvider>();
 builder.Services.AddSingleton<IRealtimeNotifier, SignalRRealtimeNotifier>();
@@ -59,10 +61,21 @@ builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+app.UseSecurityHeaders();
+if (!app.Environment.IsDevelopment())
+{
+    // Only sent over HTTPS, which the deployment terminates in front of the API.
+    app.UseHsts();
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseBodySizeLimit();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// After authentication: signed-in users are limited per account, others per address.
+app.UseRateLimiter();
 
 app.MapHealthChecks("/health").AllowAnonymous();
 var api = app.MapGroup("/api/v1");
