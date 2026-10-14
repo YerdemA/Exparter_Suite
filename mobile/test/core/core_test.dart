@@ -58,6 +58,7 @@ void main() {
       expect(errorMessage(l10n, const ApiException(code: 'invalid_credentials')), l10n.errorInvalidCredentials);
       expect(errorMessage(l10n, const ApiException(code: 'username_already_taken')), l10n.errorUsernameTaken);
       expect(errorMessage(l10n, const ApiException(code: ApiException.networkCode)), l10n.errorNetwork);
+      expect(errorMessage(l10n, const ApiException(statusCode: 429, code: 'rate_limited')), l10n.errorRateLimited);
     });
 
     test('never exposes raw error text', () {

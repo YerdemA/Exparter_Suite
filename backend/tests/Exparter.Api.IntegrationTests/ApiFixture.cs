@@ -16,7 +16,7 @@ namespace Exparter.Api.IntegrationTests;
 /// Runs the real API against a throwaway PostgreSQL container. Shared by all tests, so
 /// each test must create its own users instead of assuming an empty database.
 /// </summary>
-public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
+public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
     // Same major version as docker-compose.yml, so tests exercise the database we run.
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.6-alpine").Build();
@@ -48,6 +48,18 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE identity.users SET role = 'Admin' WHERE id = {userId}");
     }
 
+    /// <summary>
+    /// Every test client shares one address and many users are created per test, so the
+    /// limits are out of the way here; <see cref="StrictRateLimitFixture"/> tests them.
+    /// </summary>
+    protected virtual void ConfigureRateLimits(IWebHostBuilder builder)
+    {
+        builder.UseSetting("RateLimits:UserPerMinute", "1000000");
+        builder.UseSetting("RateLimits:AnonymousPerMinute", "1000000");
+        builder.UseSetting("RateLimits:CredentialsPerMinute", "1000000");
+        builder.UseSetting("RateLimits:EmailsPerQuarterHour", "1000000");
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -59,6 +71,7 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Storage:SecretKey", "unused");
         builder.UseSetting("Email:EmailVerificationUrl", "exparter://app/verify-email?token={token}");
         builder.UseSetting("Email:PasswordResetUrl", "exparter://app/reset-password?token={token}");
+        ConfigureRateLimits(builder);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IEmailSender>();

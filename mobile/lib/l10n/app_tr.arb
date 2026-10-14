@@ -201,6 +201,8 @@
   "blockedUsersEmpty": "Engellediğiniz kimse yok.",
   "notificationReportReviewed": "Şikâyetiniz incelendi. Bildirdiğiniz için teşekkür ederiz.",
   "matchEndedBlocked": "Bu kullanıcıyı engellediğiniz için eşleşme sona erdi.",
+  "errorRateLimited": "Kısa sürede çok fazla deneme yaptınız. Biraz bekleyip tekrar deneyin.",
+  "errorPayloadTooLarge": "Gönderdiğiniz içerik çok büyük.",
   "errorUserBlocked": "Bu kullanıcıyı engellediniz. Önce engeli kaldırın.",
   "errorAlreadyBlocked": "Bu kullanıcıyı zaten engellediniz.",
   "errorReportAlreadyOpen": "Bunu zaten şikâyet ettiniz; inceleme sürüyor.",

@@ -12,7 +12,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
-| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–2 tamamlandı |
+| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–3 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -238,7 +238,7 @@ Plan 2026-10-14'te onaylandı. Her dilim kendi branch'inde (`phase-6/<n>-<konu>`
 |---|---|---|
 | 1 | Yeni renk paleti, açık ve koyu tema, logo | Tamamlandı (2026-10-14) |
 | 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Tamamlandı (2026-10-14) |
-| 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Başlamadı |
+| 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Tamamlandı (2026-10-14) |
 | 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Başlamadı |
 | 5 | Hata izleme ve kayıtlar | Başlamadı |
 | 6 | Canlı ortam ve Google Play kapalı test sürümü | Başlamadı |
@@ -274,7 +274,17 @@ Kararlar (kullanıcı, 2026-10-14): engellenen kişi engellendiğini görmez; as
 - Mobil: başka bir kullanıcının profilinde ve sohbet menüsünde "Şikâyet et" ve "Engelle"; karşı tarafın mesajına basılı tutunca ve değerlendirme kartının menüsünden "Şikâyet et"; profilde "Engellenen kullanıcılar" ve engeli kaldırma; "Şikâyetiniz incelendi" bildirimi.
 - Paket: `dotnet-ef` aracı 10.0.13'e yükseltildi (çalışma zamanıyla aynı sürüm).
 - Testler (2026-10-14): backend 502 (169 domain, 232 uygulama, 101 entegrasyon), mobil 216.
-- Bilinen sınırlar: askıya alınan kullanıcının elindeki access token süresi dolana kadar (en fazla 15 dakika) REST isteklerinde geçerli kalır; bağlantısı ve oturum yenilemesi ise hemen kapanır. Engellenen kullanıcının yetenek ve değerlendirme listesi uçları kimliğiyle çağrılırsa yanıt verir (profil 404 döndüğü için uygulamada görünmez).
+- Bilinen sınırlar (dilim 2): askıya alınan kullanıcının elindeki access token süresi dolana kadar (en fazla 15 dakika) REST isteklerinde geçerli kalır; bağlantısı ve oturum yenilemesi ise hemen kapanır. Engellenen kullanıcının yetenek ve değerlendirme listesi uçları kimliğiyle çağrılırsa yanıt verir (profil 404 döndüğü için uygulamada görünmez).
+
+### Dilim 3 — Güvenlik
+
+- İstek sınırlama (ASP.NET Core'un yerleşik sınırlayıcısı, ek paket yok): giriş yapmış kullanıcı dakikada 300, giriş yapmamış adres dakikada 120 istek; giriş, token yenileme ve token onayları adres başına dakikada 30; e-posta gönderen uçlar adres başına 15 dakikada 10. Aşılınca `429 rate_limited` ve `Retry-After`. Sınırlar `RateLimits:*` ayarlarıyla değişir; ayrıntı `docs/api-conventions.md`.
+- Girdi sınırları: istek gövdesi en fazla 64 KB (`413 payload_too_large`), hub mesajı en fazla 4 KB. Metin alanlarının hepsinin zaten doğrulama sınırı vardı.
+- Güvenlik başlıkları: `no-store`, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, kısıtlayıcı CSP; geliştirme dışında HSTS. CORS kapalı (tarayıcı istemcisi yok).
+- Bağımlılık denetimi: NuGet denetimi doğrudan ve dolaylı tüm paketleri kapsar ve uyarı hata sayılır; backend CI haftada bir de çalışır. Flutter paketleri için otomatik bir güvenlik denetimi aracı yok.
+- Yerleşik güvenlik incelemesi bu dilimin değişikliklerinde yüksek veya orta düzeyde bulgu çıkarmadı.
+- Testler (2026-10-14): backend 507 (169 domain, 232 uygulama, 106 entegrasyon), mobil 216.
+- Sonraya bırakılan (dilim 6): ters vekil arkasında gerçek istemci adresinin alınması (forwarded headers), `AllowedHosts` kısıtı, HTTPS. Hesap başına giriş denemesi sınırı (şu an adres başına).
 
 ## Geliştirme ortamı
 
