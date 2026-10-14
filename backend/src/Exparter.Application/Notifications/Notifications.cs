@@ -31,6 +31,10 @@ public interface IDeviceRepository
 
     Task<Device?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<string>> ListTokensAsync(Guid userId, CancellationToken cancellationToken);
+
+    Task DeleteByTokensAsync(IReadOnlyCollection<string> fcmTokens, CancellationToken cancellationToken);
+
     Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken);
 
     void Add(Device device);
@@ -41,7 +45,7 @@ public interface IDeviceRepository
 /// <summary>
 /// How other modules tell a user that something happened. The notification is stored
 /// with the unit of work of the request that caused it, and reaches the user's open
-/// connections once that request has succeeded.
+/// connections once that request has succeeded; users without an open app get a push.
 /// </summary>
 public interface IUserNotifier
 {
@@ -54,7 +58,11 @@ public sealed record NotificationDto(Guid Id, NotificationType Type, Notificatio
         new(notification.Id, notification.Type, notification.Data, notification.CreatedAt, notification.ReadAt);
 }
 
-internal sealed class UserNotifier(INotificationRepository notifications, IRealtimeNotifier realtime, TimeProvider timeProvider)
+internal sealed class UserNotifier(
+    INotificationRepository notifications,
+    IRealtimeNotifier realtime,
+    PushNotifier pushes,
+    TimeProvider timeProvider)
     : IUserNotifier
 {
     private readonly List<Notification> _undelivered = [];
@@ -66,7 +74,7 @@ internal sealed class UserNotifier(INotificationRepository notifications, IRealt
         _undelivered.Add(notification);
     }
 
-    /// <summary>Pushes what was stored since the last call to the users' open connections.</summary>
+    /// <summary>Delivers what was stored since the last call: to open apps, or else to phones.</summary>
     public async Task DeliverAsync(CancellationToken cancellationToken)
     {
         var batch = _undelivered.ToList();
@@ -78,6 +86,11 @@ internal sealed class UserNotifier(INotificationRepository notifications, IRealt
                 RealtimeEvents.NotificationReceived,
                 NotificationDto.From(notification),
                 cancellationToken);
+        }
+
+        if (batch.Count > 0)
+        {
+            await pushes.NotifyAsync(batch, cancellationToken);
         }
     }
 }
@@ -225,6 +238,17 @@ public sealed class UnregisterDeviceCommandHandler(IDeviceRepository devices, IU
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
+}
+
+/// <summary>
+/// A user asking for deletion is signed out everywhere; their phones stop getting pushes
+/// at once. Signing in again registers the phone anew.
+/// </summary>
+public sealed class RemoveDevicesOnAccountDeletionRequested(IDeviceRepository devices)
+    : INotificationHandler<AccountDeletionRequested>
+{
+    public async ValueTask Handle(AccountDeletionRequested notification, CancellationToken cancellationToken) =>
+        await devices.DeleteByUserAsync(notification.UserId, cancellationToken);
 }
 
 /// <summary>An account is being erased: its notifications and its devices go with it.</summary>

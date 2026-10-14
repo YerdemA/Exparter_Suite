@@ -173,6 +173,55 @@ public class NotificationApiTests(ApiFixture fixture) : IClassFixture<ApiFixture
     }
 
     [Fact]
+    public async Task Users_without_an_open_app_get_pushes_and_devices_fcm_forgets_are_removed()
+    {
+        var (ali, ayse, matchId) = await MatchedPairAsync();
+        var phone = $"fcm-{Guid.NewGuid():N}";
+        await OkAsync(PostAsync(ayse, "/api/v1/devices", new { fcmToken = phone, platform = "Android" }));
+        var conversationPath = $"/api/v1/conversations/{(await ayse.GetJsonAsync($"/api/v1/matches/{matchId}")).GetProperty("conversationId").GetGuid()}";
+
+        await OkAsync(PostAsync(ali, $"/api/v1/matches/{matchId}/end-request"));
+
+        var endRequest = Assert.Single(await fixture.Pushes.WaitForAsync(phone, 1));
+        Assert.Equal("MatchEndRequested", endRequest.Data["type"]);
+        Assert.Equal(matchId.ToString(), endRequest.Data["matchId"]);
+        Assert.Equal((await NotificationsAsync(ayse))[0].GetProperty("id").GetGuid().ToString(), endRequest.Data["notificationId"]);
+        Assert.EndsWith("eşleşmeyi sonlandırmak istiyor.", endRequest.Body);
+
+        // While the app is open it shows the message itself; the phone stays quiet.
+        await using (await ConnectAsync(ayse))
+        {
+            await OkAsync(PostAsync(ali, $"{conversationPath}/messages", new { body = "Uygulama açıkken" }), HttpStatusCode.Created);
+        }
+
+        // The server notices the closed connection a moment later.
+        var presence = fixture.Services.GetRequiredService<IUserPresence>();
+        for (var attempt = 0; attempt < 100 && presence.IsConnected(ayse.UserId); attempt++)
+        {
+            await Task.Delay(50);
+        }
+
+        await OkAsync(PostAsync(ali, $"{conversationPath}/messages", new { body = "Uygulama kapalıyken" }), HttpStatusCode.Created);
+        var message = (await fixture.Pushes.WaitForAsync(phone, 2))[1];
+        Assert.Equal("Uygulama kapalıyken", message.Body);
+        Assert.Equal("MessageReceived", message.Data["type"]);
+
+        fixture.Pushes.Stale[phone] = true;
+        Assert.True((await ali.SendAsync(HttpMethod.Delete, $"/api/v1/matches/{matchId}/end-request")).IsSuccessStatusCode);
+        await fixture.Pushes.WaitForAsync(phone, 3);
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var remaining = 1;
+        for (var attempt = 0; attempt < 100 && remaining > 0; attempt++)
+        {
+            await Task.Delay(50);
+            remaining = await dbContext.Devices.CountAsync(x => x.FcmToken == phone);
+        }
+
+        Assert.Equal(0, remaining);
+    }
+
+    [Fact]
     public async Task The_worker_reminds_of_deadlines_tells_of_what_lapsed_and_removes_old_notifications()
     {
         var (ali, ayse, matchId) = await MatchedPairAsync();

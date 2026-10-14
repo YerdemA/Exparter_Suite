@@ -47,6 +47,11 @@ builder.Services.AddSignalR()
     .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, SubjectUserIdProvider>();
 builder.Services.AddSingleton<IRealtimeNotifier, SignalRRealtimeNotifier>();
+builder.Services.AddSingleton<ConnectionRegistry>();
+builder.Services.AddSingleton<IUserPresence>(services => services.GetRequiredService<ConnectionRegistry>());
+builder.Services.AddSingleton<PushQueue>();
+builder.Services.AddSingleton<IPushQueue>(services => services.GetRequiredService<PushQueue>());
+builder.Services.AddHostedService<PushWorker>();
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
 var app = builder.Build();

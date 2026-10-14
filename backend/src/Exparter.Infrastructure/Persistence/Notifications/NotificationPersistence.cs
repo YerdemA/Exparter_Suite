@@ -83,6 +83,12 @@ internal sealed class DeviceRepository(AppDbContext dbContext) : IDeviceReposito
     public Task<Device?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Devices.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<string>> ListTokensAsync(Guid userId, CancellationToken cancellationToken) =>
+        await dbContext.Devices.Where(x => x.UserId == userId).Select(x => x.FcmToken).ToListAsync(cancellationToken);
+
+    public Task DeleteByTokensAsync(IReadOnlyCollection<string> fcmTokens, CancellationToken cancellationToken) =>
+        dbContext.Devices.Where(x => fcmTokens.Contains(x.FcmToken)).ExecuteDeleteAsync(cancellationToken);
+
     public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken) =>
         dbContext.Devices.Where(x => x.UserId == userId).ExecuteDeleteAsync(cancellationToken);
 

@@ -9,6 +9,7 @@ using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
 using Exparter.Infrastructure.Email;
 using Exparter.Infrastructure.Identity;
+using Exparter.Infrastructure.Notifications;
 using Exparter.Infrastructure.Persistence;
 using Exparter.Infrastructure.Persistence.Identity;
 using Exparter.Infrastructure.Persistence.Matching;
@@ -74,6 +75,16 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<IObjectStorage, S3ObjectStorage>();
+
+        services.AddOptions<FirebaseOptions>().Bind(configuration.GetSection(FirebaseOptions.SectionName));
+        if (string.IsNullOrWhiteSpace(configuration[$"{FirebaseOptions.SectionName}:{nameof(FirebaseOptions.CredentialsPath)}"]))
+        {
+            services.AddSingleton<IPushSender, DisabledPushSender>();
+        }
+        else
+        {
+            services.AddSingleton<IPushSender, FcmPushSender>();
+        }
 
         return services;
     }

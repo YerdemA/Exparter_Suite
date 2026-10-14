@@ -31,6 +31,7 @@ public class ArchitectureTests
         typeof(Exparter.Application.Sessions.ISessionDirectory),
         typeof(Exparter.Application.Reviews.IReviewDirectory),
         typeof(Exparter.Application.Notifications.IUserNotifier),
+        typeof(Exparter.Application.Notifications.PushNotifier),
         typeof(Exparter.Domain.Notifications.NotificationType),
         typeof(Exparter.Domain.Notifications.NotificationData),
         typeof(Exparter.Application.Messaging.IConversationDirectory),

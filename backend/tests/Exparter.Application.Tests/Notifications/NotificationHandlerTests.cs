@@ -1,6 +1,7 @@
 using Exparter.Application.Common;
 using Exparter.Application.Notifications;
 using Exparter.Application.Tests.Identity;
+using Exparter.Application.Tests.Matching;
 using Exparter.Application.Tests.Messaging;
 using Exparter.Application.Tests.Profiles;
 using Exparter.Domain.Notifications;
@@ -51,6 +52,15 @@ internal sealed class InMemoryDevices : IDeviceRepository
     public Task<Device?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
 
+    public Task<IReadOnlyList<string>> ListTokensAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<string>>(Items.Where(x => x.UserId == userId).Select(x => x.FcmToken).ToList());
+
+    public Task DeleteByTokensAsync(IReadOnlyCollection<string> fcmTokens, CancellationToken cancellationToken)
+    {
+        Items.RemoveAll(x => fcmTokens.Contains(x.FcmToken));
+        return Task.CompletedTask;
+    }
+
     public Task DeleteByUserAsync(Guid userId, CancellationToken cancellationToken)
     {
         Items.RemoveAll(x => x.UserId == userId);
@@ -73,7 +83,12 @@ public class NotificationHandlerTests
     private readonly TestClock _clock = new();
     private readonly UserNotifier _notifier;
 
-    public NotificationHandlerTests() => _notifier = new UserNotifier(_notifications, _realtime, _clock);
+    public NotificationHandlerTests() =>
+        _notifier = new UserNotifier(
+            _notifications,
+            _realtime,
+            new PushNotifier(new FakePresence(), new RecordingPushQueue(), new FakeUserSummaries(new FakeUserDirectory()), _clock),
+            _clock);
 
     private async Task<PagedList<NotificationDto>> ListAsync(Guid userId, bool unreadOnly = false) =>
         await new ListNotificationsQueryHandler(_notifications)

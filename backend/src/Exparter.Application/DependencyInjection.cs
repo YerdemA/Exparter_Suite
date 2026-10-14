@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IUserStats, UserStats>();
         services.AddScoped<IReviewDirectory, ReviewDirectory>();
         services.AddScoped<ReviewDtoFactory>();
+        services.AddScoped<PushNotifier>();
         services.AddScoped<IUserNotifier, UserNotifier>();
         return services;
     }
