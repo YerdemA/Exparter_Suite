@@ -12,6 +12,8 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/recovery_controller.dart';
+import '../../notifications/domain/push_client.dart';
+import '../../notifications/presentation/push_controller.dart';
 import '../../reviews/presentation/user_reviews_section.dart';
 import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/own_skills_section.dart';
@@ -53,6 +55,82 @@ class ProfileScreen extends ConsumerWidget {
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),
+    );
+  }
+}
+
+/// Asks for the password, then for the deletion; a refusal is explained.
+Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final password = await showDialog<String>(context: context, builder: (context) => const _DeleteAccountDialog());
+  if (password == null) {
+    return;
+  }
+
+  ref.read(accountRestoredNoticeProvider.notifier).dismiss();
+  final deleted = await ref.read(authControllerProvider.notifier).deleteAccount(password: password);
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        deleted ? l10n.accountDeleteScheduled : errorMessage(l10n, ref.read(authControllerProvider).error ?? Object()),
+      ),
+    ),
+  );
+}
+
+/// Explains what deleting the account does and collects the password that confirms
+/// it. Pops with the password, or null if dismissed.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _password = TextEditingController();
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: Text(l10n.accountDeleteTitle),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.accountDeleteBody),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: _password,
+              obscureText: true,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(labelText: l10n.passwordLabel, helperText: l10n.accountDeletePasswordHint),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel)),
+        FilledButton(
+          onPressed: _password.text.isEmpty ? null : () => Navigator.pop(context, _password.text),
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
+          ),
+          child: Text(l10n.accountDelete),
+        ),
+      ],
     );
   }
 }
@@ -222,6 +300,7 @@ class _ProfileBody extends ConsumerWidget {
                 ),
                 if (!account.emailVerified) const _ResendVerificationButton(),
               ],
+              const _PushStatus(),
               const SizedBox(height: AppSpacing.lg),
               OutlinedButton.icon(
                 onPressed: loggingOut
@@ -232,6 +311,12 @@ class _ProfileBody extends ConsumerWidget {
                       },
                 icon: const Icon(Icons.logout),
                 label: Text(l10n.homeLogout),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(
+                onPressed: loggingOut ? null : () => _deleteAccount(context, ref),
+                style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                child: Text(l10n.accountDelete),
               ),
             ],
           ),
@@ -314,6 +399,49 @@ class _ResendVerificationButton extends ConsumerWidget {
               },
         icon: const Icon(Icons.send_outlined),
         label: Text(l10n.homeResendVerification),
+      ),
+    );
+  }
+}
+
+/// Whether pushes reach this phone, and a way to allow them after saying no.
+class _PushStatus extends ConsumerWidget {
+  const _PushStatus();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final brand = context.brand;
+    final permission = ref.watch(pushPermissionStatusProvider).value;
+    if (permission == null || permission == PushPermission.unavailable) {
+      return const SizedBox.shrink();
+    }
+
+    final granted = permission == PushPermission.granted;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _StatusTile(
+            icon: granted ? Icons.notifications_active_outlined : Icons.notifications_off_outlined,
+            color: granted ? brand.success : brand.warning,
+            text: granted ? l10n.pushEnabled : l10n.pushDisabled,
+          ),
+          if (!granted)
+            TextButton(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final result = await ref.read(pushPermissionStatusProvider.notifier).request();
+                if (result != PushPermission.granted) {
+                  // Android shows its dialog only so many times; after that only the
+                  // phone's settings can allow notifications.
+                  messenger.showSnackBar(SnackBar(content: Text(l10n.pushEnableInSettings)));
+                }
+              },
+              child: Text(l10n.pushEnable),
+            ),
+        ],
       ),
     );
   }

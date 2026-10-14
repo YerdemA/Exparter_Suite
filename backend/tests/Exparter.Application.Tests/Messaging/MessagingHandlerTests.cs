@@ -4,6 +4,8 @@ using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
 using Exparter.Application.Tests.Identity;
 using Exparter.Application.Tests.Matching;
+using Exparter.Application.Tests.Notifications;
+using Exparter.Application.Notifications;
 using Exparter.Application.Tests.Profiles;
 using Exparter.Domain.Common;
 using Exparter.Domain.Messaging;
@@ -21,6 +23,9 @@ internal sealed class InMemoryConversations : IConversationRepository
 
     public Task<Conversation?> FindByUsersAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.IsParticipant(firstUserId) && x.IsParticipant(secondUserId)));
+
+    public Task<IReadOnlyList<Conversation>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Conversation>>(Items.Where(x => !x.IsClosed && x.IsParticipant(userId)).ToList());
 
     public Task<PagedList<Conversation>> ListAsync(Guid userId, PageRequest page, CancellationToken cancellationToken)
     {
@@ -112,6 +117,8 @@ public class MessagingHandlerTests
     private readonly FakeUserDirectory _users = new();
     private readonly FakeMatchDirectory _matches = new();
     private readonly RecordingRealtimeNotifier _realtime = new();
+    private readonly FakePresence _presence = new();
+    private readonly RecordingPushQueue _pushQueue = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly TestClock _clock = new();
     private readonly ConversationDtoFactory _dtos;
@@ -126,10 +133,12 @@ public class MessagingHandlerTests
         _conversations.Add(_conversation);
     }
 
+    private PushNotifier Pushes => new(_presence, _pushQueue, new FakeUserSummaries(_users), _clock);
+
     private async Task<MessageDto> SendAsync(Guid userId, string body, Guid? clientMessageId = null)
     {
         _clock.Advance(TimeSpan.FromSeconds(1));
-        return await new SendMessageCommandHandler(_conversations, _realtime, _unitOfWork, _clock)
+        return await new SendMessageCommandHandler(_conversations, _realtime, Pushes, _unitOfWork, _clock)
             .Handle(new SendMessageCommand(userId, _conversation.Id, body, clientMessageId), CancellationToken.None);
     }
 
@@ -146,6 +155,18 @@ public class MessagingHandlerTests
             .Handle(new CloseConversationCommand(userId, _conversation.Id), CancellationToken.None).AsTask();
 
     private static async Task<string> AppCodeOfAsync(Func<Task> action) => (await Assert.ThrowsAsync<AppException>(action)).Code;
+
+    [Fact]
+    public async Task A_message_reaches_the_phone_of_a_recipient_without_an_open_app()
+    {
+        _presence.Connected.Add(_ali);
+        await SendAsync(_ali, "Merhaba");
+        await SendAsync(_ayse, "Selam");
+
+        var (userId, message) = Assert.Single(_pushQueue.Queued);
+        Assert.Equal((_ayse, "@ali", "Merhaba"), (userId, message.Title, message.Body));
+        Assert.Equal(_conversation.Id.ToString(), message.Data["conversationId"]);
+    }
 
     [Fact]
     public async Task A_new_match_opens_the_pairs_conversation_once()
@@ -289,7 +310,7 @@ public class MessagingHandlerTests
     [Fact]
     public async Task Messages_sent_at_the_same_instant_are_not_lost_between_pages()
     {
-        var handler = new SendMessageCommandHandler(_conversations, _realtime, _unitOfWork, _clock);
+        var handler = new SendMessageCommandHandler(_conversations, _realtime, Pushes, _unitOfWork, _clock);
         for (var index = 0; index < 4; index++)
         {
             await handler.Handle(new SendMessageCommand(_ali, _conversation.Id, $"Mesaj {index}", null), CancellationToken.None);

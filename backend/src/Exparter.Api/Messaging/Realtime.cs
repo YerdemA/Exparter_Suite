@@ -1,5 +1,7 @@
 using Exparter.Api.Common;
+using System.Collections.Concurrent;
 using Exparter.Application.Common;
+using Exparter.Application.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -10,9 +12,48 @@ namespace Exparter.Api.Messaging;
 /// clients write through the REST API and only listen here.
 /// </summary>
 [Authorize]
-internal sealed class RealtimeHub : Hub
+internal sealed class RealtimeHub(ConnectionRegistry connections) : Hub
 {
     public const string Path = "/hubs/realtime";
+
+    public override Task OnConnectedAsync()
+    {
+        connections.Add(Context.User!.GetUserId());
+        return base.OnConnectedAsync();
+    }
+
+    public override Task OnDisconnectedAsync(Exception? exception)
+    {
+        connections.Remove(Context.User!.GetUserId());
+        return base.OnDisconnectedAsync(exception);
+    }
+}
+
+/// <summary>
+/// Counts the open connections of each user, so that push messages go only to users with
+/// no app open. It lives in this process: running several instances needs a shared one.
+/// </summary>
+internal sealed class ConnectionRegistry : IUserPresence
+{
+    private readonly ConcurrentDictionary<Guid, int> _counts = new();
+
+    public bool IsConnected(Guid userId) => _counts.ContainsKey(userId);
+
+    public void Add(Guid userId) => _counts.AddOrUpdate(userId, 1, (_, count) => count + 1);
+
+    public void Remove(Guid userId)
+    {
+        while (_counts.TryGetValue(userId, out var count))
+        {
+            var removed = count <= 1
+                ? _counts.TryRemove(new KeyValuePair<Guid, int>(userId, count))
+                : _counts.TryUpdate(userId, count - 1, count);
+            if (removed)
+            {
+                return;
+            }
+        }
+    }
 }
 
 /// <summary>Addresses connections by the account id, the same value REST handlers read from the token.</summary>

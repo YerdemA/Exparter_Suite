@@ -3,6 +3,8 @@ using Exparter.Api.Common;
 using Exparter.Api.Identity;
 using Exparter.Api.Matching;
 using Exparter.Api.Messaging;
+using Exparter.Api.Notifications;
+using Exparter.Application.Notifications;
 using Exparter.Api.Reviews;
 using Exparter.Api.Sessions;
 using Exparter.Api.Profiles;
@@ -28,7 +30,7 @@ builder.Services.AddMediator(options =>
     // Handlers depend on the scoped DbContext, so they cannot use the default singleton lifetime.
     options.ServiceLifetime = ServiceLifetime.Scoped;
     options.Assemblies = [typeof(Exparter.Application.DependencyInjection)];
-    options.PipelineBehaviors = [typeof(ValidationBehavior<,>)];
+    options.PipelineBehaviors = [typeof(ValidationBehavior<,>), typeof(NotificationDeliveryBehavior<,>)];
 });
 
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = ApiProblem.EnsureCode);
@@ -45,6 +47,11 @@ builder.Services.AddSignalR()
     .AddJsonProtocol(options => options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, SubjectUserIdProvider>();
 builder.Services.AddSingleton<IRealtimeNotifier, SignalRRealtimeNotifier>();
+builder.Services.AddSingleton<ConnectionRegistry>();
+builder.Services.AddSingleton<IUserPresence>(services => services.GetRequiredService<ConnectionRegistry>());
+builder.Services.AddSingleton<PushQueue>();
+builder.Services.AddSingleton<IPushQueue>(services => services.GetRequiredService<PushQueue>());
+builder.Services.AddHostedService<PushWorker>();
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
 var app = builder.Build();
@@ -65,6 +72,7 @@ api.MapSwapEndpoints();
 api.MapConversationEndpoints();
 api.MapSessionEndpoints();
 api.MapReviewEndpoints();
+api.MapNotificationEndpoints();
 app.MapHub<RealtimeHub>(RealtimeHub.Path);
 
 if (app.Environment.IsDevelopment())

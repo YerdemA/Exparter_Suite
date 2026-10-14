@@ -72,6 +72,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `not_participant` | 403 | Çağıran bu işlemi yapabilecek taraf değil (ör. isteği gönderen kabul edemez). |
 | `not_found` | 404 | Kaynak veya adres bulunamadı. |
 | `email_already_registered` | 409 | E-posta kullanımda. |
+| `email_recently_deleted` | 409 | Bu e-postaya ait hesap kalıcı olarak silindi; adres 3 ay boyunca yeniden kaydedilemez. |
 | `username_already_taken` | 409 | Kullanıcı adı kullanımda. |
 | `username_reserved` | 409 | Kullanıcı adı ayrılmış bir ad (ör. `admin`). |
 | `username_change_too_soon` | 409 | Kullanıcı adı son 7 gün içinde değiştirilmiş. |

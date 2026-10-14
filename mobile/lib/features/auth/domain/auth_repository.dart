@@ -18,6 +18,10 @@ abstract interface class AuthRepository {
 
   Future<Account> getAccount();
 
+  /// Schedules the signed-in account for deletion; [password] proves it is the owner
+  /// asking. Signing in again within 30 days takes it back.
+  Future<void> requestAccountDeletion({required String password});
+
   /// Sends a new verification email to the signed-in user.
   Future<void> requestEmailVerification();
 

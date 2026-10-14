@@ -5,6 +5,7 @@ import 'package:exparter/app.dart';
 import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/config/app_config.dart';
 import 'package:exparter/core/router/app_routes.dart';
+import 'package:exparter/features/notifications/presentation/notifications_screen.dart';
 import 'package:exparter/features/profile/data/avatar_picker.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
@@ -291,6 +292,21 @@ void main() {
       '/api/v1/swap-requests/${(incoming.data!['items'] as List<dynamic>).first['id']}/accept',
       options: peerAuth,
     );
+    // The acceptance arrives as a notification over the open connection: the bell
+    // counts it, and tapping it opens the new match.
+    final discoverTab = find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navDiscover));
+    await tester.tap(discoverTab);
+    await tester.pumpAndSettle();
+    await tester.tap(discoverTab);
+    await pumpUntilFound(tester, find.descendant(of: find.byType(NotificationBell), matching: find.text('1')));
+    await tester.tap(find.byType(NotificationBell));
+    final acceptedNotice = find.text(l10n.notificationSwapRequestAccepted('Keşif Arkadaşı'));
+    await pumpUntilFound(tester, acceptedNotice);
+    await tester.tap(acceptedNotice);
+    await pumpUntilFound(tester, find.text(l10n.matchSendMessage));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navMatches)));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.widgetWithText(Tab, l10n.matchesTabMatches));
     await tester.pumpAndSettle();
     // Coming back to the tab reloads it; if it still shows the old answer, pull to refresh.
@@ -372,6 +388,8 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Anlatımı çok açıktı.');
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.reviewSubmit));
     await pumpUntilFound(tester, find.text(l10n.ratingSummary(9, 1)));
+    // The average comes with the profile, the list of reviews a moment later.
+    await pumpUntilFound(tester, find.text('Anlatımı çok açıktı.'));
     await tester.ensureVisible(find.text('Anlatımı çok açıktı.'));
     expect(find.text(l10n.reviewRatingOutOf(9)), findsOneWidget);
     expect(find.text(l10n.reviewDelete), findsOneWidget);
@@ -437,5 +455,27 @@ void main() {
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
     await openProfileTab(tester);
     expect(find.text('@$username'), findsOneWidget);
+
+    // Delete the account: it needs the password, signs out, and ends the match for the
+    // peer. Signing in again takes the deletion back.
+    await waitForNotices(tester);
+    // Pressed directly: on the device the test's tap at this spot does not land, though
+    // the button is in view and works by hand.
+    tester.widget<TextButton>(find.widgetWithText(TextButton, l10n.accountDelete)).onPressed!();
+    await pumpUntilFound(tester, find.text(l10n.accountDeleteBody));
+    await tester.enterText(find.byType(TextField), newPassword);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, l10n.accountDelete));
+    await pumpUntilFound(tester, find.text(l10n.loginTitle));
+    final afterDeletion = await api.get<Map<String, dynamic>>('/api/v1/matches/$matchId', options: peerAuth);
+    expect(afterDeletion.data!['status'], 'Ended');
+    expect(afterDeletion.data!['endReason'], 'AccountDeleted');
+    await waitForNotices(tester);
+
+    await tester.enterText(field(l10n.loginIdentifierLabel), username);
+    await tester.enterText(field(l10n.passwordLabel), newPassword);
+    await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
+    await openProfileTab(tester);
+    expect(find.text(l10n.homeAccountRestored), findsOneWidget);
   });
 }

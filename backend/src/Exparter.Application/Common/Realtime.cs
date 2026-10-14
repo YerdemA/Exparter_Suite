@@ -6,6 +6,7 @@ public static class RealtimeEvents
     public const string MessageReceived = "MessageReceived";
     public const string ConversationRead = "ConversationRead";
     public const string ConversationUpdated = "ConversationUpdated";
+    public const string NotificationReceived = "NotificationReceived";
 }
 
 /// <summary>

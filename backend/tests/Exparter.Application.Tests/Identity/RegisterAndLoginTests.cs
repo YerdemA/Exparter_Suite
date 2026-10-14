@@ -12,6 +12,7 @@ public class RegisterCommandHandlerTests
     private RegisterCommandHandler Handler => new(
         _context.Users,
         _context.OneTimeTokens,
+        _context.BlockedEmails,
         _context.Hasher,
         _context.Tokens,
         _context.TokenIssuer,

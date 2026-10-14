@@ -128,3 +128,23 @@ public sealed class GetUserProfileQueryHandler(
             await reviews.GetRatingAsync(profile.UserId, cancellationToken));
     }
 }
+
+/// <summary>An account is being erased: its profile and its avatar go with it.</summary>
+public sealed class RemoveProfileOnAccountErased(IProfileRepository profiles, IObjectStorage storage)
+    : INotificationHandler<AccountErased>
+{
+    public async ValueTask Handle(AccountErased notification, CancellationToken cancellationToken)
+    {
+        if (await profiles.GetByUserIdAsync(notification.UserId, cancellationToken) is not { } profile)
+        {
+            return;
+        }
+
+        if (profile.AvatarKey is not null)
+        {
+            await storage.DeleteAsync(profile.AvatarKey, cancellationToken);
+        }
+
+        profiles.Remove(profile);
+    }
+}

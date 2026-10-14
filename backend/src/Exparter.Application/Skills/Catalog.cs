@@ -1,3 +1,5 @@
+using Exparter.Application.Notifications;
+using Exparter.Domain.Notifications;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Domain.Skills;
@@ -121,6 +123,7 @@ public sealed record ReviewSkillProposalCommand(Guid SkillId, bool Approve) : IC
 
 public sealed class ReviewSkillProposalCommandHandler(
     ISkillRepository skills,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ReviewSkillProposalCommand, SkillDto>
 {
@@ -136,6 +139,14 @@ public sealed class ReviewSkillProposalCommandHandler(
         else
         {
             skill.Reject(timeProvider.GetUtcNow());
+        }
+
+        if (skill.ProposedByUserId is { } proposerId)
+        {
+            notifier.Notify(
+                proposerId,
+                command.Approve ? NotificationType.SkillProposalApproved : NotificationType.SkillProposalRejected,
+                new NotificationData(SkillId: skill.Id));
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

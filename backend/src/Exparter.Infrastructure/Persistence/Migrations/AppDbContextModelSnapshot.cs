@@ -22,6 +22,32 @@ namespace Exparter.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Exparter.Domain.Identity.BlockedEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("BlockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("blocked_until");
+
+                    b.Property<string>("EmailHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("email_hash")
+                        .IsFixedLength();
+
+                    b.HasKey("Id")
+                        .HasName("pk_blocked_emails");
+
+                    b.HasIndex("EmailHash")
+                        .HasDatabaseName("ix_blocked_emails_email_hash");
+
+                    b.ToTable("blocked_emails", "identity");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Identity.OneTimeToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -203,6 +229,10 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("end_reason");
+
+                    b.Property<DateTimeOffset?>("EndReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_reminder_sent_at");
 
                     b.Property<DateTimeOffset?>("EndRequestExpiresAt")
                         .HasColumnType("timestamp with time zone")
@@ -426,6 +456,118 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.ToTable("messages", "messaging");
                 });
 
+            modelBuilder.Entity("Exparter.Domain.Notifications.Device", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FcmToken")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)")
+                        .HasColumnName("fcm_token");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("platform");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_devices");
+
+                    b.HasIndex("FcmToken")
+                        .IsUnique()
+                        .HasDatabaseName("ix_devices_fcm_token");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_devices_user_id");
+
+                    b.ToTable("devices", "notifications");
+                });
+
+            modelBuilder.Entity("Exparter.Domain.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("Deadline")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deadline");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("match_id");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid?>("ReviewId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("review_id");
+
+                    b.Property<Guid?>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
+                    b.Property<Guid?>("SkillId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("skill_id");
+
+                    b.Property<Guid?>("SwapRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("swap_request_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_notifications_created_at");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_user_id_created_at");
+
+                    b.ToTable("notifications", "notifications");
+                });
+
             modelBuilder.Entity("Exparter.Domain.Profiles.Profile", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -562,13 +704,25 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("completion_marked_by_user_id");
 
+                    b.Property<DateTimeOffset?>("CompletionReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completion_reminder_sent_at");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTimeOffset?>("DayReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("day_reminder_sent_at");
+
                     b.Property<int?>("DurationMinutes")
                         .HasColumnType("integer")
                         .HasColumnName("duration_minutes");
+
+                    b.Property<DateTimeOffset?>("HourReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("hour_reminder_sent_at");
 
                     b.Property<Guid>("MatchId")
                         .HasColumnType("uuid")

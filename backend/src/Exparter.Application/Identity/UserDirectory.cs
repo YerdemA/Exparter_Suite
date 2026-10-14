@@ -3,7 +3,7 @@ using Exparter.Domain.Identity;
 namespace Exparter.Application.Identity;
 
 /// <param name="IsActive">False for suspended accounts and accounts pending deletion.</param>
-public sealed record UserInfo(Guid Id, string Username, bool IsActive, bool IsEmailVerified);
+public sealed record UserInfo(Guid Id, string Username, bool IsActive, bool IsEmailVerified, bool IsDeleted = false);
 
 /// <summary>What other modules may know about a user account.</summary>
 public interface IUserDirectory
@@ -26,7 +26,7 @@ internal sealed class UserDirectory(IUserRepository users) : IUserDirectory
         (await users.ListByIdsAsync(userIds, cancellationToken)).Select(ToInfo).ToList();
 
     private static UserInfo ToInfo(User user) =>
-        new(user.Id, user.Username, user.Status == UserStatus.Active, user.IsEmailVerified);
+        new(user.Id, user.Username, user.Status == UserStatus.Active, user.IsEmailVerified, user.Status == UserStatus.Deleted);
 }
 
 /// <summary>

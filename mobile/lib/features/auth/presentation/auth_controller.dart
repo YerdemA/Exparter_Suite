@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/api/api_providers.dart';
 import '../../../core/api/generated/export.dart';
 import '../../../core/auth/session_controller.dart';
+import '../../notifications/presentation/push_controller.dart';
 import '../data/api_auth_repository.dart';
 
 part 'auth_controller.g.dart';
@@ -40,6 +41,9 @@ class AuthController extends _$AuthController {
     state = const AsyncLoading();
     final refreshToken = ref.read(sessionStoreProvider).current?.refreshToken;
     final session = ref.read(sessionControllerProvider.notifier);
+
+    // The phone stops getting the user's pushes; this needs the session still valid.
+    await ref.read(pushRegistrationProvider.notifier).unregister();
     if (refreshToken != null) {
       try {
         await ref.read(authRepositoryProvider).logout(refreshToken: refreshToken);
@@ -50,6 +54,36 @@ class AuthController extends _$AuthController {
     }
 
     await session.end();
+    if (ref.mounted) {
+      state = const AsyncData(null);
+    }
+  }
+
+  /// Asks for the account to be deleted and signs out. Returns whether the server
+  /// accepted; a refusal (a wrong password, mostly) is left in the state.
+  Future<bool> deleteAccount({required String password}) async {
+    state = const AsyncLoading();
+    final session = ref.read(sessionControllerProvider.notifier);
+    try {
+      await ref.read(authRepositoryProvider).requestAccountDeletion(password: password);
+    } on Object catch (error, stackTrace) {
+      if (ref.mounted) {
+        state = AsyncError(error, stackTrace);
+      }
+
+      return false;
+    }
+
+    // The server has already signed every device out; this only forgets the tokens.
+    await session.end();
+
+    // The sign-in screen that comes next may be handed this same controller; left as
+    // loading, it would show a spinner where its button should be.
+    if (ref.mounted) {
+      state = const AsyncData(null);
+    }
+
+    return true;
   }
 
   Future<void> _run(Future<AuthResponse> Function() action) async {

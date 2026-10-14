@@ -18,6 +18,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'invalid_credentials' => l10n.errorInvalidCredentials,
     'account_suspended' => l10n.errorAccountSuspended,
     'email_already_registered' => l10n.errorEmailAlreadyRegistered,
+    'email_recently_deleted' => l10n.errorEmailRecentlyDeleted,
+    'invalid_password' => l10n.errorInvalidPassword,
     'username_already_taken' => l10n.errorUsernameTaken,
     'username_reserved' => l10n.errorUsernameReserved,
     'invalid_token' => l10n.errorInvalidLink,

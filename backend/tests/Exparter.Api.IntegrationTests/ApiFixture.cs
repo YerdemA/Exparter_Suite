@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Notifications;
 using Exparter.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -23,6 +24,8 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     public RecordingEmailSender Emails { get; } = new();
 
     public InMemoryObjectStorage Storage { get; } = new();
+
+    public RecordingPushSender Pushes { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -65,6 +68,9 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
             // to control which files "exist".
             services.RemoveAll<IObjectStorage>();
             services.AddSingleton<IObjectStorage>(Storage);
+
+            services.RemoveAll<IPushSender>();
+            services.AddSingleton<IPushSender>(Pushes);
         });
     }
 }
@@ -97,6 +103,43 @@ public sealed class InMemoryObjectStorage : IObjectStorage
     {
         _objects.TryRemove(key, out _);
         return Task.CompletedTask;
+    }
+}
+
+/// <summary>Stands in for FCM: records what each device token was sent.</summary>
+public sealed class RecordingPushSender : IPushSender
+{
+    private readonly ConcurrentQueue<(string Token, PushMessage Message)> _sent = new();
+
+    /// <summary>Tokens that FCM answers as no longer registered.</summary>
+    public ConcurrentDictionary<string, bool> Stale { get; } = new();
+
+    public Task<IReadOnlyCollection<string>> SendAsync(
+        IReadOnlyCollection<string> tokens,
+        PushMessage message,
+        CancellationToken cancellationToken)
+    {
+        foreach (var token in tokens)
+        {
+            _sent.Enqueue((token, message));
+        }
+
+        return Task.FromResult<IReadOnlyCollection<string>>(tokens.Where(Stale.ContainsKey).ToList());
+    }
+
+    public IReadOnlyList<PushMessage> SentTo(string token) =>
+        _sent.Where(x => x.Token == token).Select(x => x.Message).ToList();
+
+    /// <summary>Pushes are sent in the background; waits until the token has received <paramref name="count"/> of them.</summary>
+    public async Task<IReadOnlyList<PushMessage>> WaitForAsync(string token, int count)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        while (SentTo(token).Count < count)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(50), timeout.Token);
+        }
+
+        return SentTo(token);
     }
 }
 

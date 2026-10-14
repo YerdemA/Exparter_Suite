@@ -2,16 +2,19 @@ using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
+using Exparter.Application.Notifications;
 using Exparter.Application.Reviews;
 using Exparter.Application.Sessions;
 using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
 using Exparter.Infrastructure.Email;
 using Exparter.Infrastructure.Identity;
+using Exparter.Infrastructure.Notifications;
 using Exparter.Infrastructure.Persistence;
 using Exparter.Infrastructure.Persistence.Identity;
 using Exparter.Infrastructure.Persistence.Matching;
 using Exparter.Infrastructure.Persistence.Messaging;
+using Exparter.Infrastructure.Persistence.Notifications;
 using Exparter.Infrastructure.Persistence.Reviews;
 using Exparter.Infrastructure.Persistence.Sessions;
 using Exparter.Infrastructure.Persistence.Profiles;
@@ -54,6 +57,7 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
+        services.AddScoped<IBlockedEmailRepository, BlockedEmailRepository>();
         services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddScoped<ISkillRepository, SkillRepository>();
         services.AddScoped<IUserSkillRepository, UserSkillRepository>();
@@ -63,12 +67,24 @@ public static class DependencyInjection
         services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IDeviceRepository, DeviceRepository>();
 
         services.AddOptions<StorageOptions>()
             .Bind(configuration.GetSection(StorageOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<IObjectStorage, S3ObjectStorage>();
+
+        services.AddOptions<FirebaseOptions>().Bind(configuration.GetSection(FirebaseOptions.SectionName));
+        if (string.IsNullOrWhiteSpace(configuration[$"{FirebaseOptions.SectionName}:{nameof(FirebaseOptions.CredentialsPath)}"]))
+        {
+            services.AddSingleton<IPushSender, DisabledPushSender>();
+        }
+        else
+        {
+            services.AddSingleton<IPushSender, FcmPushSender>();
+        }
 
         return services;
     }

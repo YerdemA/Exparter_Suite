@@ -226,7 +226,7 @@ Dokuzuncu modül olarak 2026-10-07'de onaylandı (bkz. ADR 0001).
 | `UserRegistered` | Identity | Profiles: boş profil oluşturur. Kayıt kaydedilmeden önce yayınlanır; profil hesapla aynı transaction'da oluşur. |
 | `SkillProposalReviewed` | Skills | Notifications: öneren kullanıcıya sonuç bildirilir. |
 | `SwapRequestSent` / `Accepted` / `Declined` / `Cancelled` / `Expired` | Matching | Notifications: ilgili tarafa bildirim. |
-| `MatchCreated` | Matching | Messaging: çiftin sohbetini açar, kapalıysa yeniden açar. Notifications: iki tarafa bildirim. |
+| `MatchCreated` | Matching | Messaging: çiftin sohbetini açar, kapalıysa yeniden açar. İstek sahibine bildirim, isteğin kabulüyle birlikte gider. |
 | `MatchEndRequested` | Matching | Notifications: karşı tarafa bildirim. |
 | `MatchEnded` | Matching | Sessions: tamamlanmamış oturumları iptal eder. Notifications: iki tarafa bildirim. Sohbet açık kalır. |
 | `MessageSent` | Messaging | Notifications: alıcı çevrimdışıysa push. |

@@ -16,6 +16,7 @@ import '../../features/messages/presentation/conversation_screen.dart';
 import '../../features/messages/presentation/conversations_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/reviews/presentation/write_review_screen.dart';
 import '../../features/sessions/presentation/propose_session_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
@@ -98,6 +99,10 @@ GoRouter appRouter(Ref ref) {
                 path: AppRoutes.home,
                 builder: (context, state) => const DiscoveryScreen(),
                 routes: [
+                  GoRoute(
+                    path: AppRoutes.notificationsSegment,
+                    builder: (context, state) => const NotificationsScreen(),
+                  ),
                   GoRoute(
                     path: AppRoutes.userProfileSegment,
                     builder: (context, state) =>

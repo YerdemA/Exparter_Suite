@@ -11,6 +11,8 @@ import 'package:exparter/features/auth/domain/auth_repository.dart';
 import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/matches/domain/match_repository.dart';
 import 'package:exparter/features/messages/domain/message_repository.dart';
+import 'package:exparter/features/notifications/domain/notification_repository.dart';
+import 'package:exparter/features/notifications/domain/push_client.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
 import 'package:exparter/features/reviews/domain/review_repository.dart';
 import 'package:exparter/features/sessions/domain/session_repository.dart';
@@ -35,6 +37,15 @@ class MockMessageRepository extends Mock implements MessageRepository {}
 class MockSessionRepository extends Mock implements SessionRepository {}
 
 class MockReviewRepository extends Mock implements ReviewRepository {}
+
+class MockNotificationRepository extends Mock implements NotificationRepository {}
+
+/// A notification repository for tests that are about something else: nothing to show.
+MockNotificationRepository quietNotificationRepository() {
+  final repository = MockNotificationRepository();
+  when(repository.list).thenAnswer((_) async => []);
+  return repository;
+}
 
 /// A review repository for tests that are about something else: no reviews, none can be written.
 MockReviewRepository quietReviewRepository() {
@@ -252,3 +263,35 @@ Widget localized(Widget child) => MaterialApp(
       supportedLocales: AppLocalizations.supportedLocales,
       home: child,
     );
+
+/// The phone's push service, driven by hand.
+class FakePushClient implements PushClient {
+  PushPermission current = PushPermission.granted;
+  PushPermission answer = PushPermission.granted;
+  int requests = 0;
+  String? currentToken = 'token-1';
+  Map<String, String>? launchData;
+  final tokenController = StreamController<String>.broadcast();
+  final tapController = StreamController<Map<String, String>>.broadcast();
+
+  @override
+  Future<PushPermission> permission() async => current;
+
+  @override
+  Future<PushPermission> requestPermission() async {
+    requests++;
+    return current = answer;
+  }
+
+  @override
+  Future<String?> token() async => currentToken;
+
+  @override
+  Stream<String> get tokenChanges => tokenController.stream;
+
+  @override
+  Future<Map<String, String>?> launchTap() async => launchData;
+
+  @override
+  Stream<Map<String, String>> get taps => tapController.stream;
+}

@@ -9,6 +9,7 @@ import '../../../core/api/generated/export.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../notifications/presentation/notifications_screen.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
 import '../../reviews/presentation/user_reviews_section.dart';
@@ -117,7 +118,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     final selectedCity = cities.where((city) => city.code == _filters.city).firstOrNull;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navDiscover)),
+      appBar: AppBar(title: Text(l10n.navDiscover), actions: const [NotificationBell()]),
       body: SafeArea(
         child: Column(
           children: [

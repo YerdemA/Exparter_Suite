@@ -52,6 +52,9 @@ paths:
       tags: [Auth]
       operationId: register
       summary: Create an account
+      description: |
+        The email address of an account that was deleted for good cannot be registered
+        again for three months (`email_recently_deleted`).
       security: []
       requestBody:
         required: true
@@ -2473,7 +2476,6 @@ components:
         - SwapRequestDeclined
         - SwapRequestCancelled
         - SwapRequestExpired
-        - MatchCreated
         - MatchEndRequested
         - MatchEndRequestRejected
         - MatchEndRequestWithdrawn
@@ -2483,6 +2485,7 @@ components:
         - SessionAccepted
         - SessionDeclined
         - SessionCancelled
+        - SessionStartingSoon
         - SessionCompletionMarked
         - SessionCompletionReminder
         - SessionCompleted
@@ -2508,7 +2511,7 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: The automatic deadline, for end request and completion notifications.
+          description: The moment something happens on its own (an end request takes effect, a completion mark stands), or the start of a session.
 
     Notification:
       type: object

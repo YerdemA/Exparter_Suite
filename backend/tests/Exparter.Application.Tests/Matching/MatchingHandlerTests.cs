@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using AccountDeletionRequested = Exparter.Application.Identity.AccountDeletionRequested;
 using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
 using Exparter.Application.Tests.Messaging;
@@ -8,6 +9,7 @@ using Exparter.Application.Tests.Identity;
 using Exparter.Application.Tests.Profiles;
 using Exparter.Domain.Common;
 using Exparter.Domain.Matching;
+using Exparter.Domain.Notifications;
 
 namespace Exparter.Application.Tests.Matching;
 
@@ -56,6 +58,10 @@ internal sealed class InMemorySwapRequests : ISwapRequestRepository
             && ((x.RequesterId == userId && x.OfferedSkillId == skillId)
                 || (x.RecipientId == userId && x.RequestedSkillId == skillId))));
 
+    public Task<IReadOnlyList<SwapRequest>> ListPendingOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<SwapRequest>>(
+            Items.Where(x => x.Status == SwapRequestStatus.Pending && x.IsParticipant(userId)).ToList());
+
     public void Add(SwapRequest request) => Items.Add(request);
 }
 
@@ -82,6 +88,15 @@ internal sealed class InMemoryMatches : IMatchRepository
         Task.FromResult<IReadOnlyList<Match>>(
             Items.Where(x => x.Status == MatchStatus.EndRequested && x.EndRequestExpiresAt <= now).Take(limit).ToList());
 
+    public Task<IReadOnlyList<Match>> ListDueForEndReminderAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Match>>(Items
+            .Where(x => x.Status == MatchStatus.EndRequested
+                && x.EndReminderSentAt is null
+                && x.EndRequestExpiresAt > now
+                && x.EndRequestExpiresAt <= now + Match.EndReminderLeadTime)
+            .Take(limit)
+            .ToList());
+
     public Task<bool> UsesOfferedSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) =>
         Task.FromResult(Items.Any(x => x.Status != MatchStatus.Ended
             && ((x.UserAId == userId && x.SkillTaughtByAId == skillId) || (x.UserBId == userId && x.SkillTaughtByBId == skillId))));
@@ -96,7 +111,25 @@ internal sealed class InMemoryMatches : IMatchRepository
             .Where(otherUserIds.Contains)
             .ToHashSet());
 
+    public Task<IReadOnlyList<Match>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Match>>(Items.Where(x => x.Status != MatchStatus.Ended && x.IsParticipant(userId)).ToList());
+
     public void Add(Match match) => Items.Add(match);
+}
+
+internal sealed class RecordingNotifier : Exparter.Application.Notifications.IUserNotifier
+{
+    public List<(Guid UserId, NotificationType Type, NotificationData Data)> Sent { get; } = [];
+
+    public void Notify(Guid userId, NotificationType type, NotificationData data) => Sent.Add((userId, type, data));
+
+    /// <summary>What was sent since the last call, as recipient and type.</summary>
+    public List<(Guid UserId, NotificationType Type)> Take()
+    {
+        var taken = Sent.Select(item => (item.UserId, item.Type)).ToList();
+        Sent.Clear();
+        return taken;
+    }
 }
 
 internal sealed class RecordingPublisher : Mediator.IPublisher
@@ -172,6 +205,7 @@ public class MatchingHandlerTests
     private readonly TestClock _clock = new();
     private readonly InMemoryConversations _conversations = new();
     private readonly RecordingPublisher _publisher = new();
+    private readonly RecordingNotifier _notifier = new();
     private readonly MatchingDtoFactory _dtos;
 
     public MatchingHandlerTests()
@@ -186,7 +220,7 @@ public class MatchingHandlerTests
     }
 
     private SendSwapRequestCommandHandler SendHandler =>
-        new(_requirements, _users, _skills, _requests, _matches, _dtos, _unitOfWork, _clock);
+        new(_requirements, _users, _skills, _requests, _matches, _dtos, _notifier, _unitOfWork, _clock);
 
     /// <summary>Ali offers the guitar and asks Ayşe for Spanish.</summary>
     private Task<SwapRequestDto> SendAsync(string? message = null) =>
@@ -196,23 +230,23 @@ public class MatchingHandlerTests
         SendHandler.Handle(new SendSwapRequestCommand(_ayse, _ali, _spanish, _guitar, null), CancellationToken.None).AsTask();
 
     private Task<MatchDto> AcceptAsync(Guid requestId, Guid? userId = null) =>
-        new AcceptSwapRequestCommandHandler(_requirements, _requests, _matches, _dtos, _publisher, _unitOfWork, _clock)
+        new AcceptSwapRequestCommandHandler(_requirements, _requests, _matches, _dtos, _publisher, _notifier, _unitOfWork, _clock)
             .Handle(new AcceptSwapRequestCommand(userId ?? _ayse, requestId), CancellationToken.None).AsTask();
 
     private Task<SwapRequestDto> DeclineAsync(Guid requestId, Guid? userId = null) =>
-        new DeclineSwapRequestCommandHandler(_requests, _dtos, _unitOfWork, _clock)
+        new DeclineSwapRequestCommandHandler(_requests, _dtos, _notifier, _unitOfWork, _clock)
             .Handle(new DeclineSwapRequestCommand(userId ?? _ayse, requestId), CancellationToken.None).AsTask();
 
     private Task<SwapRequestDto> CancelAsync(Guid requestId, Guid? userId = null) =>
-        new CancelSwapRequestCommandHandler(_requests, _dtos, _unitOfWork, _clock)
+        new CancelSwapRequestCommandHandler(_requests, _dtos, _notifier, _unitOfWork, _clock)
             .Handle(new CancelSwapRequestCommand(userId ?? _ali, requestId), CancellationToken.None).AsTask();
 
     private Task<MatchDto> ChangeEndAsync(Guid matchId, Guid userId, MatchEndAction action) =>
-        new ChangeMatchEndCommandHandler(_matches, _dtos, _publisher, _unitOfWork, _clock)
+        new ChangeMatchEndCommandHandler(_matches, _dtos, _publisher, _notifier, _unitOfWork, _clock)
             .Handle(new ChangeMatchEndCommand(userId, matchId, action), CancellationToken.None).AsTask();
 
     private Task<int> ProcessDeadlinesAsync() =>
-        new ProcessMatchingDeadlinesCommandHandler(_requests, _matches, _publisher, _unitOfWork, _clock)
+        new ProcessMatchingDeadlinesCommandHandler(_requests, _matches, _publisher, _notifier, _unitOfWork, _clock)
             .Handle(new ProcessMatchingDeadlinesCommand(), CancellationToken.None).AsTask();
 
     private static async Task<string> AppCodeOfAsync(Func<Task> action) => (await Assert.ThrowsAsync<AppException>(action)).Code;
@@ -555,6 +589,134 @@ public class MatchingHandlerTests
             "not_found",
             await AppCodeOfAsync(() => new GetMatchQueryHandler(_matches, _dtos)
                 .Handle(new GetMatchQuery(Guid.NewGuid(), match.Id), CancellationToken.None).AsTask()));
+    }
+
+    [Fact]
+    public async Task Each_step_of_a_request_and_of_ending_a_match_tells_the_other_user()
+    {
+        var declined = await SendAsync();
+        Assert.Equal([(_ayse, NotificationType.SwapRequestReceived)], _notifier.Take());
+        await DeclineAsync(declined.Id);
+        Assert.Equal([(_ali, NotificationType.SwapRequestDeclined)], _notifier.Take());
+
+        var withdrawn = await SendBackAsync();
+        await CancelAsync(withdrawn.Id, _ayse);
+        Assert.Equal([(_ali, NotificationType.SwapRequestReceived), (_ali, NotificationType.SwapRequestCancelled)], _notifier.Take());
+
+        var request = await SendBackAsync();
+        _notifier.Take();
+        var match = await AcceptAsync(request.Id, _ali);
+        var accepted = Assert.Single(_notifier.Sent);
+        Assert.Equal((_ayse, NotificationType.SwapRequestAccepted), (accepted.UserId, accepted.Type));
+        Assert.Equal((_ali, request.Id, match.Id), (accepted.Data.ActorUserId, accepted.Data.SwapRequestId, accepted.Data.MatchId));
+        _notifier.Take();
+
+        await ChangeEndAsync(match.Id, _ali, MatchEndAction.Request);
+        var asked = Assert.Single(_notifier.Sent);
+        Assert.Equal((_ayse, NotificationType.MatchEndRequested), (asked.UserId, asked.Type));
+        Assert.Equal(_clock.GetUtcNow() + Match.EndRequestLifetime, asked.Data.Deadline);
+        _notifier.Take();
+
+        await ChangeEndAsync(match.Id, _ayse, MatchEndAction.Reject);
+        await ChangeEndAsync(match.Id, _ayse, MatchEndAction.Request);
+        await ChangeEndAsync(match.Id, _ayse, MatchEndAction.Withdraw);
+        await ChangeEndAsync(match.Id, _ali, MatchEndAction.Request);
+        await ChangeEndAsync(match.Id, _ayse, MatchEndAction.Accept);
+
+        Assert.Equal(
+            [
+                (_ali, NotificationType.MatchEndRequestRejected),
+                (_ali, NotificationType.MatchEndRequested),
+                (_ali, NotificationType.MatchEndRequestWithdrawn),
+                (_ayse, NotificationType.MatchEndRequested),
+                (_ali, NotificationType.MatchEnded),
+            ],
+            _notifier.Take());
+    }
+
+    [Fact]
+    public async Task A_leaving_user_withdraws_from_pending_requests_and_ends_their_matches()
+    {
+        var carol = Guid.NewGuid();
+        var deniz = Guid.NewGuid();
+        foreach (var (id, name) in new[] { (carol, "carol"), (deniz, "deniz") })
+        {
+            _users.Users[id] = new UserInfo(id, name, IsActive: true, IsEmailVerified: true);
+            _skills.Offered.Add((id, _spanish));
+        }
+
+        var match = await AcceptAsync((await SendAsync()).Id);
+        var sent = await SendHandler.Handle(new SendSwapRequestCommand(_ali, carol, _guitar, _spanish, null), CancellationToken.None);
+        var received = await SendHandler.Handle(new SendSwapRequestCommand(deniz, _ali, _spanish, _guitar, null), CancellationToken.None);
+        var unrelated = await SendHandler.Handle(new SendSwapRequestCommand(deniz, carol, _spanish, _spanish, null), CancellationToken.None);
+        _notifier.Take();
+        _publisher.Published.Clear();
+
+        await new CloseMatchingOnAccountDeletion(_requests, _matches, _publisher, _notifier, _clock)
+            .Handle(new AccountDeletionRequested(_ali), CancellationToken.None);
+
+        SwapRequestStatus StatusOf(Guid id) => _requests.Items.Single(x => x.Id == id).Status;
+        Assert.Equal(SwapRequestStatus.Cancelled, StatusOf(sent.Id));
+        Assert.Equal(SwapRequestStatus.Cancelled, StatusOf(received.Id));
+        Assert.Equal(SwapRequestStatus.Pending, StatusOf(unrelated.Id));
+        var ended = _matches.Items.Single(x => x.Id == match.Id);
+        Assert.Equal((MatchStatus.Ended, MatchEndReason.AccountDeleted), (ended.Status, ended.EndReason));
+        Assert.Equal(new MatchEnded(match.Id), Assert.Single(_publisher.Published));
+        Assert.Equal(
+            [
+                (carol, NotificationType.SwapRequestCancelled),
+                (deniz, NotificationType.SwapRequestExpired),
+                (_ayse, NotificationType.MatchEnded),
+            ],
+            _notifier.Take());
+
+        // Neither side waits before asking again: nobody refused anybody.
+        _users.Users[_ali] = _users.Users[_ali] with { IsActive = true };
+        await SendHandler.Handle(new SendSwapRequestCommand(deniz, _ali, _spanish, _guitar, null), CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task A_refused_action_tells_nobody()
+    {
+        var request = await SendAsync();
+        _notifier.Take();
+
+        await Assert.ThrowsAsync<DomainException>(() => DeclineAsync(request.Id, _ali));
+        await Assert.ThrowsAsync<AppException>(() => SendAsync());
+
+        Assert.Empty(_notifier.Sent);
+    }
+
+    [Fact]
+    public async Task Deadline_processing_tells_of_what_lapsed_and_reminds_once_of_an_end_request_in_its_last_day()
+    {
+        var match = await AcceptAsync((await SendAsync()).Id);
+        await ChangeEndAsync(match.Id, _ali, MatchEndAction.Request);
+        _notifier.Take();
+
+        _clock.Advance(Match.EndRequestLifetime - TimeSpan.FromHours(30));
+        Assert.Equal(0, await ProcessDeadlinesAsync());
+
+        _clock.Advance(TimeSpan.FromHours(7));
+        Assert.Equal(1, await ProcessDeadlinesAsync());
+        Assert.Equal(0, await ProcessDeadlinesAsync());
+        var reminder = Assert.Single(_notifier.Sent);
+        Assert.Equal((_ayse, NotificationType.MatchEndReminder), (reminder.UserId, reminder.Type));
+        Assert.Equal((_ali, match.Id), (reminder.Data.ActorUserId, reminder.Data.MatchId));
+        Assert.NotNull(reminder.Data.Deadline);
+        _notifier.Take();
+
+        _clock.Advance(TimeSpan.FromHours(23));
+        Assert.Equal(1, await ProcessDeadlinesAsync());
+        Assert.Equal([(_ali, NotificationType.MatchEnded), (_ayse, NotificationType.MatchEnded)], _notifier.Take());
+
+        // A request nobody answered: its sender is told when it lapses.
+        var ignored = await SendAsync();
+        _notifier.Take();
+        _clock.Advance(TimeSpan.FromDays(3));
+        Assert.Equal(1, await ProcessDeadlinesAsync());
+        var expired = Assert.Single(_notifier.Sent);
+        Assert.Equal((_ali, NotificationType.SwapRequestExpired, ignored.Id), (expired.UserId, expired.Type, expired.Data.SwapRequestId!.Value));
     }
 
     [Fact]

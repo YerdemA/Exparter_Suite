@@ -24,6 +24,8 @@ internal static class UniqueConstraints
 
     public const string ReviewPerPair = "ix_reviews_reviewer_id_reviewee_id";
 
+    public const string DevicePerToken = "ix_devices_fcm_token";
+
     public static AppException? ToAppException(string? constraintName) => constraintName switch
     {
         UserEmail => AppException.Conflict("email_already_registered", "The email address is already registered."),
@@ -33,7 +35,7 @@ internal static class UniqueConstraints
         PendingSwapRequestPerPair => AppException.Conflict("swap_request_already_pending", "The two users already have a pending swap request."),
         OpenMatchPerPair => AppException.Conflict("match_already_exists", "The two users already have a match that has not ended."),
         // Both mean the same request arrived twice at once; the client's retry finds what the first one stored.
-        ConversationPerPair or MessagePerClientId => AppException.Conflict("concurrent_update", "The resource was changed by another request."),
+        ConversationPerPair or MessagePerClientId or DevicePerToken => AppException.Conflict("concurrent_update", "The resource was changed by another request."),
         InPersonMeetingPerPair => SessionConflicts.InPersonAlreadyReported(),
         ReviewPerPair => ReviewConflicts.AlreadyExists(),
         _ => null,

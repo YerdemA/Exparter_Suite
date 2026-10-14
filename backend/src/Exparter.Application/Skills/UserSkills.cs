@@ -127,3 +127,15 @@ public sealed class RemoveOwnSkillCommandHandler(IUserSkillRepository userSkills
         return Unit.Value;
     }
 }
+
+/// <summary>An account is being erased: the skills on its profile go with it.</summary>
+public sealed class RemoveUserSkillsOnAccountErased(IUserSkillRepository userSkills) : INotificationHandler<AccountErased>
+{
+    public async ValueTask Handle(AccountErased notification, CancellationToken cancellationToken)
+    {
+        foreach (var userSkill in await userSkills.ListByUserAsync(notification.UserId, cancellationToken))
+        {
+            userSkills.Remove(userSkill);
+        }
+    }
+}

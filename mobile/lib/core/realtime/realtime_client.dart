@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:signalr_netcore/signalr_client.dart';
@@ -37,6 +38,12 @@ class ConversationUpdated extends RealtimeEvent {
   final Conversation conversation;
 }
 
+class NotificationReceived extends RealtimeEvent {
+  const NotificationReceived(this.notification);
+
+  final Notification notification;
+}
+
 /// The connection came back after a gap. Events may have been missed meanwhile, so
 /// whatever is on screen should be reloaded.
 class RealtimeReconnected extends RealtimeEvent {
@@ -63,15 +70,25 @@ RealtimeClient realtimeClient(Ref ref) {
 @Riverpod(keepAlive: true)
 Stream<RealtimeEvent> realtimeEvents(Ref ref) => ref.watch(realtimeClientProvider).events;
 
-/// Keeps the connection open exactly while someone is signed in. The signed-in part of
-/// the app watches this to switch it on.
+/// Keeps the connection open while someone is signed in and the app is on screen. The
+/// signed-in part of the app watches this to switch it on.
+///
+/// The connection closes when the app goes to the background: the server sends pushes
+/// only to users without one (docs/realtime.md).
 @Riverpod(keepAlive: true)
 void realtimeSession(Ref ref) {
   final signedIn = ref.watch(sessionControllerProvider.select((session) => session.value != null));
   final client = ref.watch(realtimeClientProvider);
   if (signedIn) {
     unawaited(client.start());
-    ref.onDispose(() => unawaited(client.stop()));
+    final lifecycle = AppLifecycleListener(
+      onHide: () => unawaited(client.stop()),
+      onShow: () => unawaited(client.start()),
+    );
+    ref.onDispose(() {
+      lifecycle.dispose();
+      unawaited(client.stop());
+    });
   }
 }
 
@@ -85,6 +102,7 @@ class SignalRRealtimeClient implements RealtimeClient {
   HubConnection? _connection;
   Timer? _retry;
   bool _wanted = false;
+  bool _connectedBefore = false;
 
   @override
   Stream<RealtimeEvent> get events => _events.stream;
@@ -92,7 +110,9 @@ class SignalRRealtimeClient implements RealtimeClient {
   @override
   Future<void> start() async {
     _wanted = true;
-    await _connect(announce: false);
+
+    // Starting again after a stop (the app came back to the screen) may have missed events.
+    await _connect(announce: _connectedBefore);
   }
 
   @override
@@ -139,6 +159,10 @@ class SignalRRealtimeClient implements RealtimeClient {
         'ConversationUpdated',
         (arguments) => _emit(arguments, (json) => ConversationUpdated(Conversation.fromJson(json))),
       )
+      ..on(
+        'NotificationReceived',
+        (arguments) => _emit(arguments, (json) => NotificationReceived(Notification.fromJson(json))),
+      )
       ..onreconnected(({connectionId}) => _events.add(const RealtimeReconnected()))
       ..onclose(({error}) {
         // Automatic reconnection gave up (or the server refused an expired token).
@@ -151,6 +175,7 @@ class SignalRRealtimeClient implements RealtimeClient {
     _connection = connection;
     try {
       await connection.start();
+      _connectedBefore = true;
       if (announce) {
         _events.add(const RealtimeReconnected());
       }

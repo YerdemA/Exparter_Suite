@@ -1,6 +1,8 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Notifications;
 using Exparter.Application.Sessions;
+using Exparter.Domain.Notifications;
 using Exparter.Domain.Reviews;
 using FluentValidation;
 using Mediator;
@@ -25,6 +27,9 @@ public interface IReviewRepository
     Task<IReadOnlyDictionary<Guid, RatingSummaryDto>> GetRatingsAsync(
         IReadOnlyCollection<Guid> userIds,
         CancellationToken cancellationToken);
+
+    /// <summary>Removes, for good, every review the user has received.</summary>
+    Task DeleteReceivedAsync(Guid revieweeId, CancellationToken cancellationToken);
 
     void Add(Review review);
 }
@@ -104,6 +109,7 @@ public sealed class CreateReviewCommandHandler(
     ISessionDirectory sessions,
     IReviewRepository reviews,
     ReviewDtoFactory dtoFactory,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<CreateReviewCommand, ReviewDto>
 {
@@ -128,6 +134,10 @@ public sealed class CreateReviewCommandHandler(
 
         var review = Review.Create(command.UserId, command.RevieweeId, sessionId, command.Rating, command.Comment, timeProvider.GetUtcNow());
         reviews.Add(review);
+        notifier.Notify(
+            review.RevieweeId,
+            NotificationType.ReviewReceived,
+            new NotificationData(ActorUserId: command.UserId, ReviewId: review.Id));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtoFactory.CreateAsync(review, cancellationToken);
     }
@@ -206,4 +216,14 @@ public sealed class GetReviewEligibilityQueryHandler(IUserDirectory users, ISess
             : null;
         return new ReviewEligibilityDto(reason is null, reason);
     }
+}
+
+/// <summary>
+/// An account is being erased: what others said about the user goes with it. What the
+/// user said about others stays, under the name of a deleted user.
+/// </summary>
+public sealed class RemoveReviewsOnAccountErased(IReviewRepository reviews) : INotificationHandler<AccountErased>
+{
+    public async ValueTask Handle(AccountErased notification, CancellationToken cancellationToken) =>
+        await reviews.DeleteReceivedAsync(notification.UserId, cancellationToken);
 }

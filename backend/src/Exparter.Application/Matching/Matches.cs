@@ -1,5 +1,8 @@
 using Exparter.Application.Common;
+using Exparter.Application.Identity;
+using Exparter.Application.Notifications;
 using Exparter.Domain.Matching;
+using Exparter.Domain.Notifications;
 using FluentValidation;
 using Mediator;
 
@@ -61,6 +64,7 @@ public sealed class ChangeMatchEndCommandHandler(
     IMatchRepository matches,
     MatchingDtoFactory dtos,
     IPublisher publisher,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ChangeMatchEndCommand, MatchDto>
 {
@@ -93,25 +97,39 @@ public sealed class ChangeMatchEndCommandHandler(
             await publisher.Publish(new MatchEnded(match.Id), cancellationToken);
         }
 
+        notifier.Notify(
+            match.OtherThan(command.UserId),
+            command.Action switch
+            {
+                MatchEndAction.Request => NotificationType.MatchEndRequested,
+                MatchEndAction.Withdraw => NotificationType.MatchEndRequestWithdrawn,
+                MatchEndAction.Accept => NotificationType.MatchEnded,
+                _ => NotificationType.MatchEndRequestRejected,
+            },
+            new NotificationData(ActorUserId: command.UserId, MatchId: match.Id, Deadline: match.EndRequestExpiresAt));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return await dtos.ToDtoAsync(match, command.UserId, cancellationToken);
     }
 }
 
-/// <summary>Records the deadlines that have passed: unanswered swap requests and end requests.</summary>
+/// <summary>
+/// Records the deadlines that have passed (unanswered swap requests and end requests)
+/// and reminds of the end requests about to take effect.
+/// </summary>
 public sealed record ProcessMatchingDeadlinesCommand : ICommand<int>;
 
 public sealed class ProcessMatchingDeadlinesCommandHandler(
     ISwapRequestRepository requests,
     IMatchRepository matches,
     IPublisher publisher,
+    IUserNotifier notifier,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : ICommandHandler<ProcessMatchingDeadlinesCommand, int>
 {
     /// <summary>Per run; whatever is left over is picked up by the next run.</summary>
     private const int BatchSize = 200;
 
-    /// <returns>How many requests and matches were updated.</returns>
+    /// <returns>How many requests and matches were updated, reminders included.</returns>
     public async ValueTask<int> Handle(ProcessMatchingDeadlinesCommand command, CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
@@ -119,6 +137,7 @@ public sealed class ProcessMatchingDeadlinesCommandHandler(
         foreach (var request in overdueRequests)
         {
             request.ExpireIfOverdue(now);
+            notifier.Notify(request.RequesterId, NotificationType.SwapRequestExpired, new NotificationData(SwapRequestId: request.Id));
         }
 
         var overdueMatches = await matches.ListWithOverdueEndRequestAsync(now, BatchSize, cancellationToken);
@@ -126,9 +145,80 @@ public sealed class ProcessMatchingDeadlinesCommandHandler(
         {
             match.EndIfEndRequestOverdue(now);
             await publisher.Publish(new MatchEnded(match.Id), cancellationToken);
+            foreach (var userId in new[] { match.UserAId, match.UserBId })
+            {
+                notifier.Notify(userId, NotificationType.MatchEnded, new NotificationData(MatchId: match.Id));
+            }
+        }
+
+        var reminded = 0;
+        foreach (var match in await matches.ListDueForEndReminderAsync(now, BatchSize, cancellationToken))
+        {
+            if (match.TakeDueEndReminder(now))
+            {
+                reminded++;
+                notifier.Notify(
+                    match.OtherThan(match.EndRequestedByUserId!.Value),
+                    NotificationType.MatchEndReminder,
+                    new NotificationData(
+                        ActorUserId: match.EndRequestedByUserId,
+                        MatchId: match.Id,
+                        Deadline: match.EndRequestExpiresAt));
+            }
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return overdueRequests.Count + overdueMatches.Count;
+        return overdueRequests.Count + overdueMatches.Count + reminded;
+    }
+}
+
+/// <summary>
+/// A user is leaving: their pending requests are withdrawn and their matches end, in
+/// the transaction that records the deletion request.
+/// </summary>
+public sealed class CloseMatchingOnAccountDeletion(
+    ISwapRequestRepository requests,
+    IMatchRepository matches,
+    IPublisher publisher,
+    IUserNotifier notifier,
+    TimeProvider timeProvider) : INotificationHandler<AccountDeletionRequested>
+{
+    public async ValueTask Handle(AccountDeletionRequested notification, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        var userId = notification.UserId;
+        foreach (var request in await requests.ListPendingOfUserAsync(userId, cancellationToken))
+        {
+            if (request.StatusAt(now) != SwapRequestStatus.Pending)
+            {
+                continue;
+            }
+
+            request.CancelBecauseAccountDeleted(now);
+
+            // The other user is told what it looked like from their side: a request they
+            // received was withdrawn, or one they sent was never answered.
+            if (request.RequesterId == userId)
+            {
+                notifier.Notify(
+                    request.RecipientId,
+                    NotificationType.SwapRequestCancelled,
+                    new NotificationData(ActorUserId: userId, SwapRequestId: request.Id));
+            }
+            else
+            {
+                notifier.Notify(request.RequesterId, NotificationType.SwapRequestExpired, new NotificationData(SwapRequestId: request.Id));
+            }
+        }
+
+        foreach (var match in await matches.ListOpenOfUserAsync(userId, cancellationToken))
+        {
+            match.EndBecauseAccountDeleted(now);
+            await publisher.Publish(new MatchEnded(match.Id), cancellationToken);
+            notifier.Notify(
+                match.OtherThan(userId),
+                NotificationType.MatchEnded,
+                new NotificationData(ActorUserId: userId, MatchId: match.Id));
+        }
     }
 }

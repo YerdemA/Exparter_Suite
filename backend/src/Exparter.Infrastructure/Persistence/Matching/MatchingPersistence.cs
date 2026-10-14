@@ -61,6 +61,11 @@ internal sealed class SwapRequestRepository(AppDbContext dbContext) : ISwapReque
                     || (x.RequesterId == secondUserId && x.RecipientId == firstUserId)),
             cancellationToken);
 
+    public async Task<IReadOnlyList<SwapRequest>> ListPendingOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        await dbContext.SwapRequests
+            .Where(x => x.Status == SwapRequestStatus.Pending && (x.RequesterId == userId || x.RecipientId == userId))
+            .ToListAsync(cancellationToken);
+
     public Task<SwapRequest?> FindLastRefusedAsync(Guid requesterId, Guid recipientId, CancellationToken cancellationToken) =>
         dbContext.SwapRequests.AsNoTracking()
             .Where(x => x.RequesterId == requesterId
@@ -138,12 +143,30 @@ internal sealed class MatchRepository(AppDbContext dbContext) : IMatchRepository
     public async Task<IReadOnlyList<Match>> ListAllAsync(Guid userId, CancellationToken cancellationToken) =>
         await dbContext.Matches.AsNoTracking().Where(x => x.UserAId == userId || x.UserBId == userId).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Match>> ListOpenOfUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        await dbContext.Matches
+            .Where(x => x.Status != MatchStatus.Ended && (x.UserAId == userId || x.UserBId == userId))
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<Match>> ListWithOverdueEndRequestAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
         await dbContext.Matches
             .Where(x => x.Status == MatchStatus.EndRequested && x.EndRequestExpiresAt <= now)
             .OrderBy(x => x.EndRequestExpiresAt)
             .Take(limit)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Match>> ListDueForEndReminderAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken)
+    {
+        var horizon = now + Match.EndReminderLeadTime;
+        return await dbContext.Matches
+            .Where(x => x.Status == MatchStatus.EndRequested
+                && x.EndReminderSentAt == null
+                && x.EndRequestExpiresAt > now
+                && x.EndRequestExpiresAt <= horizon)
+            .OrderBy(x => x.EndRequestExpiresAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
 
     public Task<bool> UsesOfferedSkillAsync(Guid userId, Guid skillId, CancellationToken cancellationToken) =>
         dbContext.Matches.AnyAsync(

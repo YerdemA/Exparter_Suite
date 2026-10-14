@@ -47,6 +47,11 @@ class ApiAuthRepository implements AuthRepository {
   Future<Account> getAccount() => guardApiCall(_api.account.getAccount);
 
   @override
+  Future<void> requestAccountDeletion({required String password}) => guardApiCall(
+        () => _api.account.requestAccountDeletion(body: AccountDeletionRequest(password: password)),
+      );
+
+  @override
   Future<void> requestEmailVerification() => guardApiCall(_api.auth.requestEmailVerification);
 
   @override
