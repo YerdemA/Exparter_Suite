@@ -7,6 +7,7 @@ import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/core/realtime/realtime_client.dart';
 import 'package:exparter/core/theme/app_theme.dart';
+import 'package:exparter/core/theme/theme_mode_setting.dart';
 import 'package:exparter/features/auth/domain/auth_repository.dart';
 import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/matches/domain/match_repository.dart';
@@ -294,4 +295,14 @@ class FakePushClient implements PushClient {
 
   @override
   Stream<Map<String, String>> get taps => tapController.stream;
+}
+
+class InMemoryThemeModeStore implements ThemeModeStore {
+  ThemeMode? value;
+
+  @override
+  Future<ThemeMode?> read() async => value;
+
+  @override
+  Future<void> write(ThemeMode mode) async => value = mode;
 }

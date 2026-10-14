@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AppPalette.indigoDeep, indigo and turquoiseDeep, as in the app's header. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="315"
+        android:startColor="#FF3730A3"
+        android:centerColor="#FF4F46E5"
+        android:endColor="#FF0E7C7B" />
+</shape>

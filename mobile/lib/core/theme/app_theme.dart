@@ -51,24 +51,81 @@ extension AppThemeContext on BuildContext {
 }
 
 abstract final class AppTheme {
-  static ThemeData light() {
-    const scheme = ColorScheme(
-      brightness: Brightness.light,
-      primary: AppPalette.pink,
-      onPrimary: AppPalette.white,
-      secondary: AppPalette.purple,
-      onSecondary: AppPalette.white,
-      tertiary: AppPalette.turquoise,
-      onTertiary: AppPalette.white,
-      error: AppPalette.danger,
-      onError: AppPalette.white,
-      surface: AppPalette.surface,
-      onSurface: AppPalette.ink,
-      onSurfaceVariant: AppPalette.inkMuted,
-      surfaceContainerHighest: AppPalette.surfaceTint,
-      outline: AppPalette.outline,
-    );
+  static ThemeData light() => _build(
+        // The seed fills the roles not set below (containers of primary and the like) in
+        // tones of the brand indigo; the brand colors themselves are set exactly.
+        ColorScheme.fromSeed(seedColor: AppPalette.indigo).copyWith(
+          primary: AppPalette.indigo,
+          onPrimary: AppPalette.white,
+          secondary: AppPalette.turquoise,
+          // Dark text: white on this turquoise is too faint to read.
+          onSecondary: AppPalette.turquoiseInk,
+          tertiary: AppPalette.amber,
+          onTertiary: AppPalette.amberInk,
+          error: AppPalette.danger,
+          onError: AppPalette.white,
+          surface: AppPalette.background,
+          onSurface: AppPalette.ink,
+          onSurfaceVariant: AppPalette.inkMuted,
+          surfaceContainerLowest: AppPalette.white,
+          surfaceContainerLow: AppPalette.white,
+          surfaceContainer: AppPalette.container,
+          surfaceContainerHigh: AppPalette.containerHigh,
+          surfaceContainerHighest: AppPalette.containerHighest,
+          outline: AppPalette.outline,
+          outlineVariant: AppPalette.outlineSoft,
+        ),
+        const AppBrandColors(
+          // The header fills the upper half of the sign-in screens; ending at the right
+          // edge keeps the turquoise end in view.
+          heroGradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.centerRight,
+            colors: [AppPalette.indigoDeep, AppPalette.indigo, AppPalette.turquoiseDeep],
+            stops: [0, 0.45, 1],
+          ),
+          onHero: AppPalette.white,
+          success: AppPalette.turquoiseDeep,
+          warning: AppPalette.amber,
+        ),
+      );
 
+  static ThemeData dark() => _build(
+        ColorScheme.fromSeed(seedColor: AppPalette.indigo, brightness: Brightness.dark).copyWith(
+          primary: AppPalette.indigoLight,
+          onPrimary: AppPalette.indigoInk,
+          secondary: AppPalette.turquoiseLight,
+          onSecondary: AppPalette.turquoiseInk,
+          tertiary: AppPalette.amberLight,
+          onTertiary: AppPalette.amberInk,
+          error: AppPalette.dangerLight,
+          onError: AppPalette.dangerInk,
+          surface: AppPalette.night,
+          onSurface: AppPalette.nightInk,
+          onSurfaceVariant: AppPalette.nightInkMuted,
+          surfaceContainerLowest: AppPalette.nightLowest,
+          surfaceContainerLow: AppPalette.nightSurface,
+          surfaceContainer: AppPalette.nightContainer,
+          surfaceContainerHigh: AppPalette.nightContainerHigh,
+          surfaceContainerHighest: AppPalette.nightContainerHighest,
+          outline: AppPalette.nightOutline,
+          outlineVariant: AppPalette.nightOutlineSoft,
+        ),
+        const AppBrandColors(
+          // Deeper than in the light theme, so the header does not glare on a dark screen.
+          heroGradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.centerRight,
+            colors: [AppPalette.indigoInk, AppPalette.indigoDeep, AppPalette.turquoiseInk],
+            stops: [0, 0.5, 1],
+          ),
+          onHero: AppPalette.white,
+          success: AppPalette.turquoiseLight,
+          warning: AppPalette.amberLight,
+        ),
+      );
+
+  static ThemeData _build(ColorScheme scheme, AppBrandColors brand) {
     final base = ThemeData(colorScheme: scheme, useMaterial3: true);
     final text = base.textTheme.apply(
       bodyColor: scheme.onSurface,
@@ -86,9 +143,17 @@ abstract final class AppTheme {
         titleLarge: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         labelLarge: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
       ),
+      cardTheme: CardThemeData(
+        color: scheme.surfaceContainerLow,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerHighest,
+        fillColor: scheme.surfaceContainerHigh,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.md,
@@ -123,19 +188,7 @@ abstract final class AppTheme {
           ),
         ),
       ),
-      extensions: const [
-        AppBrandColors(
-          heroGradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppPalette.purple, AppPalette.pink, AppPalette.coral, AppPalette.amber],
-            stops: [0, 0.45, 0.8, 1],
-          ),
-          onHero: AppPalette.white,
-          success: AppPalette.turquoise,
-          warning: AppPalette.amber,
-        ),
-      ],
+      extensions: [brand],
     );
   }
 }
