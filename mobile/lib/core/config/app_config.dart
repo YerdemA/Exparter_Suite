@@ -7,4 +7,8 @@ abstract final class AppConfig {
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:5244',
   );
+
+  /// Where crashes are reported (ADR 0013); set with `--dart-define=SENTRY_DSN=...`.
+  /// Empty, nothing is reported, as in development and tests.
+  static const sentryDsn = String.fromEnvironment('SENTRY_DSN');
 }

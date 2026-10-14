@@ -15,14 +15,47 @@ using Exparter.Application.Common;
 using Exparter.Infrastructure;
 using Exparter.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Sentry.Extensibility;
 using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, configuration) => configuration
-    .ReadFrom.Configuration(context.Configuration)
-    .Enrich.FromLogContext()
-    .WriteTo.Console());
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+
+        // Errors become Sentry events, with the lines logged before them as breadcrumbs.
+        // Without a DSN Sentry is off and this sink does nothing (ADR 0013).
+        .WriteTo.Sentry(sentry =>
+        {
+            sentry.InitializeSdk = false;
+            sentry.MinimumEventLevel = LogEventLevel.Error;
+            sentry.MinimumBreadcrumbLevel = LogEventLevel.Information;
+        });
+
+    // Readable lines while developing; one JSON object per line elsewhere, with the trace
+    // id that problem details carry, so that a reported error leads to its log lines.
+    if (context.HostingEnvironment.IsDevelopment())
+    {
+        configuration.WriteTo.Console();
+    }
+    else
+    {
+        configuration.WriteTo.Console(new RenderedCompactJsonFormatter());
+    }
+});
+
+builder.WebHost.UseSentry(sentry =>
+{
+    // The DSN comes from configuration (Sentry:Dsn); without it nothing is sent.
+    sentry.SendDefaultPii = false;
+    sentry.MaxRequestBodySize = RequestSize.None;
+    sentry.TracesSampleRate = 0;
+});
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -72,6 +105,7 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseBodySizeLimit();
 app.UseAuthentication();
+app.UseErrorReportUser();
 app.UseAuthorization();
 
 // After authentication: signed-in users are limited per account, others per address.
