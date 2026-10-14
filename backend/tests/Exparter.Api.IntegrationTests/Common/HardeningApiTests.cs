@@ -118,6 +118,15 @@ public class HardeningApiTests(StrictRateLimitFixture fixture) : IClassFixture<S
     }
 
     [Fact]
+    public async Task An_error_carries_the_trace_id_that_leads_to_its_log_lines()
+    {
+        var response = await _client.GetAsync("/api/v1/me");
+
+        var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Matches("^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$", problem.GetProperty("traceId").GetString());
+    }
+
+    [Fact]
     public async Task An_oversized_body_is_refused_before_it_is_read()
     {
         var response = await _client.PostAsJsonAsync(

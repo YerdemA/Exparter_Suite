@@ -12,7 +12,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
-| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–4 tamamlandı |
+| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -240,7 +240,7 @@ Plan 2026-10-14'te onaylandı. Her dilim kendi branch'inde (`phase-6/<n>-<konu>`
 | 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Tamamlandı (2026-10-14) |
 | 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Tamamlandı (2026-10-14) |
 | 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Tamamlandı (2026-10-14) |
-| 5 | Hata izleme ve kayıtlar | Başlamadı |
+| 5 | Hata izleme ve kayıtlar | Tamamlandı (2026-10-14) |
 | 6 | Canlı ortam ve Google Play kapalı test sürümü | Başlamadı |
 
 Kararlar (kullanıcı, 2026-10-14):
@@ -305,6 +305,31 @@ Kararlar (kullanıcı, 2026-10-14): engellenen kişi engellendiğini görmez; as
 - Mobil: avatarlar önbelleğe alınıyor (`cached_network_image` 4.0.4). İmzalı adres her yanıtta değiştiği için önbellek anahtarı adresin imzasız halidir; yeni yükleme yeni nesne anahtarı aldığından eski fotoğraf gösterilmez.
 - Testler (2026-10-14): backend 509 (169 domain, 232 uygulama, 108 entegrasyon), mobil 217.
 - Bilinen sınırlar: süzgeçsiz keşfet tüm adayları sıraladığı için kullanıcı sayısıyla doğrusal büyür (10 000 kullanıcıda tek başına yaklaşık 145 ms). Kullanıcı sayısı onlarca bine çıktığında sıralamanın önceden hesaplanması gerekir (ADR 0011). Ad araması index kullanmaz (`pg_trgm` aynı ADR'de not edildi). Avatar önbelleği telefonda bir fotoğrafla elle denenmedi; davranışı birim testiyle doğrulandı.
+
+### Dilim 5 — Hata izleme ve kayıtlar
+
+Karar (kullanıcı, 2026-10-14): Sentry, AB veri bölgesi. Gerekçe ve kurallar: ADR 0013.
+
+- Backend: hata seviyesindeki loglar (yakalanmayan istisnalar, arka plan işlerinin, e-posta ve push gönderiminin hataları) Sentry olayı olur; öncesindeki loglar iz olarak eklenir. Kullanıcıdan yalnızca kimliği gider; IP, başlık ve gövde gitmez. Performans izleme kapalı.
+- Kayıtlar: geliştirmede metin, diğer ortamlarda satır başına JSON. Hata yanıtındaki `traceId` kayıtlardaki iz kimliğiyle aynıdır.
+- Mobil: yakalanmayan hatalar ve çökmeler Sentry'ye gider; kullanıcıdan yalnızca kimliği.
+- DSN yokken Sentry kapalıdır (CI, testler, DSN'siz lokal çalıştırma).
+- Paketler: Sentry.AspNetCore 6.12.1, Sentry.Serilog 6.12.1, Serilog.Formatting.Compact 3.0.0, sentry_flutter 9.30.1 (10.x Android 8 ve üstünü istiyor; uygulama Android 7.0 ve üstünü desteklediği için 9.x seçildi).
+- Testler (2026-10-14): backend 510 (169 domain, 232 uygulama, 109 entegrasyon), mobil 218.
+- Sentry: `exparter` kuruluşu (AB bölgesi, `de.sentry.io`), projeler `exparter-api` (ASP.NET Core) ve `exparter-mobile` (Flutter). Uçtan uca doğrulandı (2026-10-14): Mailpit durdurulunca e-posta gönderim hatası `EXPARTER-API-1` olarak, `adb shell am crash` ile çökertilen uygulama `EXPARTER-MOBILE-1` olarak geldi; ikisinde de kullanıcıdan yalnızca kimliği vardı. İki deneme kaydı çözüldü olarak işaretlendi.
+- IP saklama kuruluş ayarlarında kapatıldı (kullanıcı, 2026-10-14).
+- Kalan (dilim 6): Release derlemesinde Android eşleme dosyalarının (R8) Sentry'ye yüklenmesi; ortam ve sürüm etiketlerinin canlı ortamda ayarlanması.
+
+#### Sentry için lokal ayar
+
+```powershell
+dotnet user-secrets set --project src/Exparter.Api "Sentry:Dsn" "<exparter-api projesinin DSN'i>"
+flutter run --dart-define=SENTRY_DSN=<exparter-mobile projesinin DSN'i>
+```
+
+DSN'ler Sentry'de proje ayarlarında, "Client Keys (DSN)" altında. Mobil DSN uygulamaya gömülür ve Sentry'ye göre gizli değildir; backend DSN'i yine de user-secrets'ta tutulur.
+
+IP saklamayı kapatmak için: Sentry → Settings → Organization (`exparter`) → Security & Privacy → "Prevent Storing of IP Addresses" açık.
 
 ## Geliştirme ortamı
 
