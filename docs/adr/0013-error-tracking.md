@@ -24,4 +24,4 @@ Seçenekler: Sentry (hizmet), GlitchTip (Sentry SDK'larıyla uyumlu, kendi sunuc
 - Uygulama IP adresi göndermese de Sentry, olayı gönderen bağlantının adresinden konum çıkarır; mobilde bu kullanıcının konumudur. Kuruluş ayarlarında "Prevent Storing of IP Addresses" açık tutulur.
 - Sentry'nin ücretsiz planında aylık olay sınırı vardır; aşılırsa fazlası atılır. Kapalı testte yeterlidir, yayından önce kullanım yeniden değerlendirilir.
 - GlitchTip'e geçmek yalnızca DSN değişikliğidir; SDK'lar aynı kalır.
-- JSON kayıtların nerede toplanacağı canlı ortamla birlikte (dilim 6) seçilir.
+- JSON kayıtlar sunucuda Docker'ın kayıt dosyalarında, konteyner başına boyut sınırıyla tutulur ve `docker compose logs api` ile okunur; kapalı testte merkezi kayıt servisi yok (ADR 0014). (2026-10-14'te güncellendi.)

@@ -1,0 +1,70 @@
+/* The palette of the app (mobile/lib/core/theme/app_tokens.dart). */
+:root {
+  --ink: #1e1b3a;
+  --muted: #5b5e78;
+  --primary: #4f46e5;
+  --background: #f8f9fc;
+  --outline: #e2e4ef;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e6e6f0;
+    --muted: #a6a8c0;
+    --primary: #a5b4fc;
+    --background: #0f1020;
+    --outline: #2c2e46;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--ink);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+a {
+  color: var(--primary);
+}
+
+h1 {
+  line-height: 1.25;
+}
+
+h2 {
+  margin-top: 2rem;
+  font-size: 1.2rem;
+}
+
+.meta,
+footer {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--outline);
+  text-align: left;
+  vertical-align: top;
+}
+
+footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--outline);
+}
