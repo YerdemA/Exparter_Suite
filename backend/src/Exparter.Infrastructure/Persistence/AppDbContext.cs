@@ -2,6 +2,7 @@ using Exparter.Application.Common;
 using Exparter.Domain.Identity;
 using Exparter.Domain.Matching;
 using Exparter.Domain.Messaging;
+using Exparter.Domain.Moderation;
 using Exparter.Domain.Notifications;
 using Exparter.Domain.Reviews;
 using Exparter.Domain.Sessions;
@@ -37,6 +38,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Device> Devices => Set<Device>();
+    public DbSet<Block> Blocks => Set<Block>();
+    public DbSet<Report> Reports => Set<Report>();
 
     async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {

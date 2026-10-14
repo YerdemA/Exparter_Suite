@@ -1,3 +1,4 @@
+using Exparter.Application.Moderation;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Profiles;
@@ -55,12 +56,19 @@ internal sealed class FakeReviewDirectory : Exparter.Application.Reviews.IReview
 {
     public Dictionary<Guid, RatingSummaryDto> Ratings { get; } = [];
 
+    public Dictionary<Guid, Exparter.Application.Reviews.ReviewInfo> Reviews { get; } = [];
+
     public Task<RatingSummaryDto> GetRatingAsync(Guid userId, CancellationToken cancellationToken) =>
         Task.FromResult(Ratings.GetValueOrDefault(userId, RatingSummaryDto.None));
+
+    public Task<Exparter.Application.Reviews.ReviewInfo?> FindAsync(Guid reviewId, CancellationToken cancellationToken) =>
+        Task.FromResult(Reviews.GetValueOrDefault(reviewId));
 }
 
 public class ProfileHandlerTests
 {
+    private readonly Guid _viewerId = Guid.NewGuid();
+    private readonly Moderation.InMemoryBlocks _blocks = new();
     private readonly Guid _userId = Guid.NewGuid();
     private readonly InMemoryProfiles _profiles = new();
     private readonly FakeObjectStorage _storage = new();
@@ -159,16 +167,16 @@ public class ProfileHandlerTests
         AddProfile(complete);
         _users.Users[_userId] = new UserInfo(_userId, "ayse", IsActive: true, IsEmailVerified: false);
 
-        var dto = await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
-            .Handle(new GetUserProfileQuery(_userId), CancellationToken.None);
+        var dto = await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews, new BlockDirectory(_blocks))
+            .Handle(new GetUserProfileQuery(_viewerId, _userId), CancellationToken.None);
 
         Assert.Equal("ayse", dto.Username);
         Assert.Equal(displayName, dto.DisplayName);
         Assert.Equal(RatingSummaryDto.None, dto.Rating);
 
         _reviews.Ratings[_userId] = new RatingSummaryDto(3, 8.5);
-        var rated = await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
-            .Handle(new GetUserProfileQuery(_userId), CancellationToken.None);
+        var rated = await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews, new BlockDirectory(_blocks))
+            .Handle(new GetUserProfileQuery(_viewerId, _userId), CancellationToken.None);
         Assert.Equal(new RatingSummaryDto(3, 8.5), rated.Rating);
     }
 
@@ -179,8 +187,8 @@ public class ProfileHandlerTests
         _users.Users[_userId] = new UserInfo(_userId, "ayse", IsActive: false, IsEmailVerified: true);
 
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
-                .Handle(new GetUserProfileQuery(_userId), CancellationToken.None));
+            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews, new BlockDirectory(_blocks))
+                .Handle(new GetUserProfileQuery(_viewerId, _userId), CancellationToken.None));
 
         Assert.Equal(AppErrorKind.NotFound, exception.Kind);
     }
@@ -189,8 +197,8 @@ public class ProfileHandlerTests
     public async Task Public_profile_of_an_unknown_user_is_not_found()
     {
         var exception = await Assert.ThrowsAsync<AppException>(
-            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews)
-                .Handle(new GetUserProfileQuery(Guid.NewGuid()), CancellationToken.None));
+            async () => await new GetUserProfileQueryHandler(_profiles, _users, _storage, _reviews, new BlockDirectory(_blocks))
+                .Handle(new GetUserProfileQuery(_viewerId, Guid.NewGuid()), CancellationToken.None));
 
         Assert.Equal(AppErrorKind.NotFound, exception.Kind);
     }

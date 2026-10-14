@@ -122,6 +122,13 @@ internal sealed class MatchRepository(AppDbContext dbContext) : IMatchRepository
     public Task<Match?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Matches.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<Match?> FindOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken) =>
+        dbContext.Matches.FirstOrDefaultAsync(
+            x => x.Status != MatchStatus.Ended
+                && ((x.UserAId == firstUserId && x.UserBId == secondUserId)
+                    || (x.UserAId == secondUserId && x.UserBId == firstUserId)),
+            cancellationToken);
+
     public Task<bool> HasOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken) =>
         dbContext.Matches.AnyAsync(
             x => x.Status != MatchStatus.Ended

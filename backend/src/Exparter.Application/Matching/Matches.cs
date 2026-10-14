@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Moderation;
 using Exparter.Application.Notifications;
 using Exparter.Domain.Matching;
 using Exparter.Domain.Notifications;
@@ -219,6 +220,31 @@ public sealed class CloseMatchingOnAccountDeletion(
                 match.OtherThan(userId),
                 NotificationType.MatchEnded,
                 new NotificationData(ActorUserId: userId, MatchId: match.Id));
+        }
+    }
+}
+
+/// <summary>
+/// A block withdraws the requests waiting between the two users and ends their match,
+/// in the block's own transaction. Nobody is notified: the blocked user is not to learn
+/// of the block, and the blocker knows.
+/// </summary>
+public sealed class CloseMatchingOnBlock(
+    ISwapRequestRepository requests,
+    IMatchRepository matches,
+    IPublisher publisher,
+    TimeProvider timeProvider) : INotificationHandler<UserBlocked>
+{
+    public async ValueTask Handle(UserBlocked notification, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        var pending = await requests.FindPendingBetweenAsync(notification.BlockerId, notification.BlockedId, cancellationToken);
+        pending?.CancelBecauseBlocked(now);
+
+        if (await matches.FindOpenBetweenAsync(notification.BlockerId, notification.BlockedId, cancellationToken) is { } match)
+        {
+            match.EndBecauseBlocked(notification.BlockerId, now);
+            await publisher.Publish(new MatchEnded(match.Id), cancellationToken);
         }
     }
 }

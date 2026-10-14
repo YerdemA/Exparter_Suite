@@ -3,6 +3,7 @@ using Exparter.Api.Common;
 using Exparter.Api.Identity;
 using Exparter.Api.Matching;
 using Exparter.Api.Messaging;
+using Exparter.Api.Moderation;
 using Exparter.Api.Notifications;
 using Exparter.Application.Notifications;
 using Exparter.Api.Reviews;
@@ -49,6 +50,7 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, Subj
 builder.Services.AddSingleton<IRealtimeNotifier, SignalRRealtimeNotifier>();
 builder.Services.AddSingleton<ConnectionRegistry>();
 builder.Services.AddSingleton<IUserPresence>(services => services.GetRequiredService<ConnectionRegistry>());
+builder.Services.AddSingleton<IRealtimeConnections>(services => services.GetRequiredService<ConnectionRegistry>());
 builder.Services.AddSingleton<PushQueue>();
 builder.Services.AddSingleton<IPushQueue>(services => services.GetRequiredService<PushQueue>());
 builder.Services.AddHostedService<PushWorker>();
@@ -73,6 +75,7 @@ api.MapConversationEndpoints();
 api.MapSessionEndpoints();
 api.MapReviewEndpoints();
 api.MapNotificationEndpoints();
+api.MapModerationEndpoints();
 app.MapHub<RealtimeHub>(RealtimeHub.Path);
 
 if (app.Environment.IsDevelopment())

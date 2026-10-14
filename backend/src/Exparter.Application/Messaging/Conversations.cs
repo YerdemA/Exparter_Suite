@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using Exparter.Application.Common;
 using Exparter.Application.Matching;
+using Exparter.Application.Moderation;
 using Exparter.Application.Notifications;
 using Exparter.Domain.Messaging;
 using FluentValidation;
@@ -58,8 +59,14 @@ public interface IConversationRepository
 }
 
 /// <summary>What other modules may know about conversations.</summary>
+/// <summary>A message as a report sees it.</summary>
+public sealed record MessageInfo(Guid Id, Guid SenderId, string Body);
+
 public interface IConversationDirectory
 {
+    /// <summary>A message, if <paramref name="userId"/> is one of the two users of its conversation.</summary>
+    Task<MessageInfo?> FindMessageAsync(Guid messageId, Guid userId, CancellationToken cancellationToken);
+
     /// <inheritdoc cref="IConversationRepository.FindIdsByOtherUserAsync"/>
     Task<IReadOnlyDictionary<Guid, Guid>> FindIdsByOtherUserAsync(
         Guid userId,
@@ -69,6 +76,18 @@ public interface IConversationDirectory
 
 internal sealed class ConversationDirectory(IConversationRepository conversations) : IConversationDirectory
 {
+    public async Task<MessageInfo?> FindMessageAsync(Guid messageId, Guid userId, CancellationToken cancellationToken)
+    {
+        if ((await conversations.ListMessagesByIdsAsync([messageId], cancellationToken)).SingleOrDefault() is not { } message
+            || await conversations.GetByIdAsync(message.ConversationId, cancellationToken) is not { } conversation
+            || !conversation.IsParticipant(userId))
+        {
+            return null;
+        }
+
+        return new MessageInfo(message.Id, message.SenderId, message.Body);
+    }
+
     public Task<IReadOnlyDictionary<Guid, Guid>> FindIdsByOtherUserAsync(
         Guid userId,
         IReadOnlyCollection<Guid> otherUserIds,
@@ -392,5 +411,16 @@ public sealed class CloseConversationsOnAccountDeletion(IConversationRepository 
         {
             conversation.CloseBecauseAccountDeleted(notification.UserId, now);
         }
+    }
+}
+
+/// <summary>A block closes the conversation of the two users in the block's own transaction.</summary>
+public sealed class CloseConversationOnBlock(IConversationRepository conversations, TimeProvider timeProvider)
+    : INotificationHandler<UserBlocked>
+{
+    public async ValueTask Handle(UserBlocked notification, CancellationToken cancellationToken)
+    {
+        var conversation = await conversations.FindByUsersAsync(notification.BlockerId, notification.BlockedId, cancellationToken);
+        conversation?.CloseBecauseBlocked(notification.BlockerId, timeProvider.GetUtcNow());
     }
 }

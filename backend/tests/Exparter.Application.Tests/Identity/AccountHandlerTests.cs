@@ -107,6 +107,7 @@ public class RequestAccountDeletionCommandHandlerTests
         _context.RefreshTokens,
         _context.Hasher,
         _context.Publisher,
+        new Moderation.RecordingConnections(),
         _context.UnitOfWork,
         _context.Clock);
 

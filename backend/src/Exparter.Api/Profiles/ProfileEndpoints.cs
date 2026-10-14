@@ -51,8 +51,8 @@ internal static class ProfileEndpoints
             return Results.NoContent();
         });
 
-        routes.MapGet("/users/{userId}", async (Guid userId, ISender sender, CancellationToken cancellationToken) =>
-            Results.Ok(await sender.Send(new GetUserProfileQuery(userId), cancellationToken)))
+        routes.MapGet("/users/{userId}", async (Guid userId, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
+            Results.Ok(await sender.Send(new GetUserProfileQuery(user.GetUserId(), userId), cancellationToken)))
             .RequireAuthorization();
 
         // A fixed reference list: nothing to look up, so it does not go through the mediator.

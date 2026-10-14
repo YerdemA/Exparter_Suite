@@ -45,13 +45,7 @@ internal sealed class IdentityTestContext
         return opaque.Value;
     }
 
-    /// <summary>
-    /// Suspension has no use case yet (an operator sets it in the database), so tests
-    /// reach the state the same way: from outside the domain model.
-    /// </summary>
-    public static void Suspend(User user) =>
-        typeof(User).GetProperty(nameof(User.Status), BindingFlags.Instance | BindingFlags.Public)!
-            .SetValue(user, UserStatus.Suspended);
+    public static void Suspend(User user) => user.Suspend();
 }
 
 internal sealed class TestClock : TimeProvider

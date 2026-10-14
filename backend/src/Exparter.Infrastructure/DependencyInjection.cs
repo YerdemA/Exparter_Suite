@@ -2,6 +2,7 @@ using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
+using Exparter.Application.Moderation;
 using Exparter.Application.Notifications;
 using Exparter.Application.Reviews;
 using Exparter.Application.Sessions;
@@ -14,6 +15,7 @@ using Exparter.Infrastructure.Persistence;
 using Exparter.Infrastructure.Persistence.Identity;
 using Exparter.Infrastructure.Persistence.Matching;
 using Exparter.Infrastructure.Persistence.Messaging;
+using Exparter.Infrastructure.Persistence.Moderation;
 using Exparter.Infrastructure.Persistence.Notifications;
 using Exparter.Infrastructure.Persistence.Reviews;
 using Exparter.Infrastructure.Persistence.Sessions;
@@ -69,6 +71,8 @@ public static class DependencyInjection
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();
+        services.AddScoped<IBlockRepository, BlockRepository>();
+        services.AddScoped<IReportRepository, ReportRepository>();
 
         services.AddOptions<StorageOptions>()
             .Bind(configuration.GetSection(StorageOptions.SectionName))

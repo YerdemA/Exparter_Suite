@@ -18,6 +18,11 @@ internal sealed class InMemorySessions : ISessionRepository
     public Task<SwapSession?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
 
+    public Task<PagedList<SwapSession>> ListCancelledByUsersAsync(PageRequest page, CancellationToken cancellationToken) =>
+        Task.FromResult(Paged(
+            Items.Where(x => x.Status == SwapSessionStatus.Cancelled && x.CancelReason is not null).OrderByDescending(x => x.CancelledAt),
+            page));
+
     public Task<PagedList<SwapSession>> ListByMatchAsync(Guid matchId, PageRequest page, CancellationToken cancellationToken) =>
         Task.FromResult(Paged(Items.Where(x => x.MatchId == matchId), page));
 

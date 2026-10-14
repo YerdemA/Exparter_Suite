@@ -1,3 +1,4 @@
+using Exparter.Application.Moderation;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using AccountDeletionRequested = Exparter.Application.Identity.AccountDeletionRequested;
@@ -71,6 +72,9 @@ internal sealed class InMemoryMatches : IMatchRepository
 
     public Task<Match?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
+
+    public Task<Match?> FindOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken) =>
+        Task.FromResult(Items.FirstOrDefault(x => x.Status != MatchStatus.Ended && x.IsParticipant(firstUserId) && x.IsParticipant(secondUserId)));
 
     public Task<bool> HasOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken) =>
         Task.FromResult(Items.Any(x => x.Status != MatchStatus.Ended && x.IsParticipant(firstUserId) && x.IsParticipant(secondUserId)));
@@ -220,7 +224,9 @@ public class MatchingHandlerTests
     }
 
     private SendSwapRequestCommandHandler SendHandler =>
-        new(_requirements, _users, _skills, _requests, _matches, _dtos, _notifier, _unitOfWork, _clock);
+        new(_requirements, _users, _skills, new BlockDirectory(Blocks), _requests, _matches, _dtos, _notifier, _unitOfWork, _clock);
+
+    internal Moderation.InMemoryBlocks Blocks { get; } = new();
 
     /// <summary>Ali offers the guitar and asks Ayşe for Spanish.</summary>
     private Task<SwapRequestDto> SendAsync(string? message = null) =>

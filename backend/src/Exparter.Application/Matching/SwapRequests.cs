@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Moderation;
 using Exparter.Application.Notifications;
 using Exparter.Application.Skills;
 using Exparter.Domain.Matching;
@@ -31,6 +32,7 @@ public sealed class SendSwapRequestCommandHandler(
     IInteractionRequirements requirements,
     IUserDirectory users,
     IUserSkillDirectory skills,
+    IBlockDirectory blocks,
     ISwapRequestRepository requests,
     IMatchRepository matches,
     MatchingDtoFactory dtos,
@@ -49,6 +51,8 @@ public sealed class SendSwapRequestCommandHandler(
             {
                 throw MatchingAppErrors.RecipientNotFound();
             }
+
+            await blocks.EnsureNotBlockedAsync(command.UserId, command.RecipientId, cancellationToken);
 
             if (!await skills.OffersSkillAsync(command.UserId, command.OfferedSkillId, cancellationToken)
                 || !await skills.OffersSkillAsync(command.RecipientId, command.RequestedSkillId, cancellationToken))

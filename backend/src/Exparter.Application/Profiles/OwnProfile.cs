@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Moderation;
 using Exparter.Application.Reviews;
 using Exparter.Domain.Profiles;
 using FluentValidation;
@@ -96,13 +97,14 @@ public sealed class UpdateOwnProfileCommandHandler(
     }
 }
 
-public sealed record GetUserProfileQuery(Guid UserId) : IQuery<PublicProfileDto>;
+public sealed record GetUserProfileQuery(Guid ViewerId, Guid UserId) : IQuery<PublicProfileDto>;
 
 public sealed class GetUserProfileQueryHandler(
     IProfileRepository profiles,
     IUserDirectory users,
     IObjectStorage storage,
-    IReviewDirectory reviews) : IQueryHandler<GetUserProfileQuery, PublicProfileDto>
+    IReviewDirectory reviews,
+    IBlockDirectory blocks) : IQueryHandler<GetUserProfileQuery, PublicProfileDto>
 {
     public async ValueTask<PublicProfileDto> Handle(GetUserProfileQuery query, CancellationToken cancellationToken)
     {
@@ -110,8 +112,11 @@ public sealed class GetUserProfileQueryHandler(
         var profile = user is null ? null : await profiles.GetByUserIdAsync(query.UserId, cancellationToken);
 
         // Anyone active can be looked up, whether or not they can interact yet; only
-        // suspended and leaving accounts answer like an unknown id.
-        if (user is not { IsActive: true } || profile is null)
+        // suspended and leaving accounts, and the other side of a block, answer like an
+        // unknown id.
+        if (user is not { IsActive: true }
+            || profile is null
+            || await blocks.GetRelationAsync(query.ViewerId, query.UserId, cancellationToken) != BlockRelation.None)
         {
             throw ProfileAppErrors.ProfileNotFound();
         }

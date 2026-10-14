@@ -49,6 +49,9 @@ public sealed class Match
     public DateTimeOffset? EndRequestExpiresAt { get; private set; }
     public DateTimeOffset? EndReminderSentAt { get; private set; }
     public MatchEndReason? EndReason { get; private set; }
+
+    /// <summary>Who ended the match on their own, without the other being asked (a block).</summary>
+    public Guid? EndedByUserId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? EndedAt { get; private set; }
 
@@ -118,11 +121,23 @@ public sealed class Match
     }
 
     /// <summary>One of the two users is leaving: the match ends without anyone being asked.</summary>
-    public void EndBecauseAccountDeleted(DateTimeOffset now)
+    public void EndBecauseAccountDeleted(DateTimeOffset now) => EndUnasked(MatchEndReason.AccountDeleted, now);
+
+    /// <summary><paramref name="blockerId"/> blocked the other user: the match ends without the other being asked.</summary>
+    public void EndBecauseBlocked(Guid blockerId, DateTimeOffset now)
     {
         if (Status != MatchStatus.Ended)
         {
-            End(MatchEndReason.AccountDeleted, now);
+            End(MatchEndReason.Blocked, now);
+            EndedByUserId = blockerId;
+        }
+    }
+
+    private void EndUnasked(MatchEndReason reason, DateTimeOffset now)
+    {
+        if (Status != MatchStatus.Ended)
+        {
+            End(reason, now);
         }
     }
 

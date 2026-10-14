@@ -1,6 +1,7 @@
 using Exparter.Api.Common;
 using System.Collections.Concurrent;
 using Exparter.Application.Common;
+using Exparter.Application.Identity;
 using Exparter.Application.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -12,45 +13,61 @@ namespace Exparter.Api.Messaging;
 /// clients write through the REST API and only listen here.
 /// </summary>
 [Authorize]
-internal sealed class RealtimeHub(ConnectionRegistry connections) : Hub
+internal sealed class RealtimeHub(ConnectionRegistry connections, IUserDirectory users) : Hub
 {
     public const string Path = "/hubs/realtime";
 
-    public override Task OnConnectedAsync()
+    public override async Task OnConnectedAsync()
     {
-        connections.Add(Context.User!.GetUserId());
-        return base.OnConnectedAsync();
+        // An access token outlives a suspension or a deletion request by a few minutes;
+        // the connection must not.
+        var userId = Context.User!.GetUserId();
+        if (await users.FindAsync(userId, Context.ConnectionAborted) is not { IsActive: true })
+        {
+            Context.Abort();
+            return;
+        }
+
+        connections.Add(userId, Context);
+        await base.OnConnectedAsync();
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
-        connections.Remove(Context.User!.GetUserId());
+        connections.Remove(Context.User!.GetUserId(), Context.ConnectionId);
         return base.OnDisconnectedAsync(exception);
     }
 }
 
 /// <summary>
-/// Counts the open connections of each user, so that push messages go only to users with
-/// no app open. It lives in this process: running several instances needs a shared one.
+/// The open connections of each user: push messages go only to users with no app open,
+/// and an account that stops being active is disconnected. It lives in this process:
+/// running several instances needs a shared one.
 /// </summary>
-internal sealed class ConnectionRegistry : IUserPresence
+internal sealed class ConnectionRegistry : IUserPresence, IRealtimeConnections
 {
-    private readonly ConcurrentDictionary<Guid, int> _counts = new();
+    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, HubCallerContext>> _connections = new();
 
-    public bool IsConnected(Guid userId) => _counts.ContainsKey(userId);
+    public bool IsConnected(Guid userId) => _connections.TryGetValue(userId, out var open) && !open.IsEmpty;
 
-    public void Add(Guid userId) => _counts.AddOrUpdate(userId, 1, (_, count) => count + 1);
+    public void Add(Guid userId, HubCallerContext context) =>
+        _connections.GetOrAdd(userId, _ => new ConcurrentDictionary<string, HubCallerContext>())[context.ConnectionId] = context;
 
-    public void Remove(Guid userId)
+    public void Remove(Guid userId, string connectionId)
     {
-        while (_counts.TryGetValue(userId, out var count))
+        if (_connections.TryGetValue(userId, out var open))
         {
-            var removed = count <= 1
-                ? _counts.TryRemove(new KeyValuePair<Guid, int>(userId, count))
-                : _counts.TryUpdate(userId, count - 1, count);
-            if (removed)
+            open.TryRemove(connectionId, out _);
+        }
+    }
+
+    public void CloseAll(Guid userId)
+    {
+        if (_connections.TryGetValue(userId, out var open))
+        {
+            foreach (var context in open.Values)
             {
-                return;
+                context.Abort();
             }
         }
     }

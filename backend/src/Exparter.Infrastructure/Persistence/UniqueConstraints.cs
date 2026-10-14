@@ -26,6 +26,9 @@ internal static class UniqueConstraints
 
     public const string DevicePerToken = "ix_devices_fcm_token";
 
+    public const string BlockPerPair = "pk_blocks";
+    public const string OpenReportPerTarget = "ix_reports_open_per_target";
+
     public static AppException? ToAppException(string? constraintName) => constraintName switch
     {
         UserEmail => AppException.Conflict("email_already_registered", "The email address is already registered."),
@@ -38,6 +41,8 @@ internal static class UniqueConstraints
         ConversationPerPair or MessagePerClientId or DevicePerToken => AppException.Conflict("concurrent_update", "The resource was changed by another request."),
         InPersonMeetingPerPair => SessionConflicts.InPersonAlreadyReported(),
         ReviewPerPair => ReviewConflicts.AlreadyExists(),
+        BlockPerPair => AppException.Conflict("already_blocked", "The user is already blocked."),
+        OpenReportPerTarget => AppException.Conflict("report_already_open", "This was already reported and is waiting to be reviewed."),
         _ => null,
     };
 }
