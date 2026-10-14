@@ -12,7 +12,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
-| 6 | Sertleştirme ve MVP yayını | Başlamadı |
+| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -229,6 +229,38 @@ dotnet user-secrets set --project src/Exparter.Api "Firebase:CredentialsPath" "<
 ```
 
 Ayar yoksa backend push göndermez, geri kalan her şey çalışır.
+
+## Faz 6 — Sertleştirme ve MVP yayını
+
+Plan 2026-10-14'te onaylandı. Her dilim kendi branch'inde (`phase-6/<n>-<konu>`) yapılır ve onayla `main`'e merge edilir.
+
+| Dilim | Konu | Durum |
+|---|---|---|
+| 1 | Yeni renk paleti, açık ve koyu tema, logo | Tamamlandı (2026-10-14) |
+| 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Başlamadı |
+| 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Başlamadı |
+| 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Başlamadı |
+| 5 | Hata izleme ve kayıtlar | Başlamadı |
+| 6 | Canlı ortam ve Google Play kapalı test sürümü | Başlamadı |
+
+Kararlar (kullanıcı, 2026-10-14):
+
+- Moderasyon brief'in Faz 5 listesinde yoktu ama MVP kapsamında (2026-10-06 kararı); yayından önce bitmesi için Faz 6'ya dilim olarak eklendi.
+- Palet: "İndigo ve turkuaz". Açık temada ana renk `#4F46E5`, ikincil `#0EA5A4`, vurgu `#F59E0B`, zemin `#F8F9FC`, metin `#1E1B3A`; koyu temada ana renk `#A5B4FC`, ikincil `#5EEAD4`, zemin `#0F1020`, yüzey `#1A1B2E`, metin `#E6E6F0`.
+- Tema varsayılan olarak telefonun ayarını izler; profilde Sistem, Açık veya Koyu seçilebilir.
+- Logo yok; sade bir logo bu dilimde hazırlanır.
+- Yetenek önerilerinin listelenmesi ve kabul/reddi moderasyon dilimine eklendi (şu an yalnızca PowerShell betiğiyle yapılıyor).
+
+### Dilim 1 — Renk paleti, açık ve koyu tema, logo
+
+- Palet `core/theme/` token'larında değişti; widget'larda sabit renk yoktu, ekranlara dokunulmadı. Kartlar gölge yerine ince kenarlıkla ayrılıyor (koyu temada gölge görünmüyor).
+- Turkuazın üstünde beyaz yazı okunmadığı için ikincil rengin üstündeki yazı koyu. Giriş ekranı başlığının geçişi indigo → turkuaz; beyaz başlık her noktada okunur kalacak şekilde koyulaştırıldı.
+- Kontrast testleri iki tema için de metin/zemin çiftlerini (en az 4.5:1) ve başlık geçişini (en az 3:1) denetler.
+- Tema: varsayılan olarak telefonun ayarı; profilde "Görünüm" altında Sistem / Açık / Koyu. Seçim telefonda saklanır. Durum çubuğu simgeleri temaya göre açık veya koyu.
+- Logo: iki ok bir kıvılcımın çevresinde birbirine dönüşüyor (yeteneklerin el değiştirmesi). Tek kaynak `core/theme/app_logo.dart`; Android simgeleri (eski tip, uyarlanabilir ve tek renkli, bildirim simgesi) aynı çizimden `flutter test tool/generate_icons.dart` ile üretilir. Giriş ekranında adın üstünde de görünür.
+- Android açılış ekranı ve pencere zemini iki temada da paletle aynı.
+- Testler (2026-10-14): mobil 208. Emülatörde iki temada Keşfet, Profil ve giriş ekranı, uygulama simgesi ve bildirim simgesi ekran görüntüsüyle kontrol edildi.
+- Sonraya bırakılan: Play Store için 512 px simge ve mağaza görselleri (dilim 6).
 
 ## Geliştirme ortamı
 

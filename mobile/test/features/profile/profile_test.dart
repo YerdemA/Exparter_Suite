@@ -6,6 +6,7 @@ import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/auth/interaction_requirements.dart';
 import 'package:exparter/core/auth/session_controller.dart';
 import 'package:exparter/core/auth/session_store.dart';
+import 'package:exparter/core/theme/theme_mode_setting.dart';
 import 'package:exparter/features/auth/data/api_auth_repository.dart';
 import 'package:exparter/features/notifications/data/firebase_push_client.dart';
 import 'package:exparter/features/notifications/domain/push_client.dart';
@@ -42,9 +43,11 @@ void main() {
 
   // Push is off unless a test is about it.
   late FakePushClient push;
+  late InMemoryThemeModeStore themeStore;
 
   setUp(() async {
     push = FakePushClient()..current = PushPermission.unavailable;
+    themeStore = InMemoryThemeModeStore();
     repository = MockProfileRepository();
     skillRepository = MockSkillRepository();
     authRepository = MockAuthRepository();
@@ -63,6 +66,7 @@ void main() {
         authRepositoryProvider.overrideWithValue(authRepository),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),
         pushClientProvider.overrideWithValue(push),
+        themeModeStoreProvider.overrideWithValue(themeStore),
         if (picker != null) avatarPickerProvider.overrideWithValue(picker),
       ];
 
@@ -347,6 +351,21 @@ void main() {
 
       expect(find.text(l10n.pushEnabled), findsOneWidget);
       expect(find.text(l10n.pushEnable), findsNothing);
+    });
+
+    testWidgets('the theme can be chosen and the choice is kept', (tester) async {
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
+      await pumpScreen(tester, const ProfileScreen());
+
+      final selector = find.byType(SegmentedButton<ThemeMode>);
+      await tester.ensureVisible(selector);
+      expect(tester.widget<SegmentedButton<ThemeMode>>(selector).selected, {ThemeMode.system});
+
+      await tester.tap(find.text(l10n.themeDark));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<SegmentedButton<ThemeMode>>(selector).selected, {ThemeMode.dark});
+      expect(themeStore.value, ThemeMode.dark);
     });
 
     testWidgets('a wrong password keeps the account and says so', (tester) async {

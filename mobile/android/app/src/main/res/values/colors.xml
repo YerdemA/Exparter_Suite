@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppPalette.background: the window behind the app while it starts. -->
+    <color name="launch_background">#FFF8F9FC</color>
+    <!-- AppPalette.indigo: the accent of the status bar notification. -->
+    <color name="notification_accent">#FF4F46E5</color>
+</resources>

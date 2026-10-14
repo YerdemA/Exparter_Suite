@@ -9,6 +9,7 @@ import '../../../core/auth/session_controller.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/theme_mode_setting.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/recovery_controller.dart';
@@ -302,6 +303,8 @@ class _ProfileBody extends ConsumerWidget {
               ],
               const _PushStatus(),
               const SizedBox(height: AppSpacing.lg),
+              const _ThemeChoice(),
+              const SizedBox(height: AppSpacing.lg),
               OutlinedButton.icon(
                 onPressed: loggingOut
                     ? null
@@ -400,6 +403,35 @@ class _ResendVerificationButton extends ConsumerWidget {
         icon: const Icon(Icons.send_outlined),
         label: Text(l10n.homeResendVerification),
       ),
+    );
+  }
+}
+
+/// Light, dark, or as the phone is set.
+class _ThemeChoice extends ConsumerWidget {
+  const _ThemeChoice();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final mode = ref.watch(themeModeSettingProvider).value ?? ThemeMode.system;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.themeTitle, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        SegmentedButton<ThemeMode>(
+          segments: [
+            ButtonSegment(value: ThemeMode.system, icon: const Icon(Icons.brightness_auto_outlined), label: Text(l10n.themeSystem)),
+            ButtonSegment(value: ThemeMode.light, icon: const Icon(Icons.light_mode_outlined), label: Text(l10n.themeLight)),
+            ButtonSegment(value: ThemeMode.dark, icon: const Icon(Icons.dark_mode_outlined), label: Text(l10n.themeDark)),
+          ],
+          selected: {mode},
+          showSelectedIcon: false,
+          onSelectionChanged: (selection) => ref.read(themeModeSettingProvider.notifier).select(selection.single),
+        ),
+      ],
     );
   }
 }

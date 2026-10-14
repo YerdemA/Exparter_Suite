@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../../core/theme/app_logo.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -17,71 +19,77 @@ class AuthScaffold extends StatelessWidget {
     final theme = Theme.of(context);
     final brand = context.brand;
 
-    return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(gradient: brand.heroGradient),
-        child: SafeArea(
-          bottom: false,
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xxl,
-                        AppSpacing.lg,
-                        AppSpacing.xl,
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            l10n.appName,
-                            style: theme.textTheme.displaySmall?.copyWith(
-                              color: brand.onHero,
-                              fontWeight: FontWeight.w900,
+    // The header is dark in both themes.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: DecoratedBox(
+          decoration: BoxDecoration(gradient: brand.heroGradient),
+          child: SafeArea(
+            bottom: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.xxl,
+                          AppSpacing.lg,
+                          AppSpacing.xl,
+                        ),
+                        child: Column(
+                          children: [
+                            AppLogoMark(size: AppSizes.logo, color: brand.onHero),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              l10n.appName,
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                color: brand.onHero,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            l10n.appTagline,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyLarge?.copyWith(color: brand.onHero),
-                          ),
-                        ],
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              l10n.appTagline,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyLarge?.copyWith(color: brand.onHero),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    // Material, not a plain colored box: form controls such as the
-                    // checkbox tile paint their ink on the nearest Material.
-                    Material(
-                      color: theme.colorScheme.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(AppRadius.lg),
-                      ),
-                      child: SafeArea(
-                        top: false,
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.lg),
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Text(title, style: theme.textTheme.headlineMedium),
-                                  const SizedBox(height: AppSpacing.lg),
-                                  child,
-                                ],
+                      // Material, not a plain colored box: form controls such as the
+                      // checkbox tile paint their ink on the nearest Material.
+                      Material(
+                        color: theme.colorScheme.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(AppRadius.lg),
+                        ),
+                        child: SafeArea(
+                          top: false,
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.lg),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(title, style: theme.textTheme.headlineMedium),
+                                    const SizedBox(height: AppSpacing.lg),
+                                    child,
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
