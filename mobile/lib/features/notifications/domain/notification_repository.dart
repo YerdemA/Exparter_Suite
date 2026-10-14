@@ -8,4 +8,9 @@ abstract interface class NotificationRepository {
   Future<void> markRead(String notificationId);
 
   Future<void> markAllRead();
+
+  /// Tells the server to send this phone's pushes to [fcmToken]; returns the device id.
+  Future<String> registerDevice(String fcmToken);
+
+  Future<void> unregisterDevice(String deviceId);
 }

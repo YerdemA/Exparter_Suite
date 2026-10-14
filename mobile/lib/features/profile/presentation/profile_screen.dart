@@ -12,6 +12,8 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/recovery_controller.dart';
+import '../../notifications/domain/push_client.dart';
+import '../../notifications/presentation/push_controller.dart';
 import '../../reviews/presentation/user_reviews_section.dart';
 import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/own_skills_section.dart';
@@ -298,6 +300,7 @@ class _ProfileBody extends ConsumerWidget {
                 ),
                 if (!account.emailVerified) const _ResendVerificationButton(),
               ],
+              const _PushStatus(),
               const SizedBox(height: AppSpacing.lg),
               OutlinedButton.icon(
                 onPressed: loggingOut
@@ -396,6 +399,49 @@ class _ResendVerificationButton extends ConsumerWidget {
               },
         icon: const Icon(Icons.send_outlined),
         label: Text(l10n.homeResendVerification),
+      ),
+    );
+  }
+}
+
+/// Whether pushes reach this phone, and a way to allow them after saying no.
+class _PushStatus extends ConsumerWidget {
+  const _PushStatus();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final brand = context.brand;
+    final permission = ref.watch(pushPermissionStatusProvider).value;
+    if (permission == null || permission == PushPermission.unavailable) {
+      return const SizedBox.shrink();
+    }
+
+    final granted = permission == PushPermission.granted;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _StatusTile(
+            icon: granted ? Icons.notifications_active_outlined : Icons.notifications_off_outlined,
+            color: granted ? brand.success : brand.warning,
+            text: granted ? l10n.pushEnabled : l10n.pushDisabled,
+          ),
+          if (!granted)
+            TextButton(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final result = await ref.read(pushPermissionStatusProvider.notifier).request();
+                if (result != PushPermission.granted) {
+                  // Android shows its dialog only so many times; after that only the
+                  // phone's settings can allow notifications.
+                  messenger.showSnackBar(SnackBar(content: Text(l10n.pushEnableInSettings)));
+                }
+              },
+              child: Text(l10n.pushEnable),
+            ),
+        ],
       ),
     );
   }

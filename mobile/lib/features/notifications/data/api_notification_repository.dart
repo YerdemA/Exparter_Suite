@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/api_exception.dart';
@@ -29,4 +30,22 @@ class ApiNotificationRepository implements NotificationRepository {
 
   @override
   Future<void> markAllRead() => guardApiCall(_api.notifications.markAllNotificationsRead);
+
+  @override
+  Future<String> registerDevice(String fcmToken) => guardApiCall(
+        () async => (await _api.notifications.registerDevice(
+          body: RegisterDeviceRequest(fcmToken: fcmToken, platform: _platform),
+        ))
+            .id,
+      );
+
+  @override
+  Future<void> unregisterDevice(String deviceId) =>
+      guardApiCall(() => _api.notifications.unregisterDevice(deviceId: deviceId));
+
+  static DevicePlatform get _platform => kIsWeb
+      ? DevicePlatform.web
+      : defaultTargetPlatform == TargetPlatform.iOS
+          ? DevicePlatform.ios
+          : DevicePlatform.android;
 }

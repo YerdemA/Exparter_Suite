@@ -169,9 +169,11 @@ Durum: **Onaylandı (2026-10-07).**
 | NT-05 | Kendiliğinden sonuçlanan süreler de bildirilir: süresi dolan istek sahibine, cevaplanmayan oturum önerisi öneren kişiye, kendiliğinden biten eşleşme ve kendiliğinden tamamlanan oturum iki tarafa. | Application |
 | NT-06 | Yeni mesaj bildirim listesine yazılmaz; okunmamış mesaj sayısı sohbet listesinde ve Mesajlar rozetinde görünür. | — |
 | NT-07 | Bildirimler 90 gün saklanır, sonra silinir. | Application |
-| NT-08 | Bildirimin metni sunucuda üretilmez: sunucu tür ile ilgili kimlikleri verir, metni istemci kendi dil dosyasından kurar. | — |
+| NT-08 | Uygulama içi listedeki bildirimin metni sunucuda üretilmez: sunucu tür ile ilgili kimlikleri verir, metni istemci kendi dil dosyasından kurar. Telefon bildiriminin metnini ise sunucu üretir (NT-11). | — |
 | NT-09 | Tür bazında bildirim tercihi ve e-posta bildirimi MVP'de yoktur. | — |
 | NT-10 | Bir cihaz kaydı tek bir FCM token'ına karşılık gelir; aynı token'la yeniden kayıt, cihazı o an giriş yapmış kullanıcıya taşır. | Domain, DB |
+| NT-11 | Telefon bildirimi yalnızca açık uygulaması (hub bağlantısı) olmayan kullanıcıya gider: her bildirim için ve yeni mesaj için. Metni sunucu üretir; mesajda başlık gönderenin adı, gövde mesajın ilk 100 karakteridir. | Application |
+| NT-12 | FCM'in artık tanımadığı token'ın cihaz kaydı silinir. Çıkış yapan cihaz kaydını siler; hesap silme isteği kullanıcının tüm cihaz kayıtlarını siler. | Application |
 
 ## Moderasyon
 

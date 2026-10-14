@@ -11,7 +11,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 2 | API sözleşmesi | Tamamlandı (2026-10-07) |
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
-| 5 | Dikey dilimler | Sürüyor: dilim 0–7 tamamlandı; dilim 8'in ilk parçası (8A) onay bekliyor |
+| 5 | Dikey dilimler | Sürüyor: dilim 0–7 tamamlandı; dilim 8 (8A ve 8B) onay bekliyor |
 | 6 | Sertleştirme ve MVP yayını | Başlamadı |
 | 7 | Web istemcisi | Başlamadı |
 
@@ -99,7 +99,7 @@ Her dilim kendi branch'inde (`phase-5/<n>-<konu>`) yapılır ve onayla `main`'e 
 | 5 | Gerçek zamanlı mesajlaşma | Tamamlandı (2026-10-13) |
 | 6 | Takas oturumları | Tamamlandı (2026-10-13) |
 | 7 | Değerlendirmeler | Tamamlandı (2026-10-13) |
-| 8 | Bildirimler | 8A (uygulama içi) tamamlandı, onay bekliyor; 8B (telefon bildirimi) başlamadı |
+| 8 | Bildirimler | 8A onaylandı (2026-10-14); 8B (telefon bildirimi) tamamlandı, onay bekliyor |
 
 ### Dilim 0 — E-posta doğrulama ve parola sıfırlama
 
@@ -206,6 +206,29 @@ Dilim 8 iki parçaya bölündü (kullanıcı onayı, 2026-10-13): 8A Firebase ge
 - Mobil: profil ekranında parola isteyen "Hesabımı sil" akışı (önceden yoktu).
 - Testler (2026-10-13): backend 476 (166 domain, 214 uygulama, 96 entegrasyon), mobil 190.
 - Sonraya bırakılan: telefon bildirimleri ve yeni mesaj bildirimi (8B); bildirim izni akışı (8B); hesap silme isteğinde açık hub bağlantılarının kapatılması; silinen hesap hakkındaki açık şikâyetlerin saklanması (moderasyon); saklama sürelerinin hukuki doğrulaması (yayından önce).
+- Kullanıcı onayı: 2026-10-14.
+
+### Dilim 8B — Telefon bildirimleri (FCM)
+
+- Firebase projesi: `exparter-5d834`, Android uygulaması `com.exparter.app`. Karar ve gerekçe: ADR 0012.
+- Backend: açık uygulaması olmayan kullanıcıya her bildirim ve her yeni mesaj FCM ile gider. Metni sunucu üretir (kullanıcı kararı, 2026-10-14); mesajda gönderenin adı ve mesajın başı görünür. Gönderim arka plandaki kuyruktan yapılır, isteği bekletmez. FCM'in tanımadığı token'lar silinir; hesap silme isteği cihaz kayıtlarını siler. Kurallar: NT-11, NT-12.
+- Mobil: ilk girişten sonra kısa bir açıklama ve ardından sistemin izin penceresi; profilde bildirim durumu ve "Bildirimleri aç". Cihaz kaydı girişte ve token yenilenince yapılır, çıkışta silinir. Dokunulan bildirim ilgili ekranı açar ve bildirimi okundu sayar. Uygulama arka plana geçince gerçek zamanlı bağlantıyı kapatır, öne gelince yeniden açıp listeleri yeniler.
+- Paketler: FirebaseAdmin 3.7.0 (getirdiği güvenlik açıklı `System.Security.Cryptography.Pkcs` 10.0.13'e sabitlendi), firebase_core 4.15.0, firebase_messaging 16.7.0, Google services Gradle eklentisi 4.5.0. Ayrıca yeni yayımlanan bir SignalR güvenlik bildirimi yüzünden Microsoft paketleri 10.0.12'den 10.0.13'e yükseltildi.
+- Testler (2026-10-14): backend 484 (166 domain, 221 uygulama, 97 entegrasyon), mobil 199. Emülatörde gerçek Firebase ile doğrulandı: açıklama ve izin penceresi, cihaz kaydı, uygulama arka plandayken mesaj ve oturum önerisi bildirimi, dokununca eşleşme ekranının açılması.
+- Bilinen sınırlar: bildirim simgesi şimdilik uygulama simgesi (marka simgesiyle birlikte değişecek); Android birden çok bildirimi gruplar, grubun kendisine dokunmak yalnızca uygulamayı açar. Uçtan uca test Firebase'siz çalışır; push elle doğrulandı.
+
+#### Firebase için lokal ayar
+
+Firebase konsolundan indirilen iki dosya repoya girmez:
+
+- `google-services.json` → `mobile/android/app/` (Android derlemesi için gerekir).
+- Servis hesabı anahtarı (Proje ayarları → Hizmet hesapları → Yeni özel anahtar) → repo dışında bir klasör:
+
+```powershell
+dotnet user-secrets set --project src/Exparter.Api "Firebase:CredentialsPath" "<anahtar dosyasının tam yolu>"
+```
+
+Ayar yoksa backend push göndermez, geri kalan her şey çalışır.
 
 ## Geliştirme ortamı
 

@@ -13,7 +13,7 @@ OpenAPI, SignalR hub'larını tarif edemez; bu belge hub sözleşmesinin tek kay
 
 - Bağlantı access token ile kurulur. WebSocket başlık taşıyamadığı için token `access_token` sorgu parametresiyle gönderilir (SignalR'ın standart yöntemi).
 - Bağlantı kurulduktan sonra token'ın süresi dolsa da bağlantı açık kalır. İstemci yeniden bağlanırken güncel token'ı kullanır.
-- Hesap askıya alındığında veya silme isteği verildiğinde sunucu kullanıcının bağlantılarını kapatır.
+- Hesap askıya alındığında veya silme isteği verildiğinde sunucu kullanıcının bağlantılarını kapatır (henüz uygulanmadı; bkz. `docs/roadmap.md`).
 - E-postası doğrulanmamış kullanıcı da bağlanabilir; bildirim alır.
 
 ## Sunucudan istemciye olaylar
@@ -35,7 +35,19 @@ Yok. Mesaj gönderme dahil tüm yazma işlemleri REST üzerinden yapılır.
 
 ## Push bildirimleri (FCM)
 
-- Bir bildirim oluştuğunda kullanıcının açık hub bağlantısı varsa yalnızca `NotificationReceived` gönderilir; yoksa kayıtlı cihazlarına FCM ile push gönderilir.
-- Yeni mesajlar bildirim listesine yazılmaz (sohbet listesindeki okunmamış sayısı bu işi görür), ama alıcının açık bağlantısı yoksa push gönderilir.
-- Push yükü `type` ile ilgili kimlikleri taşır; metni istemci kendi dil dosyasından üretir.
-- FCM bir token'ı geçersiz bildirirse o cihaz kaydı silinir.
+Karar ve gerekçe: ADR 0012.
+
+- Bir bildirim oluştuğunda `NotificationReceived` her zaman gönderilir; kullanıcının açık hub bağlantısı yoksa kayıtlı cihazlarına ayrıca FCM ile push gider.
+- Uygulama arka plana geçince hub bağlantısını kapatır, öne gelince yeniden açar ve listeleri yeniler. Böylece "açık bağlantı yok" ile "uygulama ekranda değil" aynı anlama gelir.
+- Yeni mesajlar bildirim listesine yazılmaz (sohbet listesindeki okunmamış sayısı bu işi görür), ama alıcının açık bağlantısı yoksa push gönderilir: başlık gönderenin adı, gövde mesajın ilk 100 karakteri.
+- Push'un metnini sunucu üretir (Türkçe başlık ve gövde); telefon uygulama kapalıyken bile gösterir.
+- Push'un `data` alanı, dokununca açılacak ekran içindir. Tüm değerler metindir:
+
+| Anahtar | Ne zaman | Açıklama |
+|---|---|---|
+| `type` | Her zaman | `NotificationType` değeri veya yeni mesaj için `MessageReceived`. |
+| `notificationId` | Bildirimlerde | Dokununca bildirim okundu sayılır. |
+| `swapRequestId`, `matchId`, `sessionId`, `reviewId`, `skillId` | Bildirimde varsa | Bildirimin `data` alanındaki kimlikler. |
+| `conversationId` | Yeni mesajda | Dokununca sohbet açılır. |
+
+- FCM bir token'ı artık tanımadığını bildirirse o cihaz kaydı silinir. Çıkış yapan uygulama kendi cihaz kaydını siler; hesap silme isteği kullanıcının tüm cihaz kayıtlarını siler.

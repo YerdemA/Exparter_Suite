@@ -7,6 +7,8 @@ import 'package:exparter/core/auth/interaction_requirements.dart';
 import 'package:exparter/core/auth/session_controller.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/features/auth/data/api_auth_repository.dart';
+import 'package:exparter/features/notifications/data/firebase_push_client.dart';
+import 'package:exparter/features/notifications/domain/push_client.dart';
 import 'package:exparter/features/profile/data/api_profile_repository.dart';
 import 'package:exparter/features/profile/data/avatar_picker.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
@@ -38,7 +40,11 @@ void main() {
 
   setUpAll(() => registerFallbackValue(jpeg));
 
+  // Push is off unless a test is about it.
+  late FakePushClient push;
+
   setUp(() async {
+    push = FakePushClient()..current = PushPermission.unavailable;
     repository = MockProfileRepository();
     skillRepository = MockSkillRepository();
     authRepository = MockAuthRepository();
@@ -56,6 +62,7 @@ void main() {
         interactionRequirementsProvider.overrideWith((ref) async => requirements ?? testRequirements()),
         authRepositoryProvider.overrideWithValue(authRepository),
         sessionStoreProvider.overrideWithValue(SessionStore(persistence)),
+        pushClientProvider.overrideWithValue(push),
         if (picker != null) avatarPickerProvider.overrideWithValue(picker),
       ];
 
@@ -317,6 +324,29 @@ void main() {
       verify(() => authRepository.requestAccountDeletion(password: 'Passw0rd!x')).called(1);
       expect(find.text(l10n.accountDeleteScheduled), findsOneWidget);
       expect(SessionStore(persistence).current, isNull);
+    });
+
+    testWidgets('says whether pushes reach the phone and asks again when they do not', (tester) async {
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
+      push
+        ..current = PushPermission.denied
+        ..answer = PushPermission.denied;
+      await pumpScreen(tester, const ProfileScreen());
+
+      expect(find.text(l10n.pushDisabled), findsOneWidget);
+      await tester.ensureVisible(find.text(l10n.pushEnable));
+      await tester.tap(find.text(l10n.pushEnable));
+      await tester.pumpAndSettle();
+
+      expect(push.requests, 1);
+      expect(find.text(l10n.pushEnableInSettings), findsOneWidget);
+
+      push.answer = PushPermission.granted;
+      await tester.tap(find.text(l10n.pushEnable));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.pushEnabled), findsOneWidget);
+      expect(find.text(l10n.pushEnable), findsNothing);
     });
 
     testWidgets('a wrong password keeps the account and says so', (tester) async {

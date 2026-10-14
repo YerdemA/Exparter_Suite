@@ -33,15 +33,15 @@ class NotificationBell extends ConsumerWidget {
 }
 
 /// Where tapping a notification leads: the resource it is about.
-String notificationTarget(api.Notification notification) {
-  final data = notification.data;
-  return switch (notification.type) {
-    NotificationType.reviewReceived => AppRoutes.profile,
-    NotificationType.skillProposalApproved || NotificationType.skillProposalRejected => AppRoutes.skillProposals,
-    _ when data.matchId != null => AppRoutes.matchDetail(data.matchId!),
-    _ => AppRoutes.matches,
-  };
-}
+String notificationTarget(api.Notification notification) => targetOf(notification.type, notification.data.matchId);
+
+/// Where a notification of [type] about [matchId] leads, in the list and from a push.
+String targetOf(NotificationType type, String? matchId) => switch (type) {
+      NotificationType.reviewReceived => AppRoutes.profile,
+      NotificationType.skillProposalApproved || NotificationType.skillProposalRejected => AppRoutes.skillProposals,
+      _ when matchId != null => AppRoutes.matchDetail(matchId),
+      _ => AppRoutes.matches,
+    };
 
 /// The sentence that tells the user what happened. [actorName] is who did it, when
 /// someone did.
