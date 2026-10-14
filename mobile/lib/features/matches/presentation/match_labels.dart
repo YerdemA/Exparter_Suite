@@ -25,6 +25,7 @@ String matchStatusLabel(AppLocalizations l10n, MatchStatus status) => switch (st
 String matchEndReasonLabel(AppLocalizations l10n, MatchEndReason? reason) => switch (reason) {
       MatchEndReason.mutualConsent => l10n.matchEndedMutual,
       MatchEndReason.endRequestExpired => l10n.matchEndedExpired,
+      MatchEndReason.blocked => l10n.matchEndedBlocked,
       _ => l10n.matchEndedOther,
     };
 

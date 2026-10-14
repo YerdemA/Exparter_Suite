@@ -159,6 +159,7 @@ internal static class PushTexts
             NotificationType.ReviewReceived => $"{actor} sizi değerlendirdi.",
             NotificationType.SkillProposalApproved => "Önerdiğiniz yetenek onaylandı.",
             NotificationType.SkillProposalRejected => "Önerdiğiniz yetenek reddedildi.",
+            NotificationType.ReportReviewed => "Şikâyetiniz incelendi. Bildirdiğiniz için teşekkür ederiz.",
             _ => "Yeni bir bildiriminiz var.",
         };
     }

@@ -75,6 +75,10 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
              ) rating
              WHERE u.id <> {viewer}
                AND u.status = 'Active'
+               AND NOT EXISTS (
+                   SELECT 1 FROM moderation.blocks b
+                   WHERE (b.blocker_id = {viewer} AND b.blocked_id = u.id)
+                      OR (b.blocker_id = u.id AND b.blocked_id = {viewer}))
                AND ({searching}
                  OR (u.email_verified_at IS NOT NULL
                      AND p.display_name IS NOT NULL

@@ -135,7 +135,12 @@ public sealed class SwapRequest
     }
 
     /// <summary>One of the two users is leaving: a request still waiting for an answer is withdrawn.</summary>
-    public void CancelBecauseAccountDeleted(DateTimeOffset now)
+    public void CancelBecauseAccountDeleted(DateTimeOffset now) => CancelUnanswered(now);
+
+    /// <summary>One of the two users blocked the other: a request still waiting for an answer is withdrawn.</summary>
+    public void CancelBecauseBlocked(DateTimeOffset now) => CancelUnanswered(now);
+
+    private void CancelUnanswered(DateTimeOffset now)
     {
         if (StatusAt(now) == SwapRequestStatus.Pending)
         {

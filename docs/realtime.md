@@ -13,7 +13,7 @@ OpenAPI, SignalR hub'larını tarif edemez; bu belge hub sözleşmesinin tek kay
 
 - Bağlantı access token ile kurulur. WebSocket başlık taşıyamadığı için token `access_token` sorgu parametresiyle gönderilir (SignalR'ın standart yöntemi).
 - Bağlantı kurulduktan sonra token'ın süresi dolsa da bağlantı açık kalır. İstemci yeniden bağlanırken güncel token'ı kullanır.
-- Hesap askıya alındığında veya silme isteği verildiğinde sunucu kullanıcının bağlantılarını kapatır (henüz uygulanmadı; bkz. `docs/roadmap.md`).
+- Hesap askıya alındığında veya silme isteği verildiğinde sunucu kullanıcının bağlantılarını kapatır. Access token birkaç dakika daha geçerli kalsa da hesabı etkin olmayan kullanıcı yeniden bağlanamaz.
 - E-postası doğrulanmamış kullanıcı da bağlanabilir; bildirim alır.
 
 ## Sunucudan istemciye olaylar

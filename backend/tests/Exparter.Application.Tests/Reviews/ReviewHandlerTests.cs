@@ -1,3 +1,4 @@
+using Exparter.Application.Moderation;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Reviews;
@@ -75,6 +76,8 @@ public class ReviewHandlerTests
 
     private ISessionDirectory SessionDirectory => new SessionDirectory(_sessions, _clock);
 
+    internal Moderation.InMemoryBlocks Blocks { get; } = new();
+
     private ReviewDtoFactory DtoFactory => new(new FakeUserSummaries(_users));
 
     /// <summary>A meeting the two users reported and confirmed.</summary>
@@ -87,7 +90,7 @@ public class ReviewHandlerTests
     }
 
     private Task<ReviewDto> CreateAsync(Guid reviewer, Guid reviewee, int rating = 8, string? comment = null) =>
-        new CreateReviewCommandHandler(_requirements, _users, SessionDirectory, _reviews, DtoFactory, _notifier, _unitOfWork, _clock)
+        new CreateReviewCommandHandler(_requirements, _users, new BlockDirectory(Blocks), SessionDirectory, _reviews, DtoFactory, _notifier, _unitOfWork, _clock)
             .Handle(new CreateReviewCommand(reviewer, reviewee, rating, comment), CancellationToken.None).AsTask();
 
     private Task DeleteAsync(Guid userId, Guid reviewId) =>
@@ -95,7 +98,7 @@ public class ReviewHandlerTests
             .Handle(new DeleteReviewCommand(userId, reviewId), CancellationToken.None).AsTask();
 
     private Task<ReviewEligibilityDto> EligibilityAsync(Guid userId, Guid otherUserId) =>
-        new GetReviewEligibilityQueryHandler(_users, SessionDirectory, _reviews)
+        new GetReviewEligibilityQueryHandler(_users, new BlockDirectory(Blocks), SessionDirectory, _reviews)
             .Handle(new GetReviewEligibilityQuery(userId, otherUserId), CancellationToken.None).AsTask();
 
     private async Task<PagedList<ReviewDto>> ReceivedAsync(Guid userId) =>

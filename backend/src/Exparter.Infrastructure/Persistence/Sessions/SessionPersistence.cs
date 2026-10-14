@@ -77,6 +77,14 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
         return Newest(sessions).ToPageAsync(page, cancellationToken);
     }
 
+    public Task<PagedList<SwapSession>> ListCancelledByUsersAsync(PageRequest page, CancellationToken cancellationToken) =>
+        dbContext.SwapSessions
+            .AsNoTracking()
+            .Where(x => x.Status == SwapSessionStatus.Cancelled && x.CancelReason != null)
+            .OrderByDescending(x => x.CancelledAt)
+            .ThenBy(x => x.Id)
+            .ToPageAsync(page, cancellationToken);
+
     public async Task<IReadOnlyList<SwapSession>> ListUpcomingByMatchAsync(Guid matchId, CancellationToken cancellationToken) =>
         await dbContext.SwapSessions
             .Where(x => x.MatchId == matchId

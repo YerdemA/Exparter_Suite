@@ -85,6 +85,30 @@ public sealed class User
         DeletionRequestedAt = now;
     }
 
+    /// <summary>
+    /// An administrator stops the account: it can no longer sign in and nobody finds it.
+    /// What it shares with others stays as it is, ready for when the suspension is lifted.
+    /// </summary>
+    public void Suspend()
+    {
+        if (Status != UserStatus.Active)
+        {
+            throw IdentityErrors.InvalidState("Only an active account can be suspended.");
+        }
+
+        Status = UserStatus.Suspended;
+    }
+
+    public void LiftSuspension()
+    {
+        if (Status != UserStatus.Suspended)
+        {
+            throw IdentityErrors.InvalidState("The account is not suspended.");
+        }
+
+        Status = UserStatus.Active;
+    }
+
     /// <summary>Restores an account whose deletion is still pending.</summary>
     /// <returns>True if a pending deletion was cancelled.</returns>
     public bool CancelDeletion()

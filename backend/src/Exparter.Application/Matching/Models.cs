@@ -56,6 +56,9 @@ public interface IMatchRepository
     /// <summary>Whether the two users have a match that has not ended.</summary>
     Task<bool> HasOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken);
 
+    /// <summary>The match of the two users that has not ended, if there is one.</summary>
+    Task<Match?> FindOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken);
+
     /// <summary>Newest first.</summary>
     Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, PageRequest page, CancellationToken cancellationToken);
 
@@ -260,7 +263,8 @@ public sealed class MatchingDtoFactory(
                 match.EndRequestedByUserId,
                 match.EndRequestedAt,
                 match.EndRequestExpiresAt,
-                match.EndReason,
+                // A block is not shown to the blocked user: to them the match simply ended.
+                match.EndReason == MatchEndReason.Blocked && match.EndedByUserId != viewerId ? null : match.EndReason,
                 match.CreatedAt,
                 match.EndedAt))
             .ToList();

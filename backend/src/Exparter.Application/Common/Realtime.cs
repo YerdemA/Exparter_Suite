@@ -18,3 +18,9 @@ public interface IRealtimeNotifier
 {
     Task SendAsync(Guid userId, string eventName, object payload, CancellationToken cancellationToken);
 }
+
+/// <summary>Ends the open real-time connections of a user whose account stopped being active.</summary>
+public interface IRealtimeConnections
+{
+    void CloseAll(Guid userId);
+}

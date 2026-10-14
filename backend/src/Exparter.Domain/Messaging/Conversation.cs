@@ -109,7 +109,12 @@ public sealed class Conversation
     }
 
     /// <summary>One of the two users is leaving: the conversation becomes read-only, match or no match.</summary>
-    public void CloseBecauseAccountDeleted(Guid userId, DateTimeOffset now)
+    public void CloseBecauseAccountDeleted(Guid userId, DateTimeOffset now) => CloseUnasked(userId, now);
+
+    /// <summary><paramref name="blockerId"/> blocked the other user: the conversation becomes read-only, match or no match.</summary>
+    public void CloseBecauseBlocked(Guid blockerId, DateTimeOffset now) => CloseUnasked(blockerId, now);
+
+    private void CloseUnasked(Guid userId, DateTimeOffset now)
     {
         if (!IsClosed)
         {

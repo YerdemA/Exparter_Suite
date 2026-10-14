@@ -23,6 +23,7 @@ public enum NotificationType
     ReviewReceived,
     SkillProposalApproved,
     SkillProposalRejected,
+    ReportReviewed,
 }
 
 /// <summary>

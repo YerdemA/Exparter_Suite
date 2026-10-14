@@ -16,6 +16,9 @@ public interface ISessionRepository
 {
     Task<SwapSession?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Sessions a user cancelled, with the reason they gave; newest first.</summary>
+    Task<PagedList<SwapSession>> ListCancelledByUsersAsync(PageRequest page, CancellationToken cancellationToken);
+
     /// <summary>Newest first, by scheduled time (or, for in-person meetings, when they were reported).</summary>
     Task<PagedList<SwapSession>> ListByMatchAsync(Guid matchId, PageRequest page, CancellationToken cancellationToken);
 
@@ -473,4 +476,31 @@ public sealed class ProcessSessionDeadlinesCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return overdue.Count + reminded;
     }
+}
+
+public sealed record SessionCancellationDto(
+    Guid SessionId,
+    Guid MatchId,
+    Guid CancelledByUserId,
+    Guid OtherUserId,
+    string Reason,
+    DateTimeOffset CancelledAt);
+
+/// <summary>Cancellation reasons are seen by the two users and by the administrators.</summary>
+public sealed record AdminListSessionCancellationsQuery(int? Page, int? PageSize) : IQuery<PagedList<SessionCancellationDto>>;
+
+public sealed class AdminListSessionCancellationsQueryHandler(ISessionRepository sessions)
+    : IQueryHandler<AdminListSessionCancellationsQuery, PagedList<SessionCancellationDto>>
+{
+    public async ValueTask<PagedList<SessionCancellationDto>> Handle(
+        AdminListSessionCancellationsQuery query,
+        CancellationToken cancellationToken) =>
+        (await sessions.ListCancelledByUsersAsync(PageRequest.From(query.Page, query.PageSize), cancellationToken))
+        .Map(session => new SessionCancellationDto(
+            session.Id,
+            session.MatchId,
+            session.CancelledByUserId!.Value,
+            session.OtherThan(session.CancelledByUserId.Value),
+            session.CancelReason!,
+            session.CancelledAt!.Value));
 }

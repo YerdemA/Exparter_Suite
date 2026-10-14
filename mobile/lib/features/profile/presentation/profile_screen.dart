@@ -304,6 +304,14 @@ class _ProfileBody extends ConsumerWidget {
               const _PushStatus(),
               const SizedBox(height: AppSpacing.lg),
               const _ThemeChoice(),
+              const SizedBox(height: AppSpacing.md),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.block),
+                title: Text(l10n.blockedUsersTitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.go(AppRoutes.blockedUsers),
+              ),
               const SizedBox(height: AppSpacing.lg),
               OutlinedButton.icon(
                 onPressed: loggingOut

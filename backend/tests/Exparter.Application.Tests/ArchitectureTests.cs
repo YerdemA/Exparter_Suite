@@ -32,9 +32,15 @@ public class ArchitectureTests
         typeof(Exparter.Application.Reviews.IReviewDirectory),
         typeof(Exparter.Application.Notifications.IUserNotifier),
         typeof(Exparter.Application.Notifications.PushNotifier),
+        typeof(Exparter.Application.Moderation.IBlockDirectory),
+        typeof(Exparter.Application.Moderation.BlockRelation),
+        typeof(Exparter.Application.Moderation.BlockDirectoryExtensions),
+        typeof(Exparter.Application.Moderation.UserBlocked),
         typeof(Exparter.Domain.Notifications.NotificationType),
         typeof(Exparter.Domain.Notifications.NotificationData),
         typeof(Exparter.Application.Messaging.IConversationDirectory),
+        typeof(Exparter.Application.Messaging.MessageInfo),
+        typeof(Exparter.Application.Reviews.ReviewInfo),
     ];
 
     private const BindingFlags AllMembers =

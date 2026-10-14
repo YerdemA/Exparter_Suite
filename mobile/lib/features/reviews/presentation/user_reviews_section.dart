@@ -10,6 +10,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../matches/presentation/match_labels.dart';
+import '../../moderation/presentation/moderation_menu.dart';
 import 'review_controller.dart';
 
 /// A user's average rating and how many reviews it rests on, e.g. "8,5 · 3 değerlendirme".
@@ -178,6 +179,15 @@ class _ReviewCard extends ConsumerWidget {
               children: [
                 Expanded(child: Text(userLabel(l10n, review.reviewer), style: theme.textTheme.titleSmall)),
                 Text(l10n.reviewRatingOutOf(review.rating), style: theme.textTheme.titleSmall),
+                if (!isOwn)
+                  PopupMenuButton<void>(
+                    itemBuilder: (menuContext) => [
+                      PopupMenuItem(
+                        onTap: () => reportContent(context, ref, targetType: ReportTargetType.review, targetId: review.id),
+                        child: Text(l10n.moderationReport),
+                      ),
+                    ],
+                  ),
               ],
             ),
             Text(MaterialLocalizations.of(context).formatMediumDate(review.createdAt.toLocal()), style: muted),

@@ -1,5 +1,6 @@
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
+using Exparter.Application.Moderation;
 using Exparter.Application.Notifications;
 using Exparter.Application.Sessions;
 using Exparter.Domain.Notifications;
@@ -35,14 +36,25 @@ public interface IReviewRepository
 }
 
 /// <summary>What other modules may know about reviews.</summary>
+/// <summary>A review as a report sees it.</summary>
+public sealed record ReviewInfo(Guid Id, Guid ReviewerId, int Rating, string? Comment);
+
 public interface IReviewDirectory
 {
     /// <returns><see cref="RatingSummaryDto.None"/> for a user without reviews.</returns>
     Task<RatingSummaryDto> GetRatingAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <returns>Null for an unknown or deleted review.</returns>
+    Task<ReviewInfo?> FindAsync(Guid reviewId, CancellationToken cancellationToken);
 }
 
 internal sealed class ReviewDirectory(IReviewRepository reviews) : IReviewDirectory
 {
+    public async Task<ReviewInfo?> FindAsync(Guid reviewId, CancellationToken cancellationToken) =>
+        await reviews.GetByIdAsync(reviewId, cancellationToken) is { IsDeleted: false } review
+            ? new ReviewInfo(review.Id, review.ReviewerId, review.Rating, review.Comment)
+            : null;
+
     public async Task<RatingSummaryDto> GetRatingAsync(Guid userId, CancellationToken cancellationToken) =>
         (await reviews.GetRatingsAsync([userId], cancellationToken)).GetValueOrDefault(userId, RatingSummaryDto.None);
 }
@@ -106,6 +118,7 @@ public sealed class CreateReviewCommandValidator : AbstractValidator<CreateRevie
 public sealed class CreateReviewCommandHandler(
     IInteractionRequirements requirements,
     IUserDirectory users,
+    IBlockDirectory blocks,
     ISessionDirectory sessions,
     IReviewRepository reviews,
     ReviewDtoFactory dtoFactory,
@@ -122,6 +135,7 @@ public sealed class CreateReviewCommandHandler(
         }
 
         await users.EnsureActiveAsync(command.RevieweeId, cancellationToken);
+        await blocks.EnsureNotBlockedAsync(command.UserId, command.RevieweeId, cancellationToken);
 
         // A deleted review counts too: taking a review back does not earn a second one.
         if (await reviews.ExistsAsync(command.UserId, command.RevieweeId, cancellationToken))
@@ -202,12 +216,20 @@ public sealed record ReviewEligibilityDto(bool CanReview, ReviewBlockReason? Rea
 /// <summary>Whether <paramref name="UserId"/> can review <paramref name="OtherUserId"/>.</summary>
 public sealed record GetReviewEligibilityQuery(Guid UserId, Guid OtherUserId) : IQuery<ReviewEligibilityDto>;
 
-public sealed class GetReviewEligibilityQueryHandler(IUserDirectory users, ISessionDirectory sessions, IReviewRepository reviews)
+public sealed class GetReviewEligibilityQueryHandler(
+    IUserDirectory users,
+    IBlockDirectory blocks,
+    ISessionDirectory sessions,
+    IReviewRepository reviews)
     : IQueryHandler<GetReviewEligibilityQuery, ReviewEligibilityDto>
 {
     public async ValueTask<ReviewEligibilityDto> Handle(GetReviewEligibilityQuery query, CancellationToken cancellationToken)
     {
         await users.EnsureActiveAsync(query.OtherUserId, cancellationToken);
+        if (query.OtherUserId != query.UserId)
+        {
+            await blocks.EnsureNotBlockedAsync(query.UserId, query.OtherUserId, cancellationToken);
+        }
 
         ReviewBlockReason? reason =
             query.OtherUserId == query.UserId ? ReviewBlockReason.Self

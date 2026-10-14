@@ -1388,7 +1388,10 @@ paths:
       summary: Block a user
       description: |
         Cancels pending swap requests between the two users, ends their active match
-        without the other user's consent and closes their conversation.
+        without the other user's consent and closes their conversation. Nobody is
+        notified. While the block stands, neither user finds the other: profiles answer
+        404, discovery leaves them out, and a request or review across the block is
+        refused (`user_blocked` for the blocker, 404 for the blocked user).
       requestBody:
         required: true
         content:
@@ -1422,7 +1425,11 @@ paths:
       tags: [Moderation]
       operationId: createReport
       summary: Report a user, a message or a review
-      description: Requires a verified email.
+      description: |
+        Requires a verified email. A message can be reported only by the two users of its
+        conversation. A user cannot report themselves or what they wrote (`report_self`),
+        and one target can have one open report per reporter (`report_already_open`). The
+        reported text is kept with the report as it was.
       requestBody:
         required: true
         content:
@@ -1538,6 +1545,36 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/AdminReport' }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/admin/users/{userId}/suspension:
+    post:
+      tags: [Admin]
+      operationId: adminSuspendUser
+      summary: Suspend an account
+      description: |
+        The account is signed out everywhere, cannot sign in and is hidden from others.
+        Its matches and conversations stay as they are. Only an active account can be
+        suspended, and not one's own (`invalid_state`).
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204': { description: Account suspended. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Admin]
+      operationId: adminLiftSuspension
+      summary: Lift the suspension of an account
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204': { description: Suspension lifted. }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -2217,6 +2254,9 @@ components:
         endReason:
           type: string
           nullable: true
+          description: |
+            Why the match ended. A block is shown only to the user who blocked; to the
+            blocked user an ended match has no reason.
           allOf:
             - $ref: '#/components/schemas/MatchEndReason'
         createdAt: { type: string, format: date-time }
@@ -2492,6 +2532,7 @@ components:
         - ReviewReceived
         - SkillProposalApproved
         - SkillProposalRejected
+        - ReportReviewed
 
     NotificationData:
       type: object
@@ -2595,7 +2636,10 @@ components:
         targetType: { $ref: '#/components/schemas/ReportTargetType' }
         targetId: { type: string, format: uuid }
         reason: { $ref: '#/components/schemas/ReportReason' }
-        description: { type: string, maxLength: 1000 }
+        description:
+          type: string
+          maxLength: 1000
+          description: Required when the reason is `Other`.
 
     Report:
       type: object
@@ -2634,9 +2678,17 @@ components:
       allOf:
         - $ref: '#/components/schemas/Report'
         - type: object
-          required: [reporterId]
+          required: [reporterId, targetUserId]
           properties:
             reporterId: { type: string, format: uuid }
+            targetUserId:
+              type: string
+              format: uuid
+              description: The reported user, or the author of the reported message or review.
+            targetContent:
+              type: string
+              nullable: true
+              description: The reported message or review as it was when reported; null for a user.
             resolvedAt: { type: string, format: date-time, nullable: true }
             resolvedByUserId: { type: string, format: uuid, nullable: true }
 

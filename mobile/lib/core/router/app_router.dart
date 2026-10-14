@@ -14,6 +14,7 @@ import '../../features/matches/presentation/matches_screen.dart';
 import '../../features/matches/presentation/send_request_screen.dart';
 import '../../features/messages/presentation/conversation_screen.dart';
 import '../../features/messages/presentation/conversations_screen.dart';
+import '../../features/moderation/presentation/blocked_users_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
@@ -184,6 +185,10 @@ GoRouter appRouter(Ref ref) {
                   GoRoute(
                     path: AppRoutes.skillProposalsSegment,
                     builder: (context, state) => const SkillProposalsScreen(),
+                  ),
+                  GoRoute(
+                    path: AppRoutes.blockedUsersSegment,
+                    builder: (context, state) => const BlockedUsersScreen(),
                   ),
                 ],
               ),

@@ -3,6 +3,7 @@ using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Matching;
 using Exparter.Application.Messaging;
+using Exparter.Application.Moderation;
 using Exparter.Application.Notifications;
 using Exparter.Application.Sessions;
 using Exparter.Application.Profiles;
@@ -36,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IUserStats, UserStats>();
         services.AddScoped<IReviewDirectory, ReviewDirectory>();
         services.AddScoped<ReviewDtoFactory>();
+        services.AddScoped<IBlockDirectory, BlockDirectory>();
         services.AddScoped<PushNotifier>();
         services.AddScoped<IUserNotifier, UserNotifier>();
         return services;
