@@ -12,7 +12,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 3 | Backend iskeleti | Tamamlandı (2026-10-07) |
 | 4 | Mobil iskelet | Tamamlandı (2026-10-09) |
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
-| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1 tamamlandı; dilim 2 onay bekliyor |
+| 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–2 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
 
 ## Faz 0 — Kurulum
@@ -237,7 +237,7 @@ Plan 2026-10-14'te onaylandı. Her dilim kendi branch'inde (`phase-6/<n>-<konu>`
 | Dilim | Konu | Durum |
 |---|---|---|
 | 1 | Yeni renk paleti, açık ve koyu tema, logo | Tamamlandı (2026-10-14) |
-| 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Tamamlandı, onay bekliyor |
+| 2 | Moderasyon: engelleme, şikâyet, admin uçları (şikâyetler, askıya alma, iptal sebepleri, yetenek önerilerinin listelenmesi ve kabul/reddi) | Tamamlandı (2026-10-14) |
 | 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Başlamadı |
 | 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Başlamadı |
 | 5 | Hata izleme ve kayıtlar | Başlamadı |
