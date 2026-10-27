@@ -1827,7 +1827,7 @@ components:
 
     RegisterRequest:
       type: object
-      required: [email, username, password, ageConfirmed]
+      required: [email, username, password, ageConfirmed, termsAccepted]
       properties:
         email: { type: string, format: email, maxLength: 254 }
         username: { $ref: '#/components/schemas/Username' }
@@ -1835,6 +1835,11 @@ components:
         ageConfirmed:
           type: boolean
           description: Must be true. The user confirms being 18 or older.
+        termsAccepted:
+          type: boolean
+          description: >-
+            Must be true. The user accepts the terms of use in force; the server records
+            which version and when.
 
     LoginRequest:
       type: object

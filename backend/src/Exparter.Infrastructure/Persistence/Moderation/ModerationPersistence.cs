@@ -89,5 +89,10 @@ internal sealed class ReportRepository(AppDbContext dbContext) : IReportReposito
             .ThenBy(x => x.Id)
             .ToPageAsync(page, cancellationToken);
 
+    public Task<int> DeleteClosedBeforeAsync(DateTimeOffset moment, CancellationToken cancellationToken) =>
+        dbContext.Reports
+            .Where(x => x.Status != ReportStatus.Open && x.ResolvedAt < moment)
+            .ExecuteDeleteAsync(cancellationToken);
+
     public void Add(Report report) => dbContext.Reports.Add(report);
 }

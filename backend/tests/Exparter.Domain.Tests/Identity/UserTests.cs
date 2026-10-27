@@ -7,7 +7,7 @@ public class UserTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 7, 12, 0, 0, TimeSpan.Zero);
 
-    private static User NewUser() => User.Register("Ayse@Example.com", "ayse", "hash", ageConfirmed: true, Now);
+    private static User NewUser() => User.Register("Ayse@Example.com", "ayse", "hash", ageConfirmed: true, termsAccepted: true, termsVersion: "v1", Now);
 
     [Fact]
     public void Register_normalizes_the_email()
@@ -20,22 +20,33 @@ public class UserTests
         Assert.Equal(UserRole.User, user.Role);
         Assert.False(user.IsEmailVerified);
         Assert.Equal(Now, user.AgeConfirmedAt);
+        Assert.Equal(Now, user.TermsAcceptedAt);
+        Assert.Equal("v1", user.TermsVersion);
     }
 
     [Fact]
     public void Register_requires_age_confirmation()
     {
         var exception = Assert.Throws<DomainException>(
-            () => User.Register("ayse@example.com", "ayse", "hash", ageConfirmed: false, Now));
+            () => User.Register("ayse@example.com", "ayse", "hash", ageConfirmed: false, termsAccepted: true, termsVersion: "v1", Now));
 
         Assert.Equal(IdentityErrors.AgeNotConfirmedCode, exception.Code);
+    }
+
+    [Fact]
+    public void Register_requires_the_terms_to_be_accepted()
+    {
+        var exception = Assert.Throws<DomainException>(
+            () => User.Register("ayse@example.com", "ayse", "hash", ageConfirmed: true, termsAccepted: false, termsVersion: "v1", Now));
+
+        Assert.Equal(IdentityErrors.TermsNotAcceptedCode, exception.Code);
     }
 
     [Fact]
     public void Register_rejects_an_uppercase_username()
     {
         var exception = Assert.Throws<DomainException>(
-            () => User.Register("ayse@example.com", "Ayse", "hash", ageConfirmed: true, Now));
+            () => User.Register("ayse@example.com", "Ayse", "hash", ageConfirmed: true, termsAccepted: true, termsVersion: "v1", Now));
 
         Assert.Equal(IdentityErrors.InvalidUsernameCode, exception.Code);
     }

@@ -23,6 +23,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Username).HasMaxLength(Username.MaxLength);
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32);
         builder.Property(x => x.Role).HasConversion<string>().HasMaxLength(32);
+        builder.Property(x => x.TermsVersion).HasMaxLength(32);
         builder.HasIndex(x => x.Email).IsUnique().HasDatabaseName(UniqueConstraints.UserEmail);
         builder.HasIndex(x => x.Username).IsUnique().HasDatabaseName(UniqueConstraints.UserUsername);
 

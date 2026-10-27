@@ -100,6 +100,7 @@ void main() {
           username: 'ayse',
           password: 'Passw0rd!x',
           ageConfirmed: true,
+          termsAccepted: true,
         ),
       ).thenAnswer((_) async => testAuthResponse());
       await container.read(sessionControllerProvider.future);
@@ -109,6 +110,7 @@ void main() {
         username: 'ayse',
         password: 'Passw0rd!x',
         ageConfirmed: true,
+        termsAccepted: true,
       );
 
       expect(container.read(sessionControllerProvider).value, testAccount());

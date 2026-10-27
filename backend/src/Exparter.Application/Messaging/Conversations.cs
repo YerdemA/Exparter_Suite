@@ -350,7 +350,7 @@ public sealed class SendMessageCommandHandler(
         // The sender is told too: their other devices show the message as well.
         await realtime.SendAsync(conversation.OtherThan(command.UserId), RealtimeEvents.MessageReceived, dto, cancellationToken);
         await realtime.SendAsync(command.UserId, RealtimeEvents.MessageReceived, dto, cancellationToken);
-        await pushes.MessageAsync(conversation.OtherThan(command.UserId), command.UserId, conversation.Id, message.Body, cancellationToken);
+        pushes.Message(conversation.OtherThan(command.UserId), conversation.Id);
         return dto;
     }
 }

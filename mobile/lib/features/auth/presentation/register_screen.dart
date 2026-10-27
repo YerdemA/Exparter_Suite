@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/error_messages.dart';
+import '../../../core/legal/legal_documents.dart';
+import '../../../core/legal/legal_links.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
@@ -23,7 +25,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _email = TextEditingController();
   final _username = TextEditingController();
   final _password = TextEditingController();
-  bool _ageConfirmed = false;
+  // One box for both: the user is 18 or older and accepts the terms of use.
+  bool _agreed = false;
 
   @override
   void dispose() {
@@ -39,7 +42,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             email: _email.text,
             username: _username.text,
             password: _password.text,
-            ageConfirmed: _ageConfirmed,
+            ageConfirmed: _agreed,
+            termsAccepted: _agreed,
           );
     }
   }
@@ -92,16 +96,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               FormField<bool>(
-                initialValue: _ageConfirmed,
+                initialValue: _agreed,
                 validator: (value) => (value ?? false) ? null : l10n.validationAgeConfirmation,
                 builder: (field) => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CheckboxListTile(
-                      value: _ageConfirmed,
+                      value: _agreed,
                       onChanged: (value) {
-                        setState(() => _ageConfirmed = value ?? false);
-                        field.didChange(_ageConfirmed);
+                        setState(() => _agreed = value ?? false);
+                        field.didChange(_agreed);
                       },
                       title: Text(l10n.registerAgeConfirmation),
                       controlAffinity: ListTileControlAffinity.leading,
@@ -121,6 +125,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ],
                 ),
               ),
+              // The data notice is read, not agreed to: processing does not rest on consent
+              // (docs/legal/compliance-research.md).
+              Text(l10n.registerDataNotice, style: Theme.of(context).textTheme.bodySmall),
+              const LegalLinks(documents: [LegalDocument.terms, LegalDocument.dataNotice]),
               if (action.hasError && !action.isLoading) ...[
                 const SizedBox(height: AppSpacing.md),
                 FormErrorBanner(message: errorMessage(l10n, action.error!)),

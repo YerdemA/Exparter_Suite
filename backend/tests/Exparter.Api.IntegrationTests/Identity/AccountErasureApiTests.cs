@@ -37,7 +37,7 @@ public class AccountErasureApiTests(ApiFixture fixture) : IClassFixture<ApiFixtu
     private Task<HttpResponseMessage> RegisterAsync(string email, string username) =>
         _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email, username, password = TestSession.Password, ageConfirmed = true });
+            new { email, username, password = TestSession.Password, ageConfirmed = true, termsAccepted = true });
 
     private async Task ExecuteSqlAsync(FormattableString sql)
     {

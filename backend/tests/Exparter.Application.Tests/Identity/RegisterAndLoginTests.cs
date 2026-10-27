@@ -22,7 +22,7 @@ public class RegisterCommandHandlerTests
         _context.Clock);
 
     private static RegisterCommand Command(string email = "Ayse@Example.com", string username = "ayse") =>
-        new(email, username, IdentityTestContext.Password, AgeConfirmed: true);
+        new(email, username, IdentityTestContext.Password, AgeConfirmed: true, TermsAccepted: true);
 
     [Fact]
     public async Task Creates_the_account_signs_in_and_sends_a_verification_email()
@@ -33,6 +33,7 @@ public class RegisterCommandHandlerTests
         Assert.Equal("ayse@example.com", user.Email);
         Assert.Equal("ayse", user.Username);
         Assert.NotEqual(IdentityTestContext.Password, user.PasswordHash);
+        Assert.Equal(TermsOfUse.CurrentVersion, user.TermsVersion);
         Assert.Equal(user.Id, result.Account.Id);
         Assert.False(result.Account.EmailVerified);
         Assert.False(result.AccountRestored);
@@ -86,19 +87,20 @@ public class RegisterCommandValidatorTests
 
     [Fact]
     public void Accepts_a_valid_command() =>
-        Assert.True(_validator.Validate(new RegisterCommand("ayse@example.com", "ayse.yilmaz", "Passw0rd!x", true)).IsValid);
+        Assert.True(_validator.Validate(new RegisterCommand("ayse@example.com", "ayse.yilmaz", "Passw0rd!x", true, true)).IsValid);
 
     [Theory]
-    [InlineData("not-an-email", "ayse", "Passw0rd!x", true, nameof(RegisterCommand.Email))]
-    [InlineData("ayse@example.com", "a", "Passw0rd!x", true, nameof(RegisterCommand.Username))]
-    [InlineData("ayse@example.com", "ay..se", "Passw0rd!x", true, nameof(RegisterCommand.Username))]
-    [InlineData("ayse@example.com", "Ayse", "Passw0rd!x", true, nameof(RegisterCommand.Username))]
-    [InlineData("ayse@example.com", null, "Passw0rd!x", true, nameof(RegisterCommand.Username))]
-    [InlineData("ayse@example.com", "ayse", "short", true, nameof(RegisterCommand.Password))]
-    [InlineData("ayse@example.com", "ayse", "Passw0rd!x", false, nameof(RegisterCommand.AgeConfirmed))]
-    public void Rejects_invalid_fields(string email, string? username, string password, bool ageConfirmed, string field)
+    [InlineData("not-an-email", "ayse", "Passw0rd!x", true, true, nameof(RegisterCommand.Email))]
+    [InlineData("ayse@example.com", "a", "Passw0rd!x", true, true, nameof(RegisterCommand.Username))]
+    [InlineData("ayse@example.com", "ay..se", "Passw0rd!x", true, true, nameof(RegisterCommand.Username))]
+    [InlineData("ayse@example.com", "Ayse", "Passw0rd!x", true, true, nameof(RegisterCommand.Username))]
+    [InlineData("ayse@example.com", null, "Passw0rd!x", true, true, nameof(RegisterCommand.Username))]
+    [InlineData("ayse@example.com", "ayse", "short", true, true, nameof(RegisterCommand.Password))]
+    [InlineData("ayse@example.com", "ayse", "Passw0rd!x", false, true, nameof(RegisterCommand.AgeConfirmed))]
+    [InlineData("ayse@example.com", "ayse", "Passw0rd!x", true, false, nameof(RegisterCommand.TermsAccepted))]
+    public void Rejects_invalid_fields(string email, string? username, string password, bool ageConfirmed, bool termsAccepted, string field)
     {
-        var result = _validator.Validate(new RegisterCommand(email, username!, password, ageConfirmed));
+        var result = _validator.Validate(new RegisterCommand(email, username!, password, ageConfirmed, termsAccepted));
 
         Assert.Contains(result.Errors, error => error.PropertyName == field);
     }

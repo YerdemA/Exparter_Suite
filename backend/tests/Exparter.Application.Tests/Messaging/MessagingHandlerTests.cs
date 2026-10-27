@@ -133,7 +133,7 @@ public class MessagingHandlerTests
         _conversations.Add(_conversation);
     }
 
-    private PushNotifier Pushes => new(_presence, _pushQueue, new FakeUserSummaries(_users), _clock);
+    private PushNotifier Pushes => new(_presence, _pushQueue, _clock);
 
     private async Task<MessageDto> SendAsync(Guid userId, string body, Guid? clientMessageId = null)
     {
@@ -164,7 +164,7 @@ public class MessagingHandlerTests
         await SendAsync(_ayse, "Selam");
 
         var (userId, message) = Assert.Single(_pushQueue.Queued);
-        Assert.Equal((_ayse, "@ali", "Merhaba"), (userId, message.Title, message.Body));
+        Assert.Equal((_ayse, "Exparter", "Yeni bir mesajınız var."), (userId, message.Title, message.Body));
         Assert.Equal(_conversation.Id.ToString(), message.Data["conversationId"]);
     }
 

@@ -32,7 +32,7 @@ public sealed class TestSession
         var (email, username) = ($"user{id}@example.com", $"user{id}");
         var response = await client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email, username, password = Password, ageConfirmed = true });
+            new { email, username, password = Password, ageConfirmed = true, termsAccepted = true });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         return new TestSession(

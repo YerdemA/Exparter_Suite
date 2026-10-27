@@ -133,6 +133,7 @@ void main() {
           username: any(named: 'username'),
           password: any(named: 'password'),
           ageConfirmed: any(named: 'ageConfirmed'),
+          termsAccepted: any(named: 'termsAccepted'),
         ),
       );
     });
@@ -144,6 +145,7 @@ void main() {
           username: 'ayse',
           password: 'Passw0rd!x',
           ageConfirmed: true,
+          termsAccepted: true,
         ),
       ).thenAnswer((_) async => testAuthResponse());
       await pumpScreen(tester, const RegisterScreen());
@@ -158,6 +160,7 @@ void main() {
           username: 'ayse',
           password: 'Passw0rd!x',
           ageConfirmed: true,
+          termsAccepted: true,
         ),
       ).called(1);
     });
@@ -169,6 +172,7 @@ void main() {
           username: any(named: 'username'),
           password: any(named: 'password'),
           ageConfirmed: any(named: 'ageConfirmed'),
+          termsAccepted: any(named: 'termsAccepted'),
         ),
       ).thenThrow(const ApiException(code: 'username_already_taken', statusCode: 409));
       await pumpScreen(tester, const RegisterScreen());

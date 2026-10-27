@@ -5,8 +5,17 @@ using Mediator;
 
 namespace Exparter.Application.Identity;
 
-public sealed record RegisterCommand(string Email, string Username, string Password, bool AgeConfirmed)
+public sealed record RegisterCommand(string Email, string Username, string Password, bool AgeConfirmed, bool TermsAccepted)
     : ICommand<AuthResult>;
+
+public static class TermsOfUse
+{
+    /// <summary>
+    /// The terms published at /kullanim-kosullari.html. Change it together with the text,
+    /// so that each account records the version it accepted.
+    /// </summary>
+    public const string CurrentVersion = "2026-10-27";
+}
 
 public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
@@ -16,6 +25,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
         RuleFor(x => x.Username).ValidUsername();
         RuleFor(x => x.Password).NotEmpty().MinimumLength(8).MaximumLength(128);
         RuleFor(x => x.AgeConfirmed).Equal(true).WithMessage("You must confirm that you are 18 or older.");
+        RuleFor(x => x.TermsAccepted).Equal(true).WithMessage("You must accept the terms of use.");
     }
 }
 
@@ -54,6 +64,8 @@ public sealed class RegisterCommandHandler(
             command.Username,
             passwordHasher.Hash(command.Password),
             command.AgeConfirmed,
+            command.TermsAccepted,
+            TermsOfUse.CurrentVersion,
             now);
         users.Add(user);
 

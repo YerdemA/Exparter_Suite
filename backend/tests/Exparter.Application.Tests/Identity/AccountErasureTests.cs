@@ -47,7 +47,7 @@ public class AccountErasureTests
         _context.Clock);
 
     private Task<AuthResult> RegisterAsync(string email, string username) =>
-        RegisterHandler.Handle(new RegisterCommand(email, username, IdentityTestContext.Password, AgeConfirmed: true), CancellationToken.None).AsTask();
+        RegisterHandler.Handle(new RegisterCommand(email, username, IdentityTestContext.Password, AgeConfirmed: true, TermsAccepted: true), CancellationToken.None).AsTask();
 
     [Fact]
     public async Task An_account_is_erased_only_once_its_deletion_can_no_longer_be_taken_back()

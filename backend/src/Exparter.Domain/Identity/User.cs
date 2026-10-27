@@ -17,6 +17,12 @@ public sealed class User
     public UserRole Role { get; private set; }
     public DateTimeOffset? EmailVerifiedAt { get; private set; }
     public DateTimeOffset AgeConfirmedAt { get; private set; }
+
+    /// <summary>When the user accepted the terms of use; null for accounts opened before there were any.</summary>
+    public DateTimeOffset? TermsAcceptedAt { get; private set; }
+
+    /// <summary>The version of the terms accepted, so that a later change can tell who has not seen it.</summary>
+    public string? TermsVersion { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? DeletionRequestedAt { get; private set; }
     public DateTimeOffset? UsernameChangedAt { get; private set; }
@@ -30,11 +36,23 @@ public sealed class User
 
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
-    public static User Register(string email, string username, string passwordHash, bool ageConfirmed, DateTimeOffset now)
+    public static User Register(
+        string email,
+        string username,
+        string passwordHash,
+        bool ageConfirmed,
+        bool termsAccepted,
+        string termsVersion,
+        DateTimeOffset now)
     {
         if (!ageConfirmed)
         {
             throw IdentityErrors.AgeNotConfirmed();
+        }
+
+        if (!termsAccepted)
+        {
+            throw IdentityErrors.TermsNotAccepted();
         }
 
         return new User
@@ -46,6 +64,8 @@ public sealed class User
             Status = UserStatus.Active,
             Role = UserRole.User,
             AgeConfirmedAt = now,
+            TermsAcceptedAt = now,
+            TermsVersion = termsVersion,
             CreatedAt = now,
         };
     }

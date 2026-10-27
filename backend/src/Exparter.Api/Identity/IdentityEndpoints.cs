@@ -6,7 +6,7 @@ using Mediator;
 
 namespace Exparter.Api.Identity;
 
-internal sealed record RegisterRequest(string Email, string Username, string Password, bool AgeConfirmed);
+internal sealed record RegisterRequest(string Email, string Username, string Password, bool AgeConfirmed, bool TermsAccepted);
 
 internal sealed record LoginRequest(string Identifier, string Password);
 
@@ -31,7 +31,7 @@ internal static class IdentityEndpoints
         auth.MapPost("/register", async (RegisterRequest request, ISender sender, CancellationToken cancellationToken) =>
         {
             var result = await sender.Send(
-                new RegisterCommand(request.Email, request.Username, request.Password, request.AgeConfirmed),
+                new RegisterCommand(request.Email, request.Username, request.Password, request.AgeConfirmed, request.TermsAccepted),
                 cancellationToken);
             return Results.Created("/api/v1/me", result);
         }).RequireRateLimiting(Hardening.EmailPolicy);

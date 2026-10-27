@@ -25,7 +25,7 @@ internal sealed class IdentityTestContext
 
     public User AddUser(string email = "ayse@example.com", string username = "ayse")
     {
-        var user = User.Register(email, username, Hasher.Hash(Password), ageConfirmed: true, Clock.GetUtcNow());
+        var user = User.Register(email, username, Hasher.Hash(Password), ageConfirmed: true, termsAccepted: true, termsVersion: "v1", Clock.GetUtcNow());
         Users.Add(user);
         return user;
     }

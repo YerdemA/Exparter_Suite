@@ -1,8 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Exparter.Application.Moderation;
+using Exparter.Infrastructure.Persistence;
+using Mediator;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Exparter.Api.IntegrationTests.Moderation;
 
@@ -92,6 +97,37 @@ public class ModerationApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
 
         await OkAsync(ayse.SendAsync(HttpMethod.Get, $"/api/v1/users/{ali.UserId}"));
         Assert.Equal("Ended", (await ali.GetJsonAsync(matchPath)).GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Closed_reports_are_removed_after_two_years_and_open_ones_stay()
+    {
+        var ali = await TestSession.RegisterVisibleAsync(_client, fixture);
+        var ayse = await TestSession.RegisterVisibleAsync(_client, fixture);
+        var can = await TestSession.RegisterVisibleAsync(_client, fixture);
+        var closed = await OkAsync(
+            PostAsync(ali, "/api/v1/reports", new { targetType = "User", targetId = ayse.UserId, reason = "Spam" }),
+            HttpStatusCode.Created);
+        var open = await OkAsync(
+            PostAsync(ali, "/api/v1/reports", new { targetType = "User", targetId = can.UserId, reason = "Spam" }),
+            HttpStatusCode.Created);
+        var admin = await AdminAsync();
+        var closedId = closed.GetProperty("id").GetGuid();
+        await OkAsync(PostAsync(admin, $"/api/v1/admin/reports/{closedId}/resolution", new { status = "Dismissed" }));
+
+        await using (var scope = fixture.Services.CreateAsyncScope())
+        {
+            var past = DateTimeOffset.UtcNow - TimeSpan.FromDays(731);
+            await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE moderation.reports SET created_at = {past}, resolved_at = {past} WHERE id = {closedId} OR id = {open.GetProperty("id").GetGuid()}");
+            await scope.ServiceProvider.GetRequiredService<ISender>().Send(new PurgeOldReportsCommand());
+        }
+
+        var ids = (await admin.GetJsonAsync("/api/v1/admin/reports?pageSize=50")).GetProperty("items").EnumerateArray()
+            .Select(item => item.GetProperty("id").GetGuid())
+            .ToList();
+        Assert.DoesNotContain(closedId, ids);
+        Assert.Contains(open.GetProperty("id").GetGuid(), ids);
     }
 
     [Fact]

@@ -6,6 +6,8 @@ import '../../../core/api/error_messages.dart';
 import '../../../core/api/generated/export.dart';
 import '../../../core/auth/interaction_requirements.dart';
 import '../../../core/auth/session_controller.dart';
+import '../../../core/legal/legal_documents.dart';
+import '../../../core/legal/legal_links.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -312,6 +314,9 @@ class _ProfileBody extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go(AppRoutes.blockedUsers),
               ),
+              const SizedBox(height: AppSpacing.md),
+              Text(l10n.legalTitle, style: theme.textTheme.titleMedium),
+              const LegalLinks(documents: LegalDocument.values),
               const SizedBox(height: AppSpacing.lg),
               OutlinedButton.icon(
                 onPressed: loggingOut

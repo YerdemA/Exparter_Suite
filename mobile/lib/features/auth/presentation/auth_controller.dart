@@ -27,6 +27,7 @@ class AuthController extends _$AuthController {
     required String username,
     required String password,
     required bool ageConfirmed,
+    required bool termsAccepted,
   }) =>
       _run(
         () => ref.read(authRepositoryProvider).register(
@@ -34,6 +35,7 @@ class AuthController extends _$AuthController {
               username: username,
               password: password,
               ageConfirmed: ageConfirmed,
+              termsAccepted: termsAccepted,
             ),
       );
 

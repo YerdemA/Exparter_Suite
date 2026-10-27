@@ -56,6 +56,9 @@ internal sealed class InMemoryReports : IReportRepository
         return Task.FromResult(new PagedList<Report>(all, page.Page, page.PageSize, all.Count));
     }
 
+    public Task<int> DeleteClosedBeforeAsync(DateTimeOffset moment, CancellationToken cancellationToken) =>
+        Task.FromResult(Items.RemoveAll(x => x.Status != ReportStatus.Open && x.ResolvedAt < moment));
+
     public void Add(Report report) => Items.Add(report);
 }
 
@@ -225,6 +228,23 @@ public class ModerationHandlerTests
         Assert.True(validator.Validate(new CreateReportCommand(_ali, ReportTargetType.User, _ayse, ReportReason.Other, "Neden")).IsValid);
         Assert.True(validator.Validate(new CreateReportCommand(_ali, ReportTargetType.User, _ayse, ReportReason.Spam, null)).IsValid);
         Assert.False(validator.Validate(new CreateReportCommand(_ali, ReportTargetType.User, _ayse, ReportReason.Spam, new string('a', 1001))).IsValid);
+    }
+
+    [Fact]
+    public async Task Closed_reports_are_purged_once_their_retention_has_passed()
+    {
+        var closed = await ReportAsync(ReportTargetType.User, _ayse);
+        var open = await ReportAsync(ReportTargetType.User, _ali, reporter: _ayse);
+        await new CloseReportCommandHandler(_reports, _notifier, _unitOfWork, _clock)
+            .Handle(new CloseReportCommand(Guid.NewGuid(), closed.Id, ReportStatus.Dismissed), CancellationToken.None);
+        var purge = new PurgeOldReportsCommandHandler(_reports, _clock);
+
+        _clock.Advance(Report.Retention - TimeSpan.FromDays(1));
+        Assert.Equal(0, await purge.Handle(new PurgeOldReportsCommand(), CancellationToken.None));
+
+        _clock.Advance(TimeSpan.FromDays(2));
+        Assert.Equal(1, await purge.Handle(new PurgeOldReportsCommand(), CancellationToken.None));
+        Assert.Equal(open.Id, Assert.Single(_reports.Items).Id);
     }
 
     [Fact]
