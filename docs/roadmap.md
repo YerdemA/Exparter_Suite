@@ -348,6 +348,7 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Testler (2026-10-27): backend 514 (170 domain, 234 uygulama, 110 entegrasyon), mobil 221.
 - Mağaza ekran görüntüleri (2026-10-27): 6 adet, `docs/store/screenshots/`. Kurgusal kişilerle yerel ortamda alındı; canlıya örnek hesap açılmadı. Veriler `scripts/seed-store-screenshots.py` ile yeniden üretilir.
 - İlk yayın derlemesi (2026-10-27): 1.0.0 (1), canlı API ve Sentry anahtarıyla; imzanın yükleme anahtarıyla eşleştiği ve yayın APK'sının canlı API'ye bağlandığı (giriş, bildirim izni ve Firebase kaydı, yasal sayfalar) emülatörde denendi.
+- E-posta bağlantıları (2026-10-27, ADR 0009): canlıda `https://exparter.app/verify-email` ve `/reset-password`. Uygulama kuruluysa Android App Links ile uygulama açılır, yoksa sitedeki sayfa işlemi tamamlar. Yerelde Caddy ile uçtan uca, emülatörde uygulamayla denendi. Play'in imzalama anahtarı yüklemeden sonra `assetlinks.json` dosyasına eklenecek.
 - Kalan: kapalı teste yükleme, Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
 
 ## Geliştirme ortamı

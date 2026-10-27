@@ -108,7 +108,7 @@ Play bu formu uygulamanın gerçek davranışıyla karşılaştırır; uygulamay
 1. **Testing → Closed testing → Create track** (ör. "Kapalı test").
 2. **Testers:** bir e-posta listesi oluşturup test kullanıcılarının Google hesaplarını ekleyin. Kişisel hesaplarda üretime geçmek için **en az 12 test kullanıcısının 14 gün boyunca kesintisiz** kapalı testte kalması gerekir; ayrılanlar olabileceği için 15–20 kişiyle başlayın.
 3. **Countries:** Türkiye.
-4. **Create release:** `app-release.aab` dosyasını yükleyin. İlk yüklemede **Play App Signing**'i kabul edin; Google uygulama imzalama anahtarını tutar, sizin anahtarınız yalnızca yükleme anahtarıdır.
+4. **Create release:** `app-release.aab` dosyasını yükleyin. İlk yüklemede **Play App Signing**'i kabul edin; Google uygulama imzalama anahtarını tutar, sizin anahtarınız yalnızca yükleme anahtarıdır. Yüklemeden sonra **Test and release → App integrity → App signing** bölümündeki "App signing key certificate" SHA-256 parmak izini `deploy/site/.well-known/assetlinks.json` dosyasına ekleyin (yükleme anahtarınınki zaten orada). Eklenmezse Play'den kurulan uygulama e-posta bağlantılarını kendisi açmaz, bağlantılar sitedeki sayfada açılır.
 5. Sürüm notu, ör. "İlk kapalı test sürümü."
 6. **Review release → Start rollout.** İlk inceleme birkaç gün sürebilir.
 7. İnceleme bitince **Testers** sekmesindeki katılım bağlantısını test kullanıcılarına gönderin. Bağlantıyı açıp "Become a tester" dedikten sonra uygulamayı Play Store'dan kurarlar.
