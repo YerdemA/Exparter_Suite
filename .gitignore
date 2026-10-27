@@ -3,6 +3,12 @@
 .env.*
 !.env.example
 
+# Deployment: keys and certificates live only on the server and the developer's machine.
+deploy/secrets/
+*.jks
+*.keystore
+mobile/android/key.properties
+
 # .NET
 bin/
 obj/

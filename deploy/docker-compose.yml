@@ -1,0 +1,86 @@
+# The live environment on the server (docs/deployment.md, ADR 0014). Values come from
+# deploy/.env on the server, never from the repository.
+name: exparter
+
+# The containers' output is the log (JSON lines from the API, ADR 0013). Docker keeps
+# a bounded amount per container and drops the oldest.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 20m
+    max-file: "5"
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    # No published port: only the API reaches the database, over the compose network.
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    image: ${API_IMAGE:?set API_IMAGE in .env}
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Caddy is the only way in, so the forwarded client address and scheme can be
+      # trusted: rate limits then count real clients instead of the proxy.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      AllowedHosts: ${API_HOST:?set API_HOST in .env}
+      ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in .env}
+      Email__Host: ${SMTP_HOST:?set SMTP_HOST in .env}
+      Email__Port: ${SMTP_PORT:-587}
+      Email__Username: ${SMTP_USERNAME:?set SMTP_USERNAME in .env}
+      Email__Password: ${SMTP_PASSWORD:?set SMTP_PASSWORD in .env}
+      Email__FromAddress: ${EMAIL_FROM_ADDRESS:?set EMAIL_FROM_ADDRESS in .env}
+      Email__EmailVerificationUrl: exparter://app/verify-email?token={token}
+      Email__PasswordResetUrl: exparter://app/reset-password?token={token}
+      Storage__Endpoint: ${STORAGE_ENDPOINT:?set STORAGE_ENDPOINT in .env}
+      Storage__Region: ${STORAGE_REGION:-auto}
+      Storage__Bucket: ${STORAGE_BUCKET:?set STORAGE_BUCKET in .env}
+      Storage__AccessKey: ${STORAGE_ACCESS_KEY:?set STORAGE_ACCESS_KEY in .env}
+      Storage__SecretKey: ${STORAGE_SECRET_KEY:?set STORAGE_SECRET_KEY in .env}
+      Firebase__CredentialsPath: /run/secrets/firebase-adminsdk.json
+      Sentry__Dsn: ${SENTRY_DSN:-}
+      Sentry__Environment: production
+    volumes:
+      - ./secrets/firebase-adminsdk.json:/run/secrets/firebase-adminsdk.json:ro
+
+  caddy:
+    image: caddy:2.11.7
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      - api
+    environment:
+      API_HOST: ${API_HOST}
+      SITE_HOST: ${SITE_HOST:?set SITE_HOST in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./site:/srv/site:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

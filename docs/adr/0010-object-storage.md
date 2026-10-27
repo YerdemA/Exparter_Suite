@@ -13,7 +13,7 @@ Değerlendirilen seçenekler: Garage, RustFS, SeaweedFS ve yönetilen servisler 
 
 - **Kod belirli bir ürüne değil S3 API'sine yazılır.** Application katmanı yalnızca `IObjectStorage` arayüzünü bilir; Infrastructure'daki `S3ObjectStorage` her S3 uyumlu servisle çalışır.
 - **Lokalde ve testlerde Garage** kullanılır (`docker-compose.yml`). Hafiftir; `--single-node --default-bucket` ile ilk açılışta düzenini, erişim anahtarını ve bucket'ı kendisi kurar, elle kurulum gerekmez.
-- **Canlı ortamın depolama servisi Faz 6'da seçilir.** Geçiş yalnızca yapılandırma değişikliğidir (`Storage:*`).
+- **Canlı ortamda Cloudflare R2 kullanılır**, bucket AB yetki alanında açılır (ADR 0014). Geçiş yalnızca yapılandırma değişikliğidir (`Storage:*`). (2026-10-14'te güncellendi; ilk karar seçimin Faz 6'ya bırakılmasıydı.)
 - **Dosyalar API'den geçmez.** İstemci, API'den aldığı presigned URL'ye doğrudan yükler; okuma da kısa ömürlü presigned URL ile yapılır. Bucket herkese açık değildir.
 - **Sınırlar yüklenen dosya üzerinde denetlenir.** Presigned URL yüklenen içeriğin boyutunu sınırlayamaz; istemci yüklemeyi bitirince API dosyanın gerçek boyutuna ve türüne bakar, kurala uymayanı siler.
 - **Sahiplik anahtarın önekiyle kanıtlanır.** Avatar anahtarları `avatars/<kullanıcı kimliği>/` altındadır; kullanıcı başka birinin önekindeki dosyayı avatarı yapamaz.

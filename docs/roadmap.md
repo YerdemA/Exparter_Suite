@@ -241,7 +241,7 @@ Plan 2026-10-14'te onaylandı. Her dilim kendi branch'inde (`phase-6/<n>-<konu>`
 | 3 | Güvenlik: istek sınırlama, girdi sınırları, güvenlik başlıkları, bağımlılık denetimi | Tamamlandı (2026-10-14) |
 | 4 | Performans: N+1 sorgular, index'ler, keşfet sorgusu, yük denemesi | Tamamlandı (2026-10-14) |
 | 5 | Hata izleme ve kayıtlar | Tamamlandı (2026-10-14) |
-| 6 | Canlı ortam ve Google Play kapalı test sürümü | Başlamadı |
+| 6 | Canlı ortam ve Google Play kapalı test sürümü | Sürüyor |
 
 Kararlar (kullanıcı, 2026-10-14):
 
@@ -330,6 +330,19 @@ flutter run --dart-define=SENTRY_DSN=<exparter-mobile projesinin DSN'i>
 DSN'ler Sentry'de proje ayarlarında, "Client Keys (DSN)" altında. Mobil DSN uygulamaya gömülür ve Sentry'ye göre gizli değildir; backend DSN'i yine de user-secrets'ta tutulur.
 
 IP saklamayı kapatmak için: Sentry → Settings → Organization (`exparter`) → Security & Privacy → "Prevent Storing of IP Addresses" açık.
+
+### Dilim 6 — Canlı ortam ve kapalı test
+
+Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankfurt), e-posta Brevo, alan adı alınacak, kişisel Play Console hesabı açılacak. Önerilen ve plana alınan: DNS ve nesne depolama Cloudflare (R2). Gerekçe: ADR 0014; ADR 0007, 0010 ve 0013 güncellendi.
+
+- Backend imajı: `backend/Dockerfile`, arm64 için çapraz derleme. `--migrate` argümanıyla migration uygulanır ve süreç çıkar. Backend CI imajı her push'ta derler.
+- Sunucu: `deploy/` (Compose ile API, PostgreSQL ve Caddy; `.env.example`; gece yedeği `backup.sh`; herkese açık sayfalar `site/`). Kurulum ve günlük işler: `docs/deployment.md`.
+- Dağıtım: `Deploy` iş akışı `main`'den imajı GHCR'ye yayımlar. `DEPLOY_HOST` değişkeni tanımlanınca migration'ı ve yeni sürümü SSH ile sunucuda çalıştırır.
+- Android: yayın derlemesi repo dışındaki yükleme anahtarıyla imzalanır (`mobile/android/key.properties`); dosya yoksa debug anahtarı kullanılır.
+- Mağaza: metinler, form yanıtları ve kapalı test adımları `docs/store/listing.md`; simge ve öne çıkan görsel `docs/store/` (üretici: `mobile/tool/generate_store_assets.dart`).
+- Gizlilik politikası, KVKK aydınlatma metni ve hesap silme sayfası taslak olarak `docs/legal/` altında; yayımlanmaları için `deploy/site/` klasörüne taşınmaları gerekir. Karar (kullanıcı, 2026-10-27): hukukçu görüşü alınmayacak; metinler benzer uygulamaların uygulamalarını inceleyen bir araştırma raporuna göre son haline getirilecek. Açık konular `docs/store/listing.md` 7. bölümde.
+- Bekleyen (kullanıcı): alan adı ve Cloudflare, Oracle sunucusu, R2 bucket'ları ve anahtarları, Brevo alan adı doğrulaması, Play Console hesabı, 12'den fazla test kullanıcısı, metinlerin hukuki kontrolü.
+- Kalan (alan adı belli olunca): uygulama içinde gizlilik ve aydınlatma metni bağlantıları, ekran görüntüleri, ilk yayın derlemesi ve kapalı teste yükleme; Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri.
 
 ## Geliştirme ortamı
 
