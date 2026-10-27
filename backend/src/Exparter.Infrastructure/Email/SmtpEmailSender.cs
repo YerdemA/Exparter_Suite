@@ -44,41 +44,43 @@ internal sealed class SmtpEmailSender(IOptions<EmailOptions> options, ILogger<Sm
     public Task SendEmailVerificationAsync(string email, string token, CancellationToken cancellationToken) =>
         SendAsync(
             email,
-            "Exparter e-posta doğrulama",
-            $"""
-             Merhaba,
-
-             Exparter hesabınızı kullanmaya başlamak için e-posta adresinizi doğrulayın:
-             {Link(_options.EmailVerificationUrl, token)}
-
-             Bağlantı 24 saat geçerlidir. Bu hesabı siz oluşturmadıysanız bu e-postayı yok sayabilirsiniz.
-             """,
+            new EmailContent(
+                Subject: "E-posta adresinizi doğrulayın",
+                Preheader: "Exparter hesabınızı kullanmaya başlamak için son bir adım.",
+                Title: "E-posta adresinizi doğrulayın",
+                Body: "Exparter'a hoş geldiniz! Hesabınızı kullanmaya başlamak için e-posta adresinizi doğrulayın.",
+                ButtonLabel: "E-postamı doğrula",
+                Link: Link(_options.EmailVerificationUrl, token),
+                Note: "Bağlantı 24 saat geçerlidir. Bu hesabı siz oluşturmadıysanız bu e-postayı yok sayabilirsiniz."),
             cancellationToken);
 
     public Task SendPasswordResetAsync(string email, string token, CancellationToken cancellationToken) =>
         SendAsync(
             email,
-            "Exparter parola sıfırlama",
-            $"""
-             Merhaba,
-
-             Parolanızı sıfırlamak için aşağıdaki bağlantıyı kullanın:
-             {Link(_options.PasswordResetUrl, token)}
-
-             Bağlantı 1 saat geçerlidir. Bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz; parolanız değişmez.
-             """,
+            new EmailContent(
+                Subject: "Parolanızı sıfırlayın",
+                Preheader: "Exparter parolanızı sıfırlamak için bağlantınız.",
+                Title: "Parolanızı sıfırlayın",
+                Body: "Exparter hesabınız için bir parola sıfırlama isteği aldık. Yeni bir parola belirlemek için düğmeye basın.",
+                ButtonLabel: "Parolayı sıfırla",
+                Link: Link(_options.PasswordResetUrl, token),
+                Note: "Bağlantı 1 saat geçerlidir. Bu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz; parolanız değişmez."),
             cancellationToken);
 
     private static string Link(string template, string token) =>
         template.Replace("{token}", Uri.EscapeDataString(token), StringComparison.Ordinal);
 
-    private async Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken)
+    private async Task SendAsync(string to, EmailContent content, CancellationToken cancellationToken)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
         message.To.Add(MailboxAddress.Parse(to));
-        message.Subject = subject;
-        message.Body = new TextPart("plain") { Text = body };
+        message.Subject = content.Subject;
+        message.Body = new BodyBuilder
+        {
+            TextBody = EmailTemplate.Text(content),
+            HtmlBody = EmailTemplate.Html(content),
+        }.ToMessageBody();
 
         try
         {
@@ -96,7 +98,7 @@ internal sealed class SmtpEmailSender(IOptions<EmailOptions> options, ILogger<Sm
         {
             // A mail outage must not fail the request that triggered the email: the data is
             // already saved and the user can ask for a new email.
-            logger.LogError(exception, "Sending email with subject {Subject} failed", subject);
+            logger.LogError(exception, "Sending email with subject {Subject} failed", content.Subject);
         }
     }
 }
