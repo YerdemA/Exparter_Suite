@@ -7,10 +7,10 @@ KVKK m. 9 uyarınca yurt dışındaki her hizmet sağlayıcıya, Kurul'un veri s
 | Sağlayıcı | Kanal | Not |
 |---|---|---|
 | Cloudflare (R2) | `PrivacyQuestions@cloudflare.com` | Cloudflare'in Article 14 bildiriminde gizlilik ekibinin adresi olarak geçiyor. |
-| Oracle Cloud | Oracle'ın veri koruma talep formu (oracle.com → Legal → Privacy → "Data Privacy Inquiry"), yoksa OCI konsolunda destek talebi | Formun adresi ikincil bir kaynaktan; göndermeden önce oracle.com'da doğrulayın. |
-| Brevo | Gizlilik politikasında yazan DPO adresi (brevo.com/legal/privacypolicy), yoksa panelden destek talebi | |
-| Sentry | sentry.io → Help → Contact Support ("Legal / Privacy" konusu) | Sentry'nin DPA'sı panelden kabul ediliyor. |
-| Google Firebase | Firebase konsolu → Support → "Data protection / privacy" talebi | Firebase'in veri işleme şartları AB standart sözleşmelerine dayanıyor. |
+| Oracle Cloud | https://www.oracle.com/legal/data-privacy-inquiry-form/ | Oracle'ın gizlilik politikasından bağlantılı. |
+| Brevo | `dpo@brevo.com` | Brevo'nun gizlilik politikasındaki veri koruma görevlisi adresi. |
+| Sentry | `compliance@sentry.io` | Sentry'nin gizlilik politikasında gizlilik soruları ve AB temsilcisi için verilen adres. |
+| Google Firebase | https://support.google.com/cloud/contact/dpo | Google Cloud sözleşmelerinde veri koruma ekibinin kanalı olarak geçiyor; çalışmadığı doğrulanamadı. Açılmazsa: https://support.google.com/policies/contact/general_privacy_form |
 
 Gönderdiğiniz tarihleri ve gelen yanıtları repoda değil, kendi bilgisayarınızda bir klasörde saklayın (ör. `D:\Yazilim\legal-records`).
 
