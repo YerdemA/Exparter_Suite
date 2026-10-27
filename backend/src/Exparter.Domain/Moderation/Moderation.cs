@@ -63,6 +63,13 @@ public sealed class Report
 {
     public const int DescriptionMaxLength = 1000;
 
+    /// <summary>
+    /// How long a closed report is kept: long enough to see that someone was reported
+    /// before, if they come back (docs/legal/compliance-research.md). Open reports stay
+    /// until they are closed.
+    /// </summary>
+    public static readonly TimeSpan Retention = TimeSpan.FromDays(730);
+
     private Report()
     {
     }

@@ -90,7 +90,7 @@ internal sealed class UserNotifier(
 
         if (batch.Count > 0)
         {
-            await pushes.NotifyAsync(batch, cancellationToken);
+            pushes.Notify(batch);
         }
     }
 }

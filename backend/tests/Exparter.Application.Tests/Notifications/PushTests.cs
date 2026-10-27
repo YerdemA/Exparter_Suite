@@ -55,7 +55,7 @@ public class PushTests
     {
         _users.Users[_ali] = new UserInfo(_ali, "ali", IsActive: true, IsEmailVerified: true);
         _users.Users[_ayse] = new UserInfo(_ayse, "ayse", IsActive: true, IsEmailVerified: true);
-        _pushes = new PushNotifier(_presence, _queue, new FakeUserSummaries(_users), _clock);
+        _pushes = new PushNotifier(_presence, _queue, _clock);
         _notifier = new UserNotifier(_notifications, _realtime, _pushes, _clock);
     }
 
@@ -72,7 +72,7 @@ public class PushTests
         Assert.Equal(2, _realtime.Sent.Count);
         var (userId, message) = Assert.Single(_queue.Queued);
         Assert.Equal(_ayse, userId);
-        Assert.Equal(("Exparter", "@ali takas isteğinizi kabul etti. Artık eşleştiniz."), (message.Title, message.Body));
+        Assert.Equal(("Exparter", "Bir kullanıcı takas isteğinizi kabul etti. Artık eşleştiniz."), (message.Title, message.Body));
         Assert.Equal("SwapRequestAccepted", message.Data["type"]);
         Assert.Equal(matchId.ToString(), message.Data["matchId"]);
         Assert.Equal(_notifications.Items[0].Id.ToString(), message.Data["notificationId"]);
@@ -80,11 +80,10 @@ public class PushTests
     }
 
     [Fact]
-    public async Task What_happened_on_its_own_or_by_a_deleted_user_is_told_without_a_name()
+    public async Task A_push_names_no_one_and_quotes_nothing_a_user_wrote()
     {
-        var gone = Guid.NewGuid();
         _notifier.Notify(_ayse, NotificationType.MatchEnded, new NotificationData(MatchId: Guid.NewGuid()));
-        _notifier.Notify(_ayse, NotificationType.MatchEnded, new NotificationData(ActorUserId: gone, MatchId: Guid.NewGuid()));
+        _notifier.Notify(_ayse, NotificationType.MatchEnded, new NotificationData(ActorUserId: _ali, MatchId: Guid.NewGuid()));
         _notifier.Notify(
             _ayse,
             NotificationType.SessionCancelled,
@@ -94,8 +93,8 @@ public class PushTests
         Assert.Equal(
             [
                 "Sonlandırma isteği cevaplanmadığı için bir eşleşmeniz sona erdi.",
-                "Bir kullanıcı ile eşleşmeniz sona erdi.",
-                "@ali oturumu iptal etti: Hastayım.",
+                "Bir eşleşmeniz sona erdi.",
+                "Bir kullanıcı oturumu iptal etti.",
             ],
             _queue.Queued.Select(x => x.Message.Body));
     }
@@ -114,21 +113,18 @@ public class PushTests
     }
 
     [Fact]
-    public async Task A_message_push_shows_the_sender_and_how_the_message_starts()
+    public void A_message_push_only_says_that_a_message_arrived()
     {
         var conversationId = Guid.NewGuid();
 
-        await _pushes.MessageAsync(_ayse, _ali, conversationId, "Merhaba!", CancellationToken.None);
-        await _pushes.MessageAsync(_ayse, _ali, conversationId, new string('a', 150), CancellationToken.None);
+        _pushes.Message(_ayse, conversationId);
         _presence.Connected.Add(_ayse);
-        await _pushes.MessageAsync(_ayse, _ali, conversationId, "Görüldü", CancellationToken.None);
+        _pushes.Message(_ayse, conversationId);
 
-        Assert.Equal(2, _queue.Queued.Count);
-        var first = _queue.Queued[0].Message;
-        Assert.Equal(("@ali", "Merhaba!"), (first.Title, first.Body));
-        Assert.Equal("MessageReceived", first.Data["type"]);
-        Assert.Equal(conversationId.ToString(), first.Data["conversationId"]);
-        Assert.Equal(new string('a', 100) + "…", _queue.Queued[1].Message.Body);
+        var message = Assert.Single(_queue.Queued).Message;
+        Assert.Equal(("Exparter", "Yeni bir mesajınız var."), (message.Title, message.Body));
+        Assert.Equal("MessageReceived", message.Data["type"]);
+        Assert.Equal(conversationId.ToString(), message.Data["conversationId"]);
     }
 
     [Fact]

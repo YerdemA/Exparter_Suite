@@ -34,6 +34,9 @@ public interface IReportRepository
     /// <summary>Oldest first: the administrators work through them in order.</summary>
     Task<PagedList<Report>> ListAsync(ReportStatus? status, PageRequest page, CancellationToken cancellationToken);
 
+    /// <returns>How many reports were removed.</returns>
+    Task<int> DeleteClosedBeforeAsync(DateTimeOffset moment, CancellationToken cancellationToken);
+
     void Add(Report report);
 }
 
@@ -324,4 +327,15 @@ public sealed class CloseReportCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return AdminReportDto.From(report);
     }
+}
+
+/// <summary>Removes reports closed longer ago than the retention period.</summary>
+public sealed record PurgeOldReportsCommand : ICommand<int>;
+
+public sealed class PurgeOldReportsCommandHandler(IReportRepository reports, TimeProvider timeProvider)
+    : ICommandHandler<PurgeOldReportsCommand, int>
+{
+    /// <returns>How many reports were removed.</returns>
+    public async ValueTask<int> Handle(PurgeOldReportsCommand command, CancellationToken cancellationToken) =>
+        await reports.DeleteClosedBeforeAsync(timeProvider.GetUtcNow() - Report.Retention, cancellationToken);
 }

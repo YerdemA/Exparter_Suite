@@ -87,7 +87,7 @@ public class NotificationHandlerTests
         _notifier = new UserNotifier(
             _notifications,
             _realtime,
-            new PushNotifier(new FakePresence(), new RecordingPushQueue(), new FakeUserSummaries(new FakeUserDirectory()), _clock),
+            new PushNotifier(new FakePresence(), new RecordingPushQueue(), _clock),
             _clock);
 
     private async Task<PagedList<NotificationDto>> ListAsync(Guid userId, bool unreadOnly = false) =>

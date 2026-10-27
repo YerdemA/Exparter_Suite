@@ -22,7 +22,7 @@ public class IdentityApiTests(ApiFixture fixture)
         var (email, username) = ($"user{id}@example.com", $"user{id}");
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email, username, password = Password, ageConfirmed = true });
+            new { email, username, password = Password, ageConfirmed = true, termsAccepted = true });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         return new TestUser(email, username, body.GetProperty("accessToken").GetString()!, body.GetProperty("refreshToken").GetString()!);
@@ -72,7 +72,7 @@ public class IdentityApiTests(ApiFixture fixture)
         var id = Unique();
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = $"New{id}@Example.com", username = $"new{id}", password = Password, ageConfirmed = true });
+            new { email = $"New{id}@Example.com", username = $"new{id}", password = Password, ageConfirmed = true, termsAccepted = true });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -91,12 +91,12 @@ public class IdentityApiTests(ApiFixture fixture)
     {
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = "not-an-email", username = "a", password = "short", ageConfirmed = false });
+            new { email = "not-an-email", username = "a", password = "short", ageConfirmed = false, termsAccepted = false });
 
         var problem = await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_failed");
         var errors = problem.GetProperty("errors");
         Assert.Equal(
-            ["ageConfirmed", "email", "password", "username"],
+            ["ageConfirmed", "email", "password", "termsAccepted", "username"],
             errors.EnumerateObject().Select(property => property.Name).Order());
     }
 
@@ -125,13 +125,13 @@ public class IdentityApiTests(ApiFixture fixture)
 
         var sameEmail = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = user.Email.ToUpperInvariant(), username = $"other{Unique()}", password = Password, ageConfirmed = true });
+            new { email = user.Email.ToUpperInvariant(), username = $"other{Unique()}", password = Password, ageConfirmed = true, termsAccepted = true });
         var sameUsername = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = $"other{Unique()}@example.com", username = user.Username, password = Password, ageConfirmed = true });
+            new { email = $"other{Unique()}@example.com", username = user.Username, password = Password, ageConfirmed = true, termsAccepted = true });
         var reserved = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = $"other{Unique()}@example.com", username = "admin", password = Password, ageConfirmed = true });
+            new { email = $"other{Unique()}@example.com", username = "admin", password = Password, ageConfirmed = true, termsAccepted = true });
 
         await AssertProblemAsync(sameEmail, HttpStatusCode.Conflict, "email_already_registered");
         await AssertProblemAsync(sameUsername, HttpStatusCode.Conflict, "username_already_taken");
@@ -143,7 +143,7 @@ public class IdentityApiTests(ApiFixture fixture)
     {
         var response = await _client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new { email = $"upper{Unique()}@example.com", username = $"Upper{Unique()}", password = Password, ageConfirmed = true });
+            new { email = $"upper{Unique()}@example.com", username = $"Upper{Unique()}", password = Password, ageConfirmed = true, termsAccepted = true });
 
         var problem = await AssertProblemAsync(response, HttpStatusCode.BadRequest, "validation_failed");
         Assert.True(problem.GetProperty("errors").TryGetProperty("username", out _));

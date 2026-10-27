@@ -24,7 +24,7 @@ Durum: **Onaylandı (2026-10-07).**
 | ID-06 | Doğrulama ve parola sıfırlama token'ları tek kullanımlıktır ve süreleri dolunca geçersizdir. | Domain |
 | ID-07 | Parola sıfırlandığında kullanıcının tüm refresh token'ları iptal edilir. | Domain |
 | ID-08 | `Suspended` durumundaki kullanıcı giriş yapamaz ve token yenileyemez. | Domain |
-| ID-09 | Kayıt olurken kullanıcı 18 yaşında veya daha büyük olduğunu onaylamalıdır. Onay olmadan hesap oluşturulmaz; onay zamanı saklanır, doğum tarihi istenmez. | Domain |
+| ID-09 | Kayıt olurken kullanıcı 18 yaşında veya daha büyük olduğunu onaylamalı ve kullanım koşullarını kabul etmelidir. İkisi olmadan hesap oluşturulmaz; onay zamanı, kabul zamanı ve kabul edilen koşulların sürümü saklanır, doğum tarihi istenmez. Kişisel veriler için açık rıza istenmez; aydınlatma metni kayıttan önce gösterilir (docs/legal/compliance-research.md). | Domain |
 | ID-10 | Kullanıcı parolasını yeniden girerek hesabını silebilir. İstekle birlikte hesap gizlenir, oturumları kapanır, bekleyen istekleri iptal edilir, aktif eşleşmesi sonlanır, tamamlanmamış oturumları iptal edilir ve sohbetleri kapanır. | Application |
 | ID-12 | Silme isteği 30 gün içinde geri alınabilir: kullanıcı bu sürede giriş yaparsa hesap yeniden etkinleşir. Kapanan istek, eşleşme, oturum ve sohbetler geri gelmez. | Domain |
 | ID-13 | 30 gün dolunca silme kalıcı olur: profil, avatar, yetenekler, cihazlar, bildirimler ve kullanıcının aldığı değerlendirmeler silinir. Gönderdiği mesajlar ve yazdığı değerlendirmeler "Silinmiş kullanıcı" adıyla kalır. | Application |
@@ -172,7 +172,7 @@ Durum: **Onaylandı (2026-10-07).**
 | NT-08 | Uygulama içi listedeki bildirimin metni sunucuda üretilmez: sunucu tür ile ilgili kimlikleri verir, metni istemci kendi dil dosyasından kurar. Telefon bildiriminin metnini ise sunucu üretir (NT-11). | — |
 | NT-09 | Tür bazında bildirim tercihi ve e-posta bildirimi MVP'de yoktur. | — |
 | NT-10 | Bir cihaz kaydı tek bir FCM token'ına karşılık gelir; aynı token'la yeniden kayıt, cihazı o an giriş yapmış kullanıcıya taşır. | Domain, DB |
-| NT-11 | Telefon bildirimi yalnızca açık uygulaması (hub bağlantısı) olmayan kullanıcıya gider: her bildirim için ve yeni mesaj için. Metni sunucu üretir; mesajda başlık gönderenin adı, gövde mesajın ilk 100 karakteridir. | Application |
+| NT-11 | Telefon bildirimi yalnızca açık uygulaması (hub bağlantısı) olmayan kullanıcıya gider: her bildirim için ve yeni mesaj için. Metni sunucu üretir. Metin yurt dışındaki FCM'den geçtiği için kimsenin adını ve kullanıcının yazdığı hiçbir şeyi (mesaj, iptal sebebi) içermez: "Bir kullanıcı …", mesajda "Yeni bir mesajınız var." Ayrıntıyı uygulama açılınca gösterir. | Application |
 | NT-12 | FCM'in artık tanımadığı token'ın cihaz kaydı silinir. Çıkış yapan cihaz kaydını siler; hesap silme isteği kullanıcının tüm cihaz kayıtlarını siler. | Application |
 
 ## Moderasyon
@@ -190,6 +190,7 @@ Durum: **Onaylandı (2026-10-07).**
 | MD-09 | Sebepler: Spam, Taciz, Uygunsuz içerik, Sahte profil, Diğer. "Diğer"de açıklama zorunludur (en fazla 1000 karakter). Şikâyet edilen metin, şikâyet anındaki haliyle saklanır. | Application |
 | MD-10 | Admin şikâyeti "sonuçlandı" veya "yersiz" olarak kapatır; şikâyet edene ayrıntısız bildirim gider ("Şikâyetiniz incelendi"). Şikâyet edilene bildirim gitmez. | Application |
 | MD-11 | Askıya alınan hesap her yerden çıkış yapar, giriş yapamaz ve kimse onu bulamaz. Eşleşme ve sohbetleri olduğu gibi kalır; askı kalkınca kaldığı yerden devam eder. Yalnızca etkin hesap askıya alınır; admin kendini askıya alamaz. | Domain, Application |
+| MD-12 | Kapanan şikâyet, kapandıktan 2 yıl sonra silinir; açık şikâyet kapanana kadar kalır. | Application |
 
 ## Keşfet sıralaması (MVP: kural tabanlı)
 

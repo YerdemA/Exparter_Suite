@@ -203,7 +203,7 @@ public class NotificationApiTests(ApiFixture fixture) : IClassFixture<ApiFixture
 
         await OkAsync(PostAsync(ali, $"{conversationPath}/messages", new { body = "Uygulama kapalıyken" }), HttpStatusCode.Created);
         var message = (await fixture.Pushes.WaitForAsync(phone, 2))[1];
-        Assert.Equal("Uygulama kapalıyken", message.Body);
+        Assert.Equal("Yeni bir mesajınız var.", message.Body);
         Assert.Equal("MessageReceived", message.Data["type"]);
 
         fixture.Pushes.Stale[phone] = true;

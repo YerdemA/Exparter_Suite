@@ -11,7 +11,7 @@ public class AccountErasureTests
     private static readonly Guid Ali = Guid.NewGuid();
     private static readonly Guid Ayse = Guid.NewGuid();
 
-    private static User NewUser() => User.Register("Ayse@Example.com", "ayse", "hash", ageConfirmed: true, Now);
+    private static User NewUser() => User.Register("Ayse@Example.com", "ayse", "hash", ageConfirmed: true, termsAccepted: true, termsVersion: "v1", Now);
 
     [Fact]
     public void Erasing_leaves_a_row_that_identifies_nobody()
@@ -35,7 +35,7 @@ public class AccountErasureTests
     public void Two_erased_accounts_do_not_collide_on_their_placeholders()
     {
         var first = NewUser();
-        var second = User.Register("can@example.com", "can", "hash", ageConfirmed: true, Now);
+        var second = User.Register("can@example.com", "can", "hash", ageConfirmed: true, termsAccepted: true, termsVersion: "v1", Now);
         foreach (var user in new[] { first, second })
         {
             user.RequestDeletion(Now);

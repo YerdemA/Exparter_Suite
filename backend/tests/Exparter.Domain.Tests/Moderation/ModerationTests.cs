@@ -37,7 +37,7 @@ public class ModerationDomainTests
     [Fact]
     public void Only_an_active_account_is_suspended_and_only_a_suspended_one_is_restored()
     {
-        var user = User.Register("ayse@example.com", "ayse", "hash", ageConfirmed: true, Now);
+        var user = User.Register("ayse@example.com", "ayse", "hash", ageConfirmed: true, termsAccepted: true, termsVersion: "v1", Now);
 
         user.Suspend();
         Assert.Equal(UserStatus.Suspended, user.Status);
