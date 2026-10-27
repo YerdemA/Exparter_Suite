@@ -72,4 +72,5 @@ jobs:
             && docker compose pull api \
             && docker compose run --rm api --migrate \
             && docker compose up -d --remove-orphans \
+            && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile \
             && docker image prune -f"

@@ -82,6 +82,8 @@ Uygulama dosyaları API'den değil, presigned URL ile doğrudan R2'den yükler v
 2. Doğrulandıktan sonra **Senders → Add a sender:** `no-reply@<alan-adı>`, ad "Exparter".
 3. **SMTP & API → SMTP:** SMTP login'i not edin ve **Generate a new SMTP key** ile bir anahtar üretin.
 
+**Gelen e-posta (destek adresi):** Metinlerde iletişim adresi `destek@<alan-adı>`. Cloudflare → alan adı → **Email → Email Routing → Get started** ile açılır; **Destination addresses** bölümüne kişisel adresiniz eklenip doğrulanır, **Routing rules** bölümünde `destek@` o adrese yönlendirilir. Cloudflare gereken MX ve SPF kayıtlarını kendisi ekler. Brevo yalnızca gönderim yaptığı için çakışmaz; ancak alan adında tek bir `v=spf1` kaydı olmalı: Cloudflare'in eklediği kayda Brevo'nun `include:` ifadesini ekleyin.
+
 ## 6. Uygulamayı sunucuya yerleştirme
 
 Bilgisayarınızda, repo kökünden:
@@ -187,7 +189,19 @@ Yükleme anahtarı `D:\Yazilim\secrets\exparter-upload.jks`, şifresi `mobile/an
 | Önceki sürüme dönme | `.env` içinde `API_IMAGE`'ı önceki commit'in etiketiyle değiştirip `docker compose up -d api` (geriye uyumsuz migration varsa önce yedeği geri yükleyin) |
 | Disk | `df -h` ve `docker system df` |
 | Moderasyon, yetenek önerileri | `scripts/admin-moderation.ps1` ve `scripts/admin-skill-proposals.ps1`, bilgisayarınızdan `-ApiBaseUrl https://api.<alan-adı>` ile |
+| Trafik kayıtları (5651) | `~/exparter/logs/caddy/` altında, satır başına bir JSON; 1 yıl sonra Caddy siler. Yetkili makam istediğinde ilgili zaman aralığı buradan verilir. |
 
-## 11. Başka sunucuya taşıma
+## 11. Hukuki yükümlülükler
+
+Gerekçeleri: [compliance-research.md](legal/compliance-research.md).
+
+- **Yer sağlayıcılık bildirimi (5651):** Genel yayından önce e-Devlet'te "BTK Yer Sağlayıcılığı Bildirimi" hizmetinden yapılır. 2026 değişikliğiyle yetkili makam Siber Güvenlik Başkanlığı oldu; başvuru sırasında ekrandaki kurum adını ve formu kontrol edin.
+- **Hukuka aykırı içerik bildirimi:** `destek@` adresine gelir; içerik yönetici betiğiyle kaldırılır veya hesap askıya alınır, işlem ve tarih not edilir.
+- **Veri ihlali:** Veritabanına, yedeklere veya anahtarlara yetkisiz erişim fark edilirse: anahtarları değiştirin (`.env`, R2 ve Brevo anahtarları, JWT anahtarı; JWT değişince herkes yeniden giriş yapar), ne olduğunu ve kimleri etkilediğini not edin, **72 saat içinde** KVKK'nın Veri İhlali Bildirim formunu doldurun ve etkilenen kullanıcıları e-postayla bilgilendirin.
+- **Standart sözleşmeler:** [scc-requests.md](legal/scc-requests.md). İmzalanan her sözleşme 5 iş günü içinde Kurul'a bildirilir.
+- **KVKK başvuruları:** `destek@` adresine, kullanıcının kayıtlı e-postasından gelen başvurular en geç 30 gün içinde ücretsiz yanıtlanır.
+- **Koşullar değişirse:** `deploy/site/kullanim-kosullari.html` ile birlikte `TermsOfUse.CurrentVersion` değişir; her hesap kabul ettiği sürümü saklar.
+
+## 12. Başka sunucuya taşıma
 
 Oracle makineyi geri alırsa veya yetmezse (ör. Hetzner): yeni makinede 2. bölümdeki Docker kurulumunu yapın (Hetzner'de iptables adımı yok, güvenlik duvarı panelden), 6. bölümü tekrarlayın, son yedeği 8. bölümdeki gibi geri yükleyin, DNS kayıtlarını ve `DEPLOY_HOST`/`DEPLOY_KNOWN_HOSTS` değişkenlerini yeni IP'ye çevirin. Hetzner'in makinesi x64 ise `deploy.yml` içindeki `platforms` değerini `linux/amd64` yapın.

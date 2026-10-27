@@ -22,6 +22,7 @@ Değerlendirilen seçenekler: Oracle Cloud Always Free (ARM sanal makine), Hetzn
 - **Gizli bilgiler** yalnızca sunucudaki `.env` dosyasında ve `secrets/` klasöründedir (Firebase hizmet hesabı anahtarı); repoda yalnızca `deploy/.env.example` vardır.
 - **Yedek:** `deploy/backup.sh` her gece `pg_dump` alır; sunucuda 14 gün tutulur, ayrı bir R2 bucket'ına kopyalanır ve orada 30 gün saklanır.
 - **Kayıtlar** Docker'ın JSON dosyalarında, konteyner başına boyut sınırıyla tutulur (ADR 0013 güncellendi). Kapalı testte merkezi kayıt servisi yok.
+- **Trafik kayıtları (5651):** Caddy her isteğin IP adresini ve portunu, zamanını, süresini, adresini, sonucunu ve boyutunu `logs/caddy/` altına yazar ve 1 yıl tutar. Başlıklar ve hub'ın adresteki erişim token'ı yazılmaz; dosyalar gece yedeğine girmez. Dağıtım her seferinde Caddy'yi yeniden yükler, böylece Caddyfile değişiklikleri de yürürlüğe girer. (2026-10-27'de eklendi; kullanıcı kararı, `docs/legal/compliance-research.md`.)
 - **Android yayın imzası:** Play App Signing kullanılır. Yükleme anahtarı repo dışındadır; `mobile/android/key.properties` dosyası yolunu ve şifresini verir. Dosya yoksa yayın derlemesi debug anahtarıyla imzalanır, böylece CI ve lokal derlemeler çalışmaya devam eder.
 
 ## Sonuçlar

@@ -45,7 +45,7 @@ GÜVENLİK VE GİZLİLİK
 Exparter 18 yaşından büyükler içindir. Konumunuz değil, yalnızca seçtiğiniz şehir tutulur. E-posta adresiniz hiçbir kullanıcıya gösterilmez. Uygulamada reklam yoktur. Hesabınızı istediğiniz zaman uygulamanın içinden silebilirsiniz.
 ```
 
-**Kategori:** Eğitim. **İletişim e-postası:** [İLETİŞİM E-POSTASI] (mağazada herkese görünür). **Gizlilik politikası:** `https://<alan-adı>/gizlilik.html`.
+**Kategori:** Eğitim. **İletişim e-postası:** `destek@exparter.app` (mağazada herkese görünür). **Gizlilik politikası:** `https://exparter.app/gizlilik.html`.
 
 ## 3. Görseller
 
@@ -63,7 +63,7 @@ Simge ve öne çıkan görsel logonun çizim kodundan üretilir: `mobile/` klas�
 
 | Bölüm | Yanıt |
 |---|---|
-| Privacy policy | `https://<alan-adı>/gizlilik.html` |
+| Privacy policy | `https://exparter.app/gizlilik.html` |
 | Ads | Uygulamada reklam yok. |
 | App access | Tüm özellikler giriş gerektirir. İnceleme ekibi için canlı ortamda bir hesap açıp kullanıcı adı ve parolasını buraya yazın; hesabın profili dolu, en az bir sunulan yeteneği olsun. |
 | Content rating | IARC anketi. Kullanıcılar birbiriyle iletişim kurabiliyor mu: **evet** (mesajlaşma). Kullanıcılar konumlarını paylaşabiliyor mu: **hayır** (yalnızca şehir). Şiddet, cinsellik, kumar, uyuşturucu içeriği: **yok**. |
@@ -71,7 +71,7 @@ Simge ve öne çıkan görsel logonun çizim kodundan üretilir: `mobile/` klas�
 | News app | Hayır. |
 | Data safety | 5. bölüm. |
 | Government apps, financial features, health | Hayır. |
-| Account deletion | Uygulama içinden: Profil → Hesabımı sil. Web: `https://<alan-adı>/hesap-silme.html` |
+| Account deletion | Uygulama içinden: Profil → Hesabımı sil. Web: `https://exparter.app/hesap-silme.html` |
 
 ## 5. Veri güvenliği (Data safety) formu
 
@@ -127,5 +127,5 @@ Aşağıdakiler teknik değil hukuki konulardır; taslak metinler (`docs/legal/`
 
 ## 8. Uygulamada kalan işler
 
-- **Uygulama içinde gizlilik bağlantısı:** Play, gizlilik politikasının uygulamanın içinden de erişilebilir olmasını istiyor. Kayıt ekranına ve profile gizlilik politikası ve aydınlatma metni bağlantıları eklenecek; bunun için alan adı belli olmalı.
+- **Uygulama içinde gizlilik bağlantısı:** Yapıldı (2026-10-27): kayıt ekranında kullanım koşulları ve aydınlatma metni, profilde üç metnin bağlantısı.
 - **Ekran görüntüleri** (3. bölüm).

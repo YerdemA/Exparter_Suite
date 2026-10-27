@@ -134,14 +134,13 @@ Letgo'nun üyelik sözleşmesi ve topluluk kuralları da askıya alma, kalıcı 
 | Gönderilen mesajlar ve yazılan değerlendirmeler | Hesap silinince "Silinmiş kullanıcı" adıyla karşı tarafta kalır | Tandem: "we will retain the messages you sent" |
 | Silinen hesabın e-posta özeti | 3 ay | Mevcut kural (ID-14) |
 | Şikâyetler | Sonuçlandıktan sonra 2 yıl | Tandem: güvenlik tanımlayıcıları 24 ay |
-| Askıya alınan hesabın kaydı | Askı süresince ve kalktıktan sonra 2 yıl | Aynı |
 | Bildirimler | 90 gün | Mevcut kural (NT-07) |
 | Trafik kayıtları (IP dahil) | 1 yıl | 5651 m. 5 |
 | Uygulama kayıtları (IP'siz) | Boyut sınırıyla birkaç gün | ADR 0013 |
 | Hata raporları | 30 gün | Sentry ücretsiz plan |
 | Veritabanı yedekleri | 30 gün | ADR 0014 |
 
-Şikâyet ve askıya alma süreleri şu an kodda uygulanmıyor; kayıtlar süresiz kalıyor. Öneri kabul edilirse temizleme işi eklenir.
+Askıya alma ayrı bir kayıt değil, hesabın durumudur; askı kalkınca geride kayıt kalmaz. Şikâyetlerin temizlenmesi MD-12 ile eklendi.
 
 ## 8. Diğer
 
@@ -150,7 +149,16 @@ Letgo'nun üyelik sözleşmesi ve topluluk kuralları da askıya alma, kalıcı 
 - **Veri sorumlusu:** Şirket yoksa veri sorumlusu gerçek kişidir; adı ve bir iletişim adresi metinlerde yer almalı. Kişisel Gmail adresi yerine Cloudflare Email Routing ile `destek@exparter.app` gibi bir adres Gmail'e yönlendirilebilir; ücretsiz ve Brevo ile çakışmaz. KEP adresi zorunlu değil; başvuru kayıtlı e-postadan kabul edilir.
 - **Başvuru süresi:** Talepler en geç 30 gün içinde ücretsiz yanıtlanır (Getir, Letgo ve KVKK m. 13 ile aynı).
 
-## 9. Yapılacaklar
+## 9. Kararlar (kullanıcı, 2026-10-27)
+
+Önerilerin hepsi kabul edildi:
+
+- Yurt dışı aktarım: 1. seçenek. Sağlayıcılar metinlerde isimle yazılır, her birine standart sözleşme talebi gönderilir (`scc-requests.md`), telefon bildirimlerinin metni kimseyi adlandırmaz (NT-11). Türkiye'de barındırma genel yayından önce yeniden değerlendirilir.
+- 5651: Trafik kayıtları 1 yıl tutulur (ADR 0014); yer sağlayıcılık bildirimi genel yayından önce yapılır.
+- Saklama süreleri 7. bölümdeki gibi.
+- Veri sorumlusu Yusuf Erdem Aykaç; iletişim `destek@exparter.app`.
+
+## 10. Yapılacaklar (karar öncesi liste)
 
 Kullanıcı kararı gerektirenler:
 

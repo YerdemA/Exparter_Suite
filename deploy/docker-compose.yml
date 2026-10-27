@@ -77,6 +77,9 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./site:/srv/site:ro
+      # The traffic log of Law No. 5651, kept for a year outside the container. Not in the
+      # nightly backup: it is not needed to restore the service.
+      - ./logs/caddy:/var/log/caddy
       - caddy-data:/data
       - caddy-config:/config
 
