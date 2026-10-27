@@ -14,9 +14,10 @@ E-posta doğrulama ve parola sıfırlama e-posta gönderimi gerektirir. Gelişti
 - Canlı ortamda **Brevo** kullanılır (`smtp-relay.brevo.com`, 587, STARTTLS); gönderici alan adı SPF, DKIM ve DMARC kayıtlarıyla doğrulanır (ADR 0014, `docs/deployment.md`). (2026-10-14'te güncellendi; ilk karar seçimin Faz 6'ya bırakılmasıydı.)
 - Gönderim "elinden geleni yapar": hata loglanır ama isteği başarısız kılmaz. Kayıt, e-posta sunucusu çalışmadığı için reddedilmemeli; kullanıcı yeni doğrulama e-postası isteyebilir.
 - E-postadaki bağlantının adresi yapılandırmadan gelir (`Email:EmailVerificationUrl`, `Email:PasswordResetUrl`); `{token}` yer tutucusu token ile değiştirilir.
+- E-postalar markalı bir HTML gövdesiyle ve aynı içeriğin düz metin hâliyle birlikte gider (`EmailTemplate`). Tablo düzeni ve satır içi stiller kullanılır, çünkü e-posta istemcileri yalnızca bunları güvenilir biçimde gösterir. Logo ve alt bilgideki bağlantılar herkese açık siteden gelir (`deploy/site/img/email-mark.png`). (2026-10-27'de eklendi; önceden yalnızca düz metin gidiyordu.)
 
 ## Sonuçlar
 
 - E-posta, isteğin içinde eşzamanlı gönderilir. Gönderim yavaşlarsa veya yeniden deneme gerekirse arka plan kuyruğu ayrı bir ADR ile eklenir.
-- Bağlantı `exparter://app/...` biçiminde bir uygulama bağlantısıdır (bkz. ADR 0009).
+- Canlıda bağlantı `https://exparter.app/...`, geliştirmede `exparter://app/...` biçimindedir (bkz. ADR 0009).
 - Metinler Türkçe ve kodun içindedir. Çoklu dil desteği gelirse şablonlar ayrıştırılır.

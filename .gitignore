@@ -50,3 +50,6 @@ mobile/lib/core/api/generated/
 mobile/lib/l10n/app_localizations*.dart
 *.g.dart
 *.freezed.dart
+
+# Marketing material made outside the app (store graphics, video, social media); kept locally.
+/marketing/
