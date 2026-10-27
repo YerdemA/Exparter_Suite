@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>E-posta doğrulama — Exparter</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/auth.js" defer></script>
+</head>
+<body>
+<main>
+  <h1>E-posta doğrulama</h1>
+
+  <!-- The address is confirmed only on a click: mail scanners that open links must not
+       spend the one-time token. -->
+  <form id="verify-form" class="form">
+    <p>Exparter hesabınızın e-posta adresini doğrulamak için düğmeye basın.</p>
+    <button type="submit">E-postamı doğrula</button>
+  </form>
+
+  <p id="status" class="status" role="status" hidden></p>
+
+  <footer><a href="/">Exparter</a> · <a href="/kullanim-kosullari.html">Kullanım koşulları</a> · <a href="/gizlilik.html">Gizlilik politikası</a></footer>
+</main>
+</body>
+</html>

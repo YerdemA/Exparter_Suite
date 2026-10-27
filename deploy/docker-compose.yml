@@ -48,8 +48,8 @@ services:
       Email__Username: ${SMTP_USERNAME:?set SMTP_USERNAME in .env}
       Email__Password: ${SMTP_PASSWORD:?set SMTP_PASSWORD in .env}
       Email__FromAddress: ${EMAIL_FROM_ADDRESS:?set EMAIL_FROM_ADDRESS in .env}
-      Email__EmailVerificationUrl: exparter://app/verify-email?token={token}
-      Email__PasswordResetUrl: exparter://app/reset-password?token={token}
+      Email__EmailVerificationUrl: https://${SITE_HOST}/verify-email?token={token}
+      Email__PasswordResetUrl: https://${SITE_HOST}/reset-password?token={token}
       Storage__Endpoint: ${STORAGE_ENDPOINT:?set STORAGE_ENDPOINT in .env}
       Storage__Region: ${STORAGE_REGION:-auto}
       Storage__Bucket: ${STORAGE_BUCKET:?set STORAGE_BUCKET in .env}

@@ -26,8 +26,18 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Links in emails (exparter://app/verify-email?token=...) open the app. The
-                 path and query are handed to the router as a location. -->
+            <!-- Links in emails open the app; the path and query are handed to the router as
+                 a location. The live service sends https links, verified through
+                 deploy/site/.well-known/assetlinks.json; without the app they open the same
+                 page on the site. The custom scheme is what development uses. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="exparter.app"/>
+                <data android:path="/verify-email"/>
+                <data android:path="/reset-password"/>
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

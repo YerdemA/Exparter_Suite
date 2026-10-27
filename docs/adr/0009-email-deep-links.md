@@ -18,9 +18,24 @@ E-posta doğrulama ve parola sıfırlama, kullanıcının e-postadaki bir bağla
 
 `https://` bağlantıları, bir alan adı ve o alan adında yayınlanan doğrulama dosyaları gerektirir; alan adı olduğunda eklenir. Geçiş yalnızca yapılandırma ve platform ayarı değişikliğidir, ekranlar aynı kalır.
 
+### Güncelleme (2026-10-27): canlı ortamda `https://` bağlantıları
+
+E-postasını bilgisayarda okuyan kullanıcı özel şemalı bağlantıyla doğrulama yapamıyordu. Canlı ortam artık şu bağlantıları gönderir:
+
+- `https://exparter.app/verify-email?token=...`
+- `https://exparter.app/reset-password?token=...`
+
+Yollar uygulamadaki rotalarla aynı kaldı, yönlendirici değişmedi.
+
+- **Uygulama kuruluysa** Android bağlantıyı uygulamada açar (App Links, `autoVerify`). Alan adı `deploy/site/.well-known/assetlinks.json` ile doğrulanır; dosyada yükleme anahtarının ve Play'in uygulama imzalama anahtarının parmak izi bulunur.
+- **Uygulama yoksa** bağlantı sitedeki aynı adlı sayfayı açar (`verify-email.html`, `reset-password.html`). Sayfa token'ı API'ye gönderir. Caddy bu iki çağrıyı site adresinden API'ye iletir; böylece API'de CORS gerekmez.
+- E-posta doğrulama sayfası token'ı yalnızca düğmeye basılınca gönderir: bağlantıları önceden açan e-posta tarayıcıları tek kullanımlık token'ı harcamamalı.
+- Token adres satırında olduğu için Caddy'nin trafik kaydından `token` parametresi silinir (ADR 0014).
+- Özel şema geliştirme ortamı için kaldı (`appsettings.Development.json`).
+
 ## Sonuçlar
 
-- Uygulama yüklü değilse bağlantı hiçbir şey açmaz ve bazı e-posta istemcileri özel şemalı bağlantıları tıklanabilir göstermez. MVP'nin kapalı testinde kabul edilebilir; genel yayından önce `https://` bağlantılarına geçilmelidir.
+- Uygulama yüklü değilse bağlantı hiçbir şey açmaz ve bazı e-posta istemcileri özel şemalı bağlantıları tıklanabilir göstermez. Canlı ortamda 2026-10-27'de `https://` bağlantılarına geçildi (yukarıdaki güncelleme); bu sonuç artık yalnızca geliştirme ortamı için geçerli.
 - Özel şemayı başka bir uygulama da kaydedebilir. Token tek kullanımlık ve kısa ömürlü olduğu için risk sınırlıdır, ama bu da `https://` bağlantılarına geçmek için bir nedendir.
 - iOS tarafında şema `Info.plist` içine kaydedildi ama denenmedi; iOS doğrulaması MVP sonrasına bırakıldı.
 - Android'de 2026-10-09'da doğrulandı: e-postadaki gerçek bağlantı, kapalı uygulamayı açıp e-postayı doğruladı.
