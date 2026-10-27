@@ -21,6 +21,7 @@ class ApiAuthRepository implements AuthRepository {
     required String username,
     required String password,
     required bool ageConfirmed,
+    required bool termsAccepted,
   }) =>
       guardApiCall(
         () => _api.auth.register(
@@ -29,6 +30,7 @@ class ApiAuthRepository implements AuthRepository {
             username: username,
             password: password,
             ageConfirmed: ageConfirmed,
+            termsAccepted: termsAccepted,
           ),
         ),
       );

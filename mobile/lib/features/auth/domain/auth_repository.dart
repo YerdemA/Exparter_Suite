@@ -7,6 +7,7 @@ abstract interface class AuthRepository {
     required String username,
     required String password,
     required bool ageConfirmed,
+    required bool termsAccepted,
   });
 
   /// [identifier] is the account's email address or username.
