@@ -13,7 +13,7 @@ Değerlendirilen seçenekler: Oracle Cloud Always Free (ARM sanal makine), Hetzn
 
 - **Sunucu: Oracle Cloud Always Free, Frankfurt** (kullanıcı kararı, 2026-10-14). Ampere A1 (ARM64), Ubuntu 24.04. Tek sanal makine.
 - **Her şey Docker Compose ile çalışır** (`deploy/docker-compose.yml`): API, PostgreSQL ve Caddy. Veritabanı dışarıya port açmaz; içeriye tek giriş Caddy'dir.
-- **Caddy** HTTPS sertifikalarını Let's Encrypt'ten kendisi alır ve yeniler. API'yi (WebSocket dahil) ve gizlilik, KVKK ve hesap silme sayfalarını (`deploy/site/`) sunar. API, Caddy'nin ilettiği istemci adresine güvenir (`ASPNETCORE_FORWARDEDHEADERS_ENABLED`); istek sınırları gerçek istemciyi sayar.
+- **Caddy** HTTPS sertifikalarını Let's Encrypt'ten kendisi alır ve yeniler. API'yi (WebSocket dahil) ve herkese açık sayfaları (`deploy/site/`) sunar. Gizlilik, KVKK ve hesap silme sayfaları son hallerini alana kadar `docs/legal/` altında taslak olarak durur; dağıtım yalnızca `deploy/site/` klasörünü yayımlar. API, Caddy'nin ilettiği istemci adresine güvenir (`ASPNETCORE_FORWARDEDHEADERS_ENABLED`); istek sınırları gerçek istemciyi sayar.
 - **Alan adı ve DNS: Cloudflare** (alan adı kullanıcı tarafından alınacak). Kayıtlar yalnızca DNS'tir (gri bulut); trafik Cloudflare'in vekil sunucusundan geçmez, sertifikayı Caddy alır.
 - **Nesne depolama: Cloudflare R2**, AB yetki alanında (ADR 0010 güncellendi). Ücretsiz katman avatarlar için yeterlidir ve veri çıkışı ücretsizdir.
 - **E-posta: Brevo**, SMTP ile (kullanıcı kararı, ADR 0007 güncellendi). Ücretsiz planda günde 300 e-posta.

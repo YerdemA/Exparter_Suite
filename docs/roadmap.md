@@ -340,7 +340,7 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Dağıtım: `Deploy` iş akışı `main`'den imajı GHCR'ye yayımlar. `DEPLOY_HOST` değişkeni tanımlanınca migration'ı ve yeni sürümü SSH ile sunucuda çalıştırır.
 - Android: yayın derlemesi repo dışındaki yükleme anahtarıyla imzalanır (`mobile/android/key.properties`); dosya yoksa debug anahtarı kullanılır.
 - Mağaza: metinler, form yanıtları ve kapalı test adımları `docs/store/listing.md`; simge ve öne çıkan görsel `docs/store/` (üretici: `mobile/tool/generate_store_assets.dart`).
-- Gizlilik politikası, KVKK aydınlatma metni ve hesap silme sayfası taslak olarak `deploy/site/` altında. **Hukukçu onayı olmadan yayımlanmaz**; açık hukuki konular `docs/store/listing.md` 7. bölümde.
+- Gizlilik politikası, KVKK aydınlatma metni ve hesap silme sayfası taslak olarak `docs/legal/` altında; yayımlanmaları için `deploy/site/` klasörüne taşınmaları gerekir. Karar (kullanıcı, 2026-10-27): hukukçu görüşü alınmayacak; metinler benzer uygulamaların uygulamalarını inceleyen bir araştırma raporuna göre son haline getirilecek. Açık konular `docs/store/listing.md` 7. bölümde.
 - Bekleyen (kullanıcı): alan adı ve Cloudflare, Oracle sunucusu, R2 bucket'ları ve anahtarları, Brevo alan adı doğrulaması, Play Console hesabı, 12'den fazla test kullanıcısı, metinlerin hukuki kontrolü.
 - Kalan (alan adı belli olunca): uygulama içinde gizlilik ve aydınlatma metni bağlantıları, ekran görüntüleri, ilk yayın derlemesi ve kapalı teste yükleme; Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri.
 

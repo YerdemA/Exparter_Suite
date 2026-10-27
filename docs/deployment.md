@@ -8,7 +8,7 @@ Uygulama ──HTTPS──▶ Caddy ──▶ API ──▶ PostgreSQL        (O
                       │        ├──▶ Brevo SMTP           (e-posta)
                       │        ├──▶ Firebase             (telefon bildirimi)
                       │        └──▶ Sentry               (hatalar)
-                      └──▶ deploy/site/                  (gizlilik, KVKK, hesap silme sayfaları)
+                      └──▶ deploy/site/                  (herkese açık sayfalar)
 ```
 
 Aşağıda `<alan-adı>` sizin alan adınız (ör. `exparter.app`), `<ip>` sunucunun genel IP adresidir. Bilgisayarınızdaki komutlar PowerShell'de, sunucudakiler SSH oturumunda çalışır.

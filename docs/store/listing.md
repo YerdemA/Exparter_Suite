@@ -114,7 +114,7 @@ Play bu formu uygulamanın gerçek davranışıyla karşılaştırır; uygulamay
 
 ## 7. Yayından önce hukuki kontrol listesi
 
-Aşağıdakiler teknik değil hukuki konulardır; taslak metinler (`deploy/site/gizlilik.html`, `deploy/site/kvkk.html`) bir hukukçuya gösterilmeden yayımlanmamalıdır.
+Aşağıdakiler teknik değil hukuki konulardır; taslak metinler (`docs/legal/`) bu konular netleşmeden yayımlanmaz. Hukukçu görüşü alınmayacak (kullanıcı kararı, 2026-10-27); konular benzer uygulamaları inceleyen bir araştırmayla netleştirilir.
 
 - [ ] Veri sorumlusunun adı, adresi ve iletişim e-postası (metinlerdeki köşeli parantezler).
 - [ ] **Yurt dışına aktarım** (KVKK m. 9): Oracle, Cloudflare, Brevo, Google (Firebase) ve Sentry ile Kurul'un standart sözleşmelerinin imzalanması ve Kurul'a süresi içinde bildirilmesi ya da başka bir dayanak.
