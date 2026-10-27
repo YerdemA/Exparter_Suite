@@ -53,11 +53,13 @@ Exparter 18 yaşından büyükler içindir. Konumunuz değil, yalnızca seçtiğ
 |---|---|---|
 | Uygulama simgesi | 512×512 PNG | [icon-512.png](icon-512.png) |
 | Öne çıkan görsel | 1024×500 PNG veya JPEG, saydamlık yok | [feature-graphic.png](feature-graphic.png) |
-| Telefon ekran görüntüleri | En az 2, en fazla 8; 9:16, kısa kenar en az 1080 px önerilir | Henüz yok |
+| Telefon ekran görüntüleri | En az 2, en fazla 8; 9:16, kısa kenar en az 1080 px önerilir | [screenshots/](screenshots/) (6 adet, 1080×1920) |
 
 Simge ve öne çıkan görsel logonun çizim kodundan üretilir: `mobile/` klasöründen `flutter test tool/generate_store_assets.dart`.
 
-**Ekran görüntüleri** canlı ortamda örnek hesaplarla, emülatörde alınacak. Önerilen sıra: Keşfet (karşılıklı uyumlu kişiler), bir kullanıcının profili ve yetenekleri, takas isteği, sohbet, oturum planlama, değerlendirmeler. Gerçek kullanıcı verisi kullanılmaz.
+**Ekran görüntüleri** dosya adlarındaki sırayla yüklenir: Keşfet, bir kullanıcının profili, gelen takas isteği, sohbet (koyu tema), oturumlar, değerlendirmeler. Kurgusal kişilerle, yerel ortamda ve boş bir veritabanında alındı; canlı ortama örnek hesap açılmadı, çünkü gerçek kullanıcılar Keşfet'te bu sahte profilleri görürdü.
+
+Yeniden çekmek için: yerelde boş bir veritabanı oluşturup API'yi ona bağlayın (`ConnectionStrings__Database`, e-posta sınırı için `RateLimits__EmailsPerQuarterHour=1000`), `--migrate` ile şemayı kurun, API'yi çalıştırıp `python scripts/seed-store-screenshots.py` ile verileri ekleyin ve uygulamada `elif_ornek` ile giriş yapın. Emülatörde Play'in en/boy sınırı (uzun kenar kısa kenarın en fazla iki katı) için `adb shell wm size 1080x1920` ve `wm density 360`; durum çubuğu için sistem arayüzü demo modu; saat dilimi `Europe/Istanbul`.
 
 ## 4. Uygulama içeriği (App content)
 
@@ -97,7 +99,7 @@ Simge ve öne çıkan görsel logonun çizim kodundan üretilir: `mobile/` klas�
 | Uygulama etkinliği → Kullanıcı tarafından oluşturulan diğer içerikler | Değerlendirmeler, şikâyetler | Zorunlu değil | Uygulama işlevi, güvenlik ve dolandırıcılığı önleme |
 | Uygulama bilgileri ve performansı → Kilitlenme günlükleri | Sentry çökme raporları | Zorunlu | Analiz (hata ayıklama) |
 | Uygulama bilgileri ve performansı → Diğer teşhis verileri | Sentry hata ayrıntıları | Zorunlu | Analiz (hata ayıklama) |
-| Cihaz veya diğer kimlikler | Firebase bildirim token'ı | İsteğe bağlı (bildirim izni) | Uygulama işlevi |
+| Cihaz veya diğer kimlikler | Firebase bildirim token'ı; sunucunun trafik kaydındaki IP adresi | Zorunlu (IP her istekte kaydedilir; token yalnızca bildirim izniyle) | Uygulama işlevi; dolandırıcılığı önleme, güvenlik ve uyumluluk (5651 gereği 1 yıl) |
 
 Play bu formu uygulamanın gerçek davranışıyla karşılaştırır; uygulamaya yeni bir veri türü eklenirse form da güncellenmelidir.
 
@@ -114,18 +116,18 @@ Play bu formu uygulamanın gerçek davranışıyla karşılaştırır; uygulamay
 
 ## 7. Yayından önce hukuki kontrol listesi
 
-Aşağıdakiler teknik değil hukuki konulardır; taslak metinler (`docs/legal/`) bu konular netleşmeden yayımlanmaz. Hukukçu görüşü alınmayacak (kullanıcı kararı, 2026-10-27); konular benzer uygulamaları inceleyen bir araştırmayla netleştirilir.
+Hukukçu görüşü alınmadı (kullanıcı kararı, 2026-10-27); konular benzer uygulamaları inceleyen bir araştırmayla netleştirildi: [compliance-research.md](../legal/compliance-research.md).
 
-- [ ] Veri sorumlusunun adı, adresi ve iletişim e-postası (metinlerdeki köşeli parantezler).
-- [ ] **Yurt dışına aktarım** (KVKK m. 9): Oracle, Cloudflare, Brevo, Google (Firebase) ve Sentry ile Kurul'un standart sözleşmelerinin imzalanması ve Kurul'a süresi içinde bildirilmesi ya da başka bir dayanak.
-- [ ] **5651 sayılı Kanun:** Kullanıcı içeriği barındırdığı için uygulamanın "yer sağlayıcı" sayılıp sayılmadığı ve trafik bilgisi saklama yükümlülüğü. Saklama gerekiyorsa sunucu kayıtlarının süresi ve içeriği buna göre değiştirilmelidir (şu an IP adresi kaydedilmiyor).
-- [ ] Şikâyet kayıtlarının ve sunucu kayıtlarının saklama süreleri.
-- [ ] Silinen hesabın mesaj ve değerlendirmelerinin "Silinmiş kullanıcı" adıyla kalmasının anonimleştirme sayılıp sayılmadığı (mesaj içeriği kişisel veri içerebilir).
-- [ ] VERBİS kaydı yükümlülüğü (çalışan sayısı ve bilanço eşiğinin altındaki gerçek kişi veri sorumluları muaf olabilir).
-- [ ] Kullanım koşulları (kullanıcı sözleşmesi): davranış kuralları, askıya alma, sorumluluğun sınırlanması. Henüz taslağı yok.
-- [ ] Aydınlatma metninin kayıt ekranında, hesap oluşturulmadan önce gösterilmesi.
+- [x] Veri sorumlusu: Yusuf Erdem Aykaç, `destek@exparter.app` (posta adresi yok; başvuru e-postayla).
+- [ ] **Yurt dışına aktarım** (KVKK m. 9): Sağlayıcılar metinlerde isimle yazıldı, beşine de standart sözleşme talebi gönderildi ([scc-requests.md](../legal/scc-requests.md)). Kabul eden olursa Türkçe metin imzalanır ve Kurul'a 5 iş günü içinde bildirilir. Türkiye'de barındırma genel yayından önce yeniden değerlendirilecek.
+- [ ] **5651 sayılı Kanun:** Trafik kayıtları 1 yıl tutuluyor (ADR 0014). Yer sağlayıcılık bildirimi genel yayından önce yapılacak ([deployment.md](../deployment.md), 11. bölüm).
+- [x] Saklama süreleri (araştırmanın 7. bölümü); şikâyetler sonuçlandıktan 2 yıl sonra silinir (MD-12).
+- [x] Silinen hesabın mesaj ve değerlendirmeleri "Silinmiş kullanıcı" adıyla kalır; gizlilik politikasında yazıyor.
+- [x] VERBİS: Gerçek kişi ve eşiklerin altında olduğu için muaf.
+- [x] Kullanım koşulları: `https://exparter.app/kullanim-kosullari.html`; kayıtta kabul edilir, kabul zamanı ve sürümü saklanır (ID-09).
+- [x] Aydınlatma metni kayıt ekranında, hesap oluşturulmadan önce bağlantıyla gösteriliyor (açık rıza kutusu yok).
 
 ## 8. Uygulamada kalan işler
 
 - **Uygulama içinde gizlilik bağlantısı:** Yapıldı (2026-10-27): kayıt ekranında kullanım koşulları ve aydınlatma metni, profilde üç metnin bağlantısı.
-- **Ekran görüntüleri** (3. bölüm).
+- **Ekran görüntüleri:** Yapıldı (2026-10-27, 3. bölüm).

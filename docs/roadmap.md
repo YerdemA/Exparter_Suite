@@ -340,13 +340,15 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Dağıtım: `Deploy` iş akışı `main`'den imajı GHCR'ye yayımlar. `DEPLOY_HOST` değişkeni tanımlanınca migration'ı ve yeni sürümü SSH ile sunucuda çalıştırır.
 - Android: yayın derlemesi repo dışındaki yükleme anahtarıyla imzalanır (`mobile/android/key.properties`); dosya yoksa debug anahtarı kullanılır.
 - Mağaza: metinler, form yanıtları ve kapalı test adımları `docs/store/listing.md`; simge ve öne çıkan görsel `docs/store/` (üretici: `mobile/tool/generate_store_assets.dart`).
-- Gizlilik politikası, KVKK aydınlatma metni ve hesap silme sayfası taslak olarak `docs/legal/` altında; yayımlanmaları için `deploy/site/` klasörüne taşınmaları gerekir. Karar (kullanıcı, 2026-10-27): hukukçu görüşü alınmayacak; metinler benzer uygulamaların uygulamalarını inceleyen bir araştırma raporuna göre son haline getirilecek. Açık konular `docs/store/listing.md` 7. bölümde.
-- Bekleyen (kullanıcı): alan adı ve Cloudflare, Oracle sunucusu, R2 bucket'ları ve anahtarları, Brevo alan adı doğrulaması, Play Console hesabı, 12'den fazla test kullanıcısı, metinlerin hukuki kontrolü.
+- Yasal metinler `deploy/site/` altında yayında (`exparter.app`). Kalan hukuki işler `docs/store/listing.md` 7. bölümde.
+- Bekleyen (kullanıcı): 12'den fazla test kullanıcısı.
 - Canlı ortam kuruldu (2026-10-27): Oracle A1 sunucusu, `exparter.app` ve `api.exparter.app` (Caddy sertifikaları), 13 migration, R2 ve Brevo doğrulandı (doğrulama e-postası gelen kutusuna düştü), gece yedeği R2'de, otomatik dağıtım ilk denemede çalıştı.
 - Hukuki uyum (karar, kullanıcı, 2026-10-27): hukukçu yerine araştırma raporu (`docs/legal/compliance-research.md`). Uygulananlar: kayıtta kullanım koşullarının kabulü (kabul zamanı ve sürümü saklanır, ID-09), aydınlatma metnine bağlantı (açık rıza yok), profilde yasal metin bağlantıları, kimseyi adlandırmayan telefon bildirimleri (NT-11), kapanan şikâyetlerin 2 yıl sonra silinmesi (MD-12), 1 yıl tutulan trafik kayıtları (5651, ADR 0014). Metinler son haliyle `deploy/site/` altında; sağlayıcılara standart sözleşme talepleri `docs/legal/scc-requests.md`.
 - Paketler: url_launcher 6.3.3.
 - Testler (2026-10-27): backend 514 (170 domain, 234 uygulama, 110 entegrasyon), mobil 221.
-- Kalan: `destek@exparter.app` yönlendirmesi ve sözleşme talepleri (kullanıcı), metinlerin yayımlanması, ekran görüntüleri, ilk yayın derlemesi ve kapalı teste yükleme, Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, genel yayından önce yer sağlayıcılık bildirimi.
+- Mağaza ekran görüntüleri (2026-10-27): 6 adet, `docs/store/screenshots/`. Kurgusal kişilerle yerel ortamda alındı; canlıya örnek hesap açılmadı. Veriler `scripts/seed-store-screenshots.py` ile yeniden üretilir.
+- İlk yayın derlemesi (2026-10-27): 1.0.0 (1), canlı API ve Sentry anahtarıyla; imzanın yükleme anahtarıyla eşleştiği ve yayın APK'sının canlı API'ye bağlandığı (giriş, bildirim izni ve Firebase kaydı, yasal sayfalar) emülatörde denendi.
+- Kalan: kapalı teste yükleme, Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
 
 ## Geliştirme ortamı
 
