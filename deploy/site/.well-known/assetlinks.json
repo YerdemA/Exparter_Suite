@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.exparter.app",
       "sha256_cert_fingerprints": [
-        "07:DA:6A:D7:1A:C3:9A:24:7D:BE:D7:47:FD:94:03:46:45:76:B1:98:3B:E2:92:1D:26:10:5A:62:0D:CB:BE:85"
+        "07:DA:6A:D7:1A:C3:9A:24:7D:BE:D7:47:FD:94:03:46:45:76:B1:98:3B:E2:92:1D:26:10:5A:62:0D:CB:BE:85",
+        "8C:BA:03:B0:22:07:51:1E:CC:48:99:3B:AE:73:16:F1:98:0C:D8:45:5C:AB:45:62:80:27:20:0A:6A:08:34:F8"
       ]
     }
   }
