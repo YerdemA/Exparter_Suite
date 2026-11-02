@@ -301,7 +301,7 @@ void main() {
       expect(find.text('Deniz Kaya'), findsOneWidget);
       expect(find.text('@deniz'), findsOneWidget);
       expect(find.text('Gitar çalıyorum.'), findsOneWidget);
-      expect(find.text(l10n.profileModeInPersonIn('İstanbul')), findsOneWidget);
+      expect(find.widgetWithText(Chip, l10n.profileModeInPersonIn('İstanbul')), findsOneWidget);
       expect(find.text('Gitar · ${l10n.skillLevelAdvanced}'), findsOneWidget);
       // Nothing wanted yet.
       expect(find.text(l10n.userSkillsEmpty), findsOneWidget);

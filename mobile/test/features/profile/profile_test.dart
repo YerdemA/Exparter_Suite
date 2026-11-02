@@ -325,6 +325,13 @@ void main() {
       expect(find.text(l10n.legalTitle), findsOneWidget);
     });
 
+    testWidgets('short screens start at the top instead of floating in the middle', (tester) async {
+      await pumpScreen(tester, const SettingsScreen());
+
+      final barBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
+      expect(tester.getTopLeft(find.byType(SegmentedButton<ThemeMode>)).dy - barBottom, lessThan(100));
+    });
+
     testWidgets('deleting the account needs the password and signs the user out', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
       when(() => authRepository.requestAccountDeletion(password: any(named: 'password'))).thenAnswer((_) async {});

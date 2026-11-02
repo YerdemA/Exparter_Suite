@@ -98,7 +98,8 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileEditTitle)),
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
             child: SingleChildScrollView(

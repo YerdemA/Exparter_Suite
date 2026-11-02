@@ -20,6 +20,7 @@ import '../data/avatar_picker.dart';
 import 'profile_controller.dart';
 import 'widgets/profile_avatar.dart';
 import 'widgets/status_tile.dart';
+import 'widgets/swap_mode_chips.dart';
 
 /// The signed-in user's own profile and account.
 class ProfileScreen extends ConsumerWidget {
@@ -142,7 +143,8 @@ class _ProfileBody extends ConsumerWidget {
         ? null
         : ref.watch(citiesProvider).value?.where((city) => city.code == profile.city).firstOrNull?.name;
 
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSizes.formMaxWidth),
         // A plain column rather than a lazy list: the content is short, and every part
@@ -182,19 +184,10 @@ class _ProfileBody extends ConsumerWidget {
                   style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               const SizedBox(height: AppSpacing.md),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  if (profile.acceptsOnline)
-                    Chip(avatar: const Icon(Icons.videocam_outlined), label: Text(l10n.profileModeOnline)),
-                  if (profile.acceptsInPerson)
-                    Chip(
-                      avatar: const Icon(Icons.place_outlined),
-                      label: Text(cityName == null ? l10n.profileModeInPerson : l10n.profileModeInPersonIn(cityName)),
-                    ),
-                ],
+              SwapModeChips(
+                acceptsOnline: profile.acceptsOnline,
+                acceptsInPerson: profile.acceptsInPerson,
+                cityName: cityName,
               ),
               if (profile.bio != null) ...[
                 const SizedBox(height: AppSpacing.md),
