@@ -41,6 +41,10 @@ internal static class ApiProblem
             problemDetails.Extensions["errors"] = errors;
         }
 
+        // The default writer refuses a request that does not accept JSON, and throws here.
+        // The error response is always JSON; without this, a client asking for something
+        // else, such as an event stream on the hub, would get an empty 500 instead of the 401.
+        httpContext.Request.Headers.Accept = "application/problem+json";
         httpContext.Response.StatusCode = statusCode;
         await httpContext.RequestServices.GetRequiredService<IProblemDetailsService>().WriteAsync(
             new ProblemDetailsContext { HttpContext = httpContext, ProblemDetails = problemDetails });
