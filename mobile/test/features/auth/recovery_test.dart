@@ -5,6 +5,7 @@ import 'package:exparter/core/api/api_providers.dart';
 import 'package:exparter/core/auth/session_controller.dart';
 import 'package:exparter/core/auth/session_store.dart';
 import 'package:exparter/features/auth/data/api_auth_repository.dart';
+import 'package:exparter/features/auth/presentation/account_refresh.dart';
 import 'package:exparter/features/auth/presentation/forgot_password_screen.dart';
 import 'package:exparter/features/auth/presentation/recovery_controller.dart';
 import 'package:exparter/features/auth/presentation/reset_password_screen.dart';
@@ -88,6 +89,88 @@ void main() {
         (container.read(recoveryControllerProvider).error! as ApiException).code,
         'email_already_verified',
       );
+    });
+
+    test('learns from the refusal that the email was verified elsewhere', () async {
+      await SessionStore(persistence).save(testSession());
+      when(() => repository.requestEmailVerification())
+          .thenThrow(const ApiException(code: 'email_already_verified', statusCode: 409));
+      when(() => repository.getAccount()).thenAnswer((_) async => testAccount(emailVerified: true));
+      final container = ProviderContainer.test(overrides: overrides());
+      container.listen(recoveryControllerProvider, (_, _) {});
+      await container.read(sessionControllerProvider.future);
+
+      expect(await container.read(recoveryControllerProvider.notifier).resendVerificationEmail(), isFalse);
+      await pumpEventQueue();
+
+      expect(container.read(sessionControllerProvider).value!.emailVerified, isTrue);
+    });
+
+    test('another failure leaves the account alone', () async {
+      await SessionStore(persistence).save(testSession());
+      when(() => repository.requestEmailVerification())
+          .thenThrow(const ApiException(code: ApiException.networkCode));
+      final container = ProviderContainer.test(overrides: overrides());
+      container.listen(recoveryControllerProvider, (_, _) {});
+
+      await container.read(recoveryControllerProvider.notifier).resendVerificationEmail();
+      await pumpEventQueue();
+
+      verifyNever(() => repository.getAccount());
+    });
+  });
+
+  group('account refresh', () {
+    test('picks up an email verified away from the app and tells the rest of the app', () async {
+      await SessionStore(persistence).save(testSession());
+      when(() => repository.getAccount()).thenAnswer((_) async => testAccount(emailVerified: true));
+      final container = ProviderContainer.test(overrides: overrides());
+
+      await container.read(accountRefresherProvider).refresh();
+
+      expect(container.read(sessionControllerProvider).value!.emailVerified, isTrue);
+      expect(persistence.value, contains('"emailVerified":true'));
+    });
+
+    test('an unchanged account does not touch the session', () async {
+      await SessionStore(persistence).save(testSession());
+      final container = ProviderContainer.test(overrides: overrides());
+      final account = await container.read(sessionControllerProvider.future);
+      when(() => repository.getAccount()).thenAnswer((_) async => account!);
+      var changes = 0;
+      container.listen(sessionControllerProvider, (_, _) => changes++);
+
+      await container.read(accountRefresherProvider).refresh();
+
+      expect(changes, 0);
+    });
+
+    test('a failed refresh keeps the cached account', () async {
+      await SessionStore(persistence).save(testSession());
+      when(() => repository.getAccount()).thenThrow(const ApiException(code: ApiException.networkCode));
+      final container = ProviderContainer.test(overrides: overrides());
+      await container.read(sessionControllerProvider.future);
+
+      await container.read(accountRefresherProvider).refresh();
+
+      expect(container.read(sessionControllerProvider).value, isNotNull);
+    });
+
+    test('runs once someone is signed in, and not when signed out', () async {
+      when(() => repository.getAccount()).thenAnswer((_) async => testAccount(emailVerified: true));
+      final signedOut = ProviderContainer.test(overrides: overrides());
+      await signedOut.read(sessionControllerProvider.future);
+      signedOut.listen(accountRefreshSessionProvider, (_, _) {});
+      await pumpEventQueue();
+      verifyNever(() => repository.getAccount());
+
+      await SessionStore(persistence).save(testSession());
+      final signedIn = ProviderContainer.test(overrides: overrides());
+      await signedIn.read(sessionControllerProvider.future);
+      signedIn.listen(accountRefreshSessionProvider, (_, _) {});
+      await pumpEventQueue();
+
+      verify(() => repository.getAccount()).called(1);
     });
   });
 

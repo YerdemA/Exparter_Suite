@@ -6,6 +6,7 @@ import 'core/error_reporting.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_setting.dart';
+import 'features/auth/presentation/account_refresh.dart';
 import 'l10n/app_localizations.dart';
 
 class ExparterApp extends ConsumerWidget {
@@ -14,6 +15,7 @@ class ExparterApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(errorReportUserProvider);
+    ref.watch(accountRefreshSessionProvider);
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,
       debugShowCheckedModeBanner: false,
