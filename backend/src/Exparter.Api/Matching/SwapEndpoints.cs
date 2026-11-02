@@ -14,8 +14,8 @@ internal static class SwapEndpoints
     {
         var requests = routes.MapGroup("/swap-requests").RequireAuthorization();
 
-        requests.MapGet("", async (SwapRequestDirection direction, SwapRequestStatus? status, int? page, int? pageSize, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
-            Results.Ok(await sender.Send(new ListSwapRequestsQuery(user.GetUserId(), direction, status, page, pageSize), cancellationToken)));
+        requests.MapGet("", async (SwapRequestDirection direction, SwapRequestStatus? status, Guid? otherUserId, int? page, int? pageSize, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
+            Results.Ok(await sender.Send(new ListSwapRequestsQuery(user.GetUserId(), direction, status, otherUserId, page, pageSize), cancellationToken)));
 
         requests.MapPost("", async (SendSwapRequestRequest request, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
         {
@@ -39,8 +39,8 @@ internal static class SwapEndpoints
 
         var matches = routes.MapGroup("/matches").RequireAuthorization();
 
-        matches.MapGet("", async (MatchStatus? status, int? page, int? pageSize, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
-            Results.Ok(await sender.Send(new ListMatchesQuery(user.GetUserId(), status, page, pageSize), cancellationToken)));
+        matches.MapGet("", async (MatchStatus? status, Guid? otherUserId, int? page, int? pageSize, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
+            Results.Ok(await sender.Send(new ListMatchesQuery(user.GetUserId(), status, otherUserId, page, pageSize), cancellationToken)));
 
         matches.MapGet("/{matchId}", async (Guid matchId, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
             Results.Ok(await sender.Send(new GetMatchQuery(user.GetUserId(), matchId), cancellationToken)));

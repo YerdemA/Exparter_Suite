@@ -109,6 +109,7 @@ public sealed record ListSwapRequestsQuery(
     Guid UserId,
     SwapRequestDirection Direction,
     SwapRequestStatus? Status,
+    Guid? OtherUserId,
     int? Page,
     int? PageSize) : IQuery<PagedList<SwapRequestDto>>;
 
@@ -132,6 +133,7 @@ public sealed class ListSwapRequestsQueryHandler(
             query.UserId,
             query.Direction,
             query.Status,
+            query.OtherUserId,
             timeProvider.GetUtcNow(),
             PageRequest.From(query.Page, query.PageSize),
             cancellationToken);

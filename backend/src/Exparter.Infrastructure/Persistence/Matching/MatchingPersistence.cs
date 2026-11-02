@@ -78,6 +78,7 @@ internal sealed class SwapRequestRepository(AppDbContext dbContext) : ISwapReque
         Guid userId,
         SwapRequestDirection direction,
         SwapRequestStatus? status,
+        Guid? otherUserId,
         DateTimeOffset now,
         PageRequest page,
         CancellationToken cancellationToken)
@@ -86,6 +87,12 @@ internal sealed class SwapRequestRepository(AppDbContext dbContext) : ISwapReque
         requests = direction == SwapRequestDirection.Incoming
             ? requests.Where(x => x.RecipientId == userId)
             : requests.Where(x => x.RequesterId == userId);
+        if (otherUserId is not null)
+        {
+            requests = direction == SwapRequestDirection.Incoming
+                ? requests.Where(x => x.RequesterId == otherUserId)
+                : requests.Where(x => x.RecipientId == otherUserId);
+        }
 
         requests = status switch
         {
@@ -136,9 +143,14 @@ internal sealed class MatchRepository(AppDbContext dbContext) : IMatchRepository
                     || (x.UserAId == secondUserId && x.UserBId == firstUserId)),
             cancellationToken);
 
-    public Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, PageRequest page, CancellationToken cancellationToken)
+    public Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, Guid? otherUserId, PageRequest page, CancellationToken cancellationToken)
     {
         var matches = dbContext.Matches.AsNoTracking().Where(x => x.UserAId == userId || x.UserBId == userId);
+        if (otherUserId is not null)
+        {
+            matches = matches.Where(x => x.UserAId == otherUserId || x.UserBId == otherUserId);
+        }
+
         if (status is not null)
         {
             matches = matches.Where(x => x.Status == status);
