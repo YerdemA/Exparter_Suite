@@ -9,7 +9,7 @@ using Mediator;
 
 namespace Exparter.Application.Matching;
 
-public sealed record ListMatchesQuery(Guid UserId, MatchStatus? Status, int? Page, int? PageSize) : IQuery<PagedList<MatchDto>>;
+public sealed record ListMatchesQuery(Guid UserId, MatchStatus? Status, Guid? OtherUserId, int? Page, int? PageSize) : IQuery<PagedList<MatchDto>>;
 
 public sealed class ListMatchesQueryValidator : AbstractValidator<ListMatchesQuery>
 {
@@ -24,7 +24,7 @@ public sealed class ListMatchesQueryHandler(IMatchRepository matches, MatchingDt
 {
     public async ValueTask<PagedList<MatchDto>> Handle(ListMatchesQuery query, CancellationToken cancellationToken)
     {
-        var page = await matches.ListAsync(query.UserId, query.Status, PageRequest.From(query.Page, query.PageSize), cancellationToken);
+        var page = await matches.ListAsync(query.UserId, query.Status, query.OtherUserId, PageRequest.From(query.Page, query.PageSize), cancellationToken);
         return new PagedList<MatchDto>(
             await dtos.ToDtosAsync(page.Items, query.UserId, cancellationToken),
             page.Page,

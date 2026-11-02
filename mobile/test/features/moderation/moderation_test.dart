@@ -2,6 +2,7 @@ import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/features/discovery/data/api_discovery_repository.dart';
 import 'package:exparter/features/discovery/presentation/user_profile_screen.dart';
+import 'package:exparter/features/matches/data/api_match_repository.dart';
 import 'package:exparter/features/moderation/data/api_moderation_repository.dart';
 import 'package:exparter/features/moderation/presentation/blocked_users_screen.dart';
 import 'package:exparter/features/reviews/data/api_review_repository.dart';
@@ -55,6 +56,7 @@ void main() {
   List<Override> overrides() => [
         moderationRepositoryProvider.overrideWithValue(moderation),
         discoveryRepositoryProvider.overrideWithValue(discovery),
+        matchRepositoryProvider.overrideWithValue(quietMatchRepository()),
         sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
         reviewRepositoryProvider.overrideWithValue(quietReviewRepository()),
       ];

@@ -150,6 +150,35 @@ public class SwapApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task Requests_and_matches_can_be_narrowed_to_one_other_user()
+    {
+        var (ali, ayse, guitar, spanish) = await PairAsync();
+        var stranger = await TestSession.RegisterVisibleAsync(_client, fixture);
+        await stranger.AddSkillAsync("yoga", "Offered", "Expert");
+        var yoga = await ali.FindSkillIdAsync("yoga");
+        var request = await CreatedAsync(SendAsync(ali, ayse, guitar, spanish));
+        var other = await CreatedAsync(SendAsync(ali, stranger, guitar, yoga));
+
+        async Task<Guid> OnlyIdAsync(TestSession session, string path) =>
+            IdOf(Assert.Single((await session.GetJsonAsync(path)).GetProperty("items").EnumerateArray()));
+
+        Assert.Equal(IdOf(request), await OnlyIdAsync(ali, $"/api/v1/swap-requests?direction=Outgoing&otherUserId={ayse.UserId}"));
+        Assert.Equal(IdOf(other), await OnlyIdAsync(ali, $"/api/v1/swap-requests?direction=Outgoing&otherUserId={stranger.UserId}"));
+        Assert.Equal(IdOf(request), await OnlyIdAsync(ayse, $"/api/v1/swap-requests?direction=Incoming&otherUserId={ali.UserId}"));
+        Assert.Equal(
+            0,
+            (await ayse.GetJsonAsync($"/api/v1/swap-requests?direction=Incoming&otherUserId={stranger.UserId}")).GetProperty("totalCount").GetInt32());
+
+        var match = await OkAsync(ayse.SendAsync(HttpMethod.Post, $"/api/v1/swap-requests/{IdOf(request)}/accept"));
+        await OkAsync(stranger.SendAsync(HttpMethod.Post, $"/api/v1/swap-requests/{IdOf(other)}/accept"));
+
+        Assert.Equal(2, (await ali.GetJsonAsync("/api/v1/matches")).GetProperty("totalCount").GetInt32());
+        Assert.Equal(IdOf(match), await OnlyIdAsync(ali, $"/api/v1/matches?otherUserId={ayse.UserId}"));
+        Assert.Equal(IdOf(match), await OnlyIdAsync(ayse, $"/api/v1/matches?otherUserId={ali.UserId}"));
+        Assert.Equal(0, (await ayse.GetJsonAsync($"/api/v1/matches?otherUserId={stranger.UserId}")).GetProperty("totalCount").GetInt32());
+    }
+
+    [Fact]
     public async Task Only_the_right_user_can_answer_or_withdraw_and_strangers_see_nothing()
     {
         var (ali, ayse, guitar, spanish) = await PairAsync();

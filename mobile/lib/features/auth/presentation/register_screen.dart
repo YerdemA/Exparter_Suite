@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -78,6 +79,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 // Stops the keyboard from capitalizing the first letter, which the
                 // lowercase-only rule would reject.
                 textCapitalization: TextCapitalization.none,
+                // A username cannot contain spaces, so they are not let in, typed or pasted.
+                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
                 autofillHints: const [AutofillHints.newUsername],
                 textInputAction: TextInputAction.next,
                 validator: (value) => fieldErrorText(l10n, AuthValidators.username(value)),

@@ -9,6 +9,7 @@ import '../../../core/auth/session_controller.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../matches/presentation/match_controller.dart';
 import '../../moderation/presentation/moderation_menu.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
@@ -138,25 +139,7 @@ class _Content extends ConsumerWidget {
               UserStatsCard(userId: profile.userId),
               if (!isOwnProfile) ...[
                 const SizedBox(height: AppSpacing.lg),
-                FilledButton.icon(
-                  // A user with nothing to teach cannot be asked for a swap.
-                  onPressed: offered.isEmpty
-                      ? null
-                      : () async {
-                          final requirements = await ref.read(interactionRequirementsProvider.future);
-                          if (!context.mounted) {
-                            return;
-                          }
-
-                          if (requirements?.canInteract ?? false) {
-                            context.go(AppRoutes.sendRequest(profile.userId));
-                          } else {
-                            await showInteractionRequiredDialog(context);
-                          }
-                        },
-                  icon: const Icon(Icons.swap_horiz),
-                  label: Text(l10n.requestSend),
-                ),
+                _SwapAction(userId: profile.userId, hasOfferedSkills: offered.isNotEmpty),
               ],
               const SizedBox(height: AppSpacing.lg),
               _SkillGroup(title: l10n.userOfferedTitle, skills: offered),
@@ -169,6 +152,59 @@ class _Content extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// What can be done about a swap with this user: a new request, or a way to what
+/// the two already have going, since the server refuses a second one.
+class _SwapAction extends ConsumerWidget {
+  const _SwapAction({required this.userId, required this.hasOfferedSkills});
+
+  final String userId;
+  final bool hasOfferedSkills;
+
+  Future<void> _sendRequest(BuildContext context, WidgetRef ref) async {
+    final requirements = await ref.read(interactionRequirementsProvider.future);
+    if (!context.mounted) {
+      return;
+    }
+
+    if (requirements?.canInteract ?? false) {
+      context.go(AppRoutes.sendRequest(userId));
+    } else {
+      await showInteractionRequiredDialog(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final standing = ref.watch(swapStandingProvider(userId));
+
+    return switch (standing) {
+      AsyncData(value: OpenMatch(:final matchId)) => FilledButton.icon(
+          onPressed: () => context.go(AppRoutes.matchDetail(matchId)),
+          icon: const Icon(Icons.handshake_outlined),
+          label: Text(l10n.matchView),
+        ),
+      AsyncData(value: RequestSent()) => FilledButton.icon(
+          onPressed: null,
+          icon: const Icon(Icons.schedule_send_outlined),
+          label: Text(l10n.requestAlreadySent),
+        ),
+      AsyncData(value: RequestReceived()) => FilledButton.icon(
+          onPressed: () => context.go(AppRoutes.incomingRequests),
+          icon: const Icon(Icons.move_to_inbox_outlined),
+          label: Text(l10n.requestViewIncoming),
+        ),
+      // If the answer did not arrive, a request stays possible; the server has the last word.
+      _ => FilledButton.icon(
+          // A user with nothing to teach cannot be asked for a swap.
+          onPressed: standing.isLoading || !hasOfferedSkills ? null : () => _sendRequest(context, ref),
+          icon: const Icon(Icons.swap_horiz),
+          label: Text(l10n.requestSend),
+        ),
+    };
   }
 }
 

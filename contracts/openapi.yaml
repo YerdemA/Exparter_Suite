@@ -647,6 +647,10 @@ paths:
         - name: status
           in: query
           schema: { $ref: '#/components/schemas/SwapRequestStatus' }
+        - name: otherUserId
+          in: query
+          description: Only requests exchanged with this user.
+          schema: { type: string, format: uuid }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -766,6 +770,10 @@ paths:
         - name: status
           in: query
           schema: { $ref: '#/components/schemas/MatchStatus' }
+        - name: otherUserId
+          in: query
+          description: Only matches with this user.
+          schema: { type: string, format: uuid }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:

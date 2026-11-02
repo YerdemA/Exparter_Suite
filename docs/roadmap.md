@@ -354,7 +354,8 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Play Console (2026-10-28): uygulama `com.exparter.app` olarak oluşturuldu, formlar dolduruldu, 1.0.0 (1) kapalı test kanalında incelemeye gönderildi. İnceleme hesabı `exparter_inceleme`, `deneme_yusuf` ile aktif bir eşleşmesi var.
 - Kapalı test (2026-11-02): 1.0.0 (1) incelemeden geçti, 10 test kullanıcısının cihazında kurulu. Play'in imzalama anahtarı `assetlinks.json` dosyasına eklendi; bağlantıların cihazlarda doğrulanması için 1.0.0 (2) derlendi ve incelemeye gönderildi.
 - Sentry incelemesi (2026-11-02): uygulama dışında doğrulanan e-posta artık uygulama açılınca, öne gelince ve "zaten doğrulanmış" yanıtında fark ediliyor (1.0.0 (3)). JSON kabul etmeyen istekler boş 500 yerine doğru sorun yanıtını alıyor. İstemci hataları Sentry'ye gitmiyor. Backend 520, mobil 227 test.
-- Kalan: 1.0.0 (2) sürümünün yüklenmesi ve bağlantıların test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
+- Test geri bildirimi (2026-11-03, 1.0.0 (4)): sohbet başlığında profil fotoğrafı; profilde devam eden eşleşme veya bekleyen istek varsa yeni istek yerine durum ve ilgili ekrana geçiş (`otherUserId` filtresi); kullanıcı adına boşluk girilemiyor; "Çevrimiçi takas" / "Yüz yüze takas" adları; profildeki çark simgesinden açılan Ayarlar ekranı (görünüm, bildirim, engellenenler, yasal, çıkış, hesap silme). Backend 521, mobil 234 test; uçtan uca test emülatörde geçti.
+- Kalan: 1.0.0 (4) sürümünün yüklenmesi ve bağlantıların test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
 
 ## Geliştirme ortamı
 

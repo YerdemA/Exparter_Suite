@@ -19,6 +19,47 @@ Future<List<Match>> matches(Ref ref) => ref.watch(matchRepositoryProvider).listM
 @Riverpod(retry: noRetry)
 Future<Match> match(Ref ref, String matchId) => ref.watch(matchRepositoryProvider).getMatch(matchId);
 
+/// Where the signed-in user stands with another user, which decides whether a new
+/// swap request makes sense.
+sealed class SwapStanding {
+  const SwapStanding();
+}
+
+class NoOpenSwap extends SwapStanding {
+  const NoOpenSwap();
+}
+
+class OpenMatch extends SwapStanding {
+  const OpenMatch(this.matchId);
+
+  final String matchId;
+}
+
+class RequestSent extends SwapStanding {
+  const RequestSent();
+}
+
+class RequestReceived extends SwapStanding {
+  const RequestReceived();
+}
+
+@Riverpod(retry: noRetry)
+Future<SwapStanding> swapStanding(Ref ref, String userId) async {
+  final repository = ref.watch(matchRepositoryProvider);
+  final match = await repository.findOpenMatch(userId);
+  if (match != null) {
+    return OpenMatch(match.id);
+  }
+
+  if (await repository.findPendingRequest(Direction.outgoing, userId) != null) {
+    return const RequestSent();
+  }
+
+  return await repository.findPendingRequest(Direction.incoming, userId) != null
+      ? const RequestReceived()
+      : const NoOpenSwap();
+}
+
 /// Runs the request and match actions. Its state is the progress of the action in
 /// flight; each method reports whether it succeeded.
 @riverpod
@@ -73,6 +114,7 @@ class MatchActions extends _$MatchActions {
         ref.invalidate(pendingRequestsProvider);
         ref.invalidate(matchesProvider);
         ref.invalidate(matchProvider);
+        ref.invalidate(swapStandingProvider);
         // Starting or ending a match changes both users' statistics.
         ref.invalidate(userStatsProvider);
         if (state.isLoading) {

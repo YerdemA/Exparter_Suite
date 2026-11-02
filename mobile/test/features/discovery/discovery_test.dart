@@ -1,5 +1,6 @@
 import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/generated/export.dart';
+import 'package:exparter/features/matches/data/api_match_repository.dart';
 import 'package:exparter/features/discovery/data/api_discovery_repository.dart';
 import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/discovery/presentation/discovery_controller.dart';
@@ -38,6 +39,7 @@ void main() {
         sessionRepositoryProvider.overrideWithValue(quietSessionRepository()),
         reviewRepositoryProvider.overrideWithValue(quietReviewRepository()),
         discoveryRepositoryProvider.overrideWithValue(repository),
+        matchRepositoryProvider.overrideWithValue(quietMatchRepository()),
         skillRepositoryProvider.overrideWithValue(skillRepository),
         skillCategoriesProvider.overrideWith((ref) async => testCategories),
         citiesProvider.overrideWith((ref) async => testCities),

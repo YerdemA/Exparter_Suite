@@ -38,12 +38,14 @@ internal sealed class InMemorySwapRequests : ISwapRequestRepository
         Guid userId,
         SwapRequestDirection direction,
         SwapRequestStatus? status,
+        Guid? otherUserId,
         DateTimeOffset now,
         PageRequest page,
         CancellationToken cancellationToken)
     {
         var all = Items
             .Where(x => (direction == SwapRequestDirection.Incoming ? x.RecipientId : x.RequesterId) == userId
+                && (otherUserId is null || (direction == SwapRequestDirection.Incoming ? x.RequesterId : x.RecipientId) == otherUserId)
                 && (status is null || x.StatusAt(now) == status))
             .OrderByDescending(x => x.CreatedAt)
             .ToList();
@@ -79,9 +81,13 @@ internal sealed class InMemoryMatches : IMatchRepository
     public Task<bool> HasOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken) =>
         Task.FromResult(Items.Any(x => x.Status != MatchStatus.Ended && x.IsParticipant(firstUserId) && x.IsParticipant(secondUserId)));
 
-    public Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, PageRequest page, CancellationToken cancellationToken)
+    public Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, Guid? otherUserId, PageRequest page, CancellationToken cancellationToken)
     {
-        var all = Items.Where(x => x.IsParticipant(userId) && (status is null || x.Status == status)).ToList();
+        var all = Items
+            .Where(x => x.IsParticipant(userId)
+                && (otherUserId is null || x.IsParticipant(otherUserId.Value))
+                && (status is null || x.Status == status))
+            .ToList();
         return Task.FromResult(new PagedList<Match>(all, page.Page, page.PageSize, all.Count));
     }
 
@@ -501,9 +507,9 @@ public class MatchingHandlerTests
 
         var handler = new ListSwapRequestsQueryHandler(_requests, _dtos, _clock);
         var pending = await handler.Handle(
-            new ListSwapRequestsQuery(_ayse, SwapRequestDirection.Incoming, SwapRequestStatus.Pending, null, null), CancellationToken.None);
+            new ListSwapRequestsQuery(_ayse, SwapRequestDirection.Incoming, SwapRequestStatus.Pending, null, null, null), CancellationToken.None);
         var expired = await handler.Handle(
-            new ListSwapRequestsQuery(_ayse, SwapRequestDirection.Incoming, SwapRequestStatus.Expired, null, null), CancellationToken.None);
+            new ListSwapRequestsQuery(_ayse, SwapRequestDirection.Incoming, SwapRequestStatus.Expired, null, null, null), CancellationToken.None);
         Assert.Empty(pending.Items);
         Assert.Equal(SwapRequestStatus.Expired, Assert.Single(expired.Items).Status);
     }
@@ -515,7 +521,7 @@ public class MatchingHandlerTests
         var handler = new ListSwapRequestsQueryHandler(_requests, _dtos, _clock);
 
         async Task<int> CountAsync(Guid userId, SwapRequestDirection direction) =>
-            (await handler.Handle(new ListSwapRequestsQuery(userId, direction, null, null, null), CancellationToken.None)).TotalCount;
+            (await handler.Handle(new ListSwapRequestsQuery(userId, direction, null, null, null, null), CancellationToken.None)).TotalCount;
 
         Assert.Equal(1, await CountAsync(_ali, SwapRequestDirection.Outgoing));
         Assert.Equal(0, await CountAsync(_ali, SwapRequestDirection.Incoming));
@@ -584,8 +590,8 @@ public class MatchingHandlerTests
         var match = await AcceptAsync((await SendAsync()).Id);
         var handler = new ListMatchesQueryHandler(_matches, _dtos);
 
-        var forAyse = await handler.Handle(new ListMatchesQuery(_ayse, MatchStatus.Active, null, null), CancellationToken.None);
-        var ended = await handler.Handle(new ListMatchesQuery(_ali, MatchStatus.Ended, null, null), CancellationToken.None);
+        var forAyse = await handler.Handle(new ListMatchesQuery(_ayse, MatchStatus.Active, null, null, null), CancellationToken.None);
+        var ended = await handler.Handle(new ListMatchesQuery(_ali, MatchStatus.Ended, null, null, null), CancellationToken.None);
         var single = await new GetMatchQueryHandler(_matches, _dtos).Handle(new GetMatchQuery(_ali, match.Id), CancellationToken.None);
 
         Assert.Equal(match.Id, Assert.Single(forAyse.Items).Id);

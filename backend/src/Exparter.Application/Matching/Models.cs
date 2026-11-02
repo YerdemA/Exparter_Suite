@@ -33,6 +33,7 @@ public interface ISwapRequestRepository
         Guid userId,
         SwapRequestDirection direction,
         SwapRequestStatus? status,
+        Guid? otherUserId,
         DateTimeOffset now,
         PageRequest page,
         CancellationToken cancellationToken);
@@ -60,7 +61,7 @@ public interface IMatchRepository
     Task<Match?> FindOpenBetweenAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken);
 
     /// <summary>Newest first.</summary>
-    Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, PageRequest page, CancellationToken cancellationToken);
+    Task<PagedList<Match>> ListAsync(Guid userId, MatchStatus? status, Guid? otherUserId, PageRequest page, CancellationToken cancellationToken);
 
     /// <summary>Every match of the user, in no particular order.</summary>
     Task<IReadOnlyList<Match>> ListAllAsync(Guid userId, CancellationToken cancellationToken);
