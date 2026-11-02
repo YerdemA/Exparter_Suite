@@ -9,7 +9,10 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../matches/presentation/match_labels.dart';
 import '../../moderation/presentation/moderation_menu.dart';
+import '../../profile/presentation/widgets/profile_avatar.dart';
 import 'message_controller.dart';
+
+const _titleAvatarSize = 36.0;
 
 /// One conversation: its messages, newest at the bottom, and the box to write in.
 class ConversationScreen extends ConsumerStatefulWidget {
@@ -94,7 +97,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
             ? null
             : InkWell(
                 onTap: () => context.go(AppRoutes.userProfile(conversation.otherUser.userId)),
-                child: Text(userLabel(l10n, conversation.otherUser)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ProfileAvatar(
+                      name: conversation.otherUser.displayName ?? conversation.otherUser.username,
+                      imageUrl: conversation.otherUser.avatarUrl,
+                      size: _titleAvatarSize,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Flexible(child: Text(userLabel(l10n, conversation.otherUser), overflow: TextOverflow.ellipsis)),
+                  ],
+                ),
               ),
         actions: [
           if (conversation != null && (!conversation.otherUser.isDeleted || _canClose(conversation)))

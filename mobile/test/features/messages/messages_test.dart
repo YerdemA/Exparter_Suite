@@ -13,6 +13,7 @@ import 'package:exparter/features/messages/presentation/conversations_screen.dar
 import 'package:exparter/features/messages/presentation/message_controller.dart';
 import 'package:exparter/features/reviews/data/api_review_repository.dart';
 import 'package:exparter/features/sessions/data/api_session_repository.dart';
+import 'package:exparter/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -382,6 +383,16 @@ void main() {
       expect(find.text('İki'), findsOneWidget);
       expect(find.text('Üç'), findsOneWidget);
       expect(find.textContaining(l10n.messageSeen), findsOneWidget);
+    });
+
+    testWidgets('shows the other user\'s photo or initial next to their name', (tester) async {
+      stubThread(conversation(), [message('m1', 'Bir')]);
+
+      await pump(tester);
+
+      final title = find.byType(AppBar);
+      expect(find.descendant(of: title, matching: find.byType(ProfileAvatar)), findsOneWidget);
+      expect(find.descendant(of: title, matching: find.text('Deniz Kaya')), findsOneWidget);
     });
 
     testWidgets('does not claim a message was seen before the other user read that far', (tester) async {
