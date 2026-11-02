@@ -351,7 +351,8 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - E-posta bağlantıları (2026-10-27, ADR 0009): canlıda `https://exparter.app/verify-email` ve `/reset-password`. Uygulama kuruluysa Android App Links ile uygulama açılır, yoksa sitedeki sayfa işlemi tamamlar. Yerelde Caddy ile uçtan uca, emülatörde uygulamayla denendi. Play'in imzalama anahtarı yüklemeden sonra `assetlinks.json` dosyasına eklenecek.
 - Site ve e-postalar (2026-10-27): `exparter.app` ana sayfası markaya uygun yeniden tasarlandı (tanıtım, nasıl çalışır, özellikler, ekranlar, güvenlik, kapalı teste katılım); yasal sayfalar ve e-posta bağlantısı sayfaları aynı başlık ve kart düzenini kullanıyor. Doğrulama ve parola sıfırlama e-postaları markalı HTML ve düz metin olarak gidiyor (ADR 0007); Mailpit'e gerçek gönderimle test edildi.
 - Testler (2026-10-27): backend 516 (170 domain, 234 uygulama, 112 entegrasyon), mobil 221.
-- Kalan: kapalı teste yükleme, Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
+- Play Console (2026-10-28): uygulama `com.exparter.app` olarak oluşturuldu, formlar dolduruldu, 1.0.0 (1) kapalı test kanalında incelemeye gönderildi. İnceleme hesabı `exparter_inceleme`, `deneme_yusuf` ile aktif bir eşleşmesi var.
+- Kalan: incelemenin sonucu, Play imzalama anahtarının `assetlinks.json` dosyasına eklenmesi, test kullanıcılarının toplanması (12+ kişi, 14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
 
 ## Geliştirme ortamı
 

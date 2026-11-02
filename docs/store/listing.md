@@ -95,11 +95,14 @@ Yeniden çekmek için: yerelde boş bir veritabanı oluşturup API'yi ona bağla
 | Kişisel bilgiler → Diğer bilgiler | Biyografi, yetenekler, takas tercihi | İsteğe bağlı (biyografi) | Uygulama işlevi |
 | Konum → Yaklaşık konum | Kullanıcının seçtiği şehir | İsteğe bağlı | Uygulama işlevi |
 | Fotoğraflar ve videolar → Fotoğraflar | Profil fotoğrafı | İsteğe bağlı | Uygulama işlevi |
-| Mesajlar → Diğer uygulama içi mesajlar | Sohbet mesajları | Zorunlu değil (kullanıcı yazarsa) | Uygulama işlevi |
+| Mesajlar → Diğer uygulama içi mesajlar | Sohbet mesajları | Zorunlu değil (kullanıcı yazarsa) | Uygulama işlevi; dolandırıcılığı önleme, güvenlik ve uyumluluk (şikâyet edilen mesajlar incelenir) |
+| Uygulama etkinliği → Uygulama içi arama geçmişi | Keşfet'teki ad veya kullanıcı adı aramaları (istek adresinde olduğu için trafik kaydında 1 yıl kalır) | Zorunlu değil | Uygulama işlevi; dolandırıcılığı önleme, güvenlik ve uyumluluk |
 | Uygulama etkinliği → Kullanıcı tarafından oluşturulan diğer içerikler | Değerlendirmeler, şikâyetler | Zorunlu değil | Uygulama işlevi, güvenlik ve dolandırıcılığı önleme |
 | Uygulama bilgileri ve performansı → Kilitlenme günlükleri | Sentry çökme raporları | Zorunlu | Analiz (hata ayıklama) |
 | Uygulama bilgileri ve performansı → Diğer teşhis verileri | Sentry hata ayrıntıları | Zorunlu | Analiz (hata ayıklama) |
 | Cihaz veya diğer kimlikler | Firebase bildirim token'ı; sunucunun trafik kaydındaki IP adresi | Zorunlu (IP her istekte kaydedilir; token yalnızca bildirim izniyle) | Uygulama işlevi; dolandırıcılığı önleme, güvenlik ve uyumluluk (5651 gereği 1 yıl) |
+
+Hiçbir veri geçici olarak işlenmiyor; hepsi saklanıyor. Form bu yanıtlarla 2026-10-28'de dolduruldu.
 
 Play bu formu uygulamanın gerçek davranışıyla karşılaştırır; uygulamaya yeni bir veri türü eklenirse form da güncellenmelidir.
 
