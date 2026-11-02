@@ -85,9 +85,9 @@
   "profileAcceptsInPerson": "Yüz yüze",
   "profileCityLabel": "Şehir",
   "profileCityHelper": "Yüz yüze takaslar için gerekli. Yalnızca şehriniz görünür.",
-  "profileModeOnline": "Çevrimiçi",
-  "profileModeInPerson": "Yüz yüze",
-  "profileModeInPersonIn": "Yüz yüze · {city}",
+  "profileModeOnline": "Çevrimiçi takas",
+  "profileModeInPerson": "Yüz yüze takas",
+  "profileModeInPersonIn": "Yüz yüze takas · {city}",
   "@profileModeInPersonIn": {
     "placeholders": {
       "city": { "type": "String" }
