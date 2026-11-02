@@ -12,6 +12,9 @@ abstract final class AppRoutes {
   static const sendRequestSegment = 'request';
   static const writeReviewSegment = 'review';
   static const matches = '/matches';
+  static const matchesTabParameter = 'tab';
+  static const matchesTabIncoming = 'incoming';
+  static const incomingRequests = '$matches?$matchesTabParameter=$matchesTabIncoming';
   static const matchDetailSegment = ':$matchIdParameter';
   static const matchIdParameter = 'matchId';
   static const proposeSessionSegment = 'sessions/new';
@@ -26,8 +29,10 @@ abstract final class AppRoutes {
   static const skillTypeParameter = 'type';
   static const skillProposalsSegment = 'skills/proposals';
   static const skillProposals = '$profile/$skillProposalsSegment';
+  static const settingsSegment = 'settings';
+  static const settings = '$profile/$settingsSegment';
   static const blockedUsersSegment = 'blocked';
-  static const blockedUsers = '$profile/$blockedUsersSegment';
+  static const blockedUsers = '$settings/$blockedUsersSegment';
 
   static String userProfile(String userId) => '/users/$userId';
 

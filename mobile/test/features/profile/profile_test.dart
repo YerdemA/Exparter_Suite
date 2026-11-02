@@ -17,6 +17,7 @@ import 'package:exparter/features/profile/presentation/profile_controller.dart';
 import 'package:exparter/features/profile/presentation/profile_form_screen.dart';
 import 'package:exparter/features/profile/presentation/profile_screen.dart';
 import 'package:exparter/features/reviews/data/api_review_repository.dart';
+import 'package:exparter/features/profile/presentation/settings_screen.dart';
 import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/features/skills/data/api_skill_repository.dart';
 import 'package:exparter/l10n/app_localizations_tr.dart';
@@ -305,10 +306,29 @@ void main() {
       expect(find.textContaining('Gitar ·'), findsOneWidget);
     });
 
+    testWidgets('keeps the account actions on the settings screen', (tester) async {
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
+      await pumpScreen(tester, const ProfileScreen());
+
+      expect(find.byTooltip(l10n.settingsTitle), findsOneWidget);
+      expect(find.text(l10n.homeLogout), findsNothing);
+      expect(find.text(l10n.accountDelete), findsNothing);
+      expect(find.text(l10n.blockedUsersTitle), findsNothing);
+      expect(find.text(l10n.themeTitle), findsNothing);
+
+      await pumpScreen(tester, const SettingsScreen());
+
+      expect(find.text(l10n.homeLogout), findsOneWidget);
+      expect(find.text(l10n.accountDelete), findsOneWidget);
+      expect(find.text(l10n.blockedUsersTitle), findsOneWidget);
+      expect(find.text(l10n.themeTitle), findsOneWidget);
+      expect(find.text(l10n.legalTitle), findsOneWidget);
+    });
+
     testWidgets('deleting the account needs the password and signs the user out', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
       when(() => authRepository.requestAccountDeletion(password: any(named: 'password'))).thenAnswer((_) async {});
-      await pumpScreen(tester, const ProfileScreen());
+      await pumpScreen(tester, const SettingsScreen());
 
       await tester.ensureVisible(find.text(l10n.accountDelete));
       await tester.tap(find.text(l10n.accountDelete));
@@ -320,8 +340,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'Passw0rd!x');
       await tester.pumpAndSettle();
       await tester.tap(confirm);
-      // Signed out, the screen has no profile to show and keeps spinning; in the app the
-      // router leaves it at this point.
+      // Signed out; in the app the router leaves the screen at this point.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -335,7 +354,7 @@ void main() {
       push
         ..current = PushPermission.denied
         ..answer = PushPermission.denied;
-      await pumpScreen(tester, const ProfileScreen());
+      await pumpScreen(tester, const SettingsScreen());
 
       expect(find.text(l10n.pushDisabled), findsOneWidget);
       await tester.ensureVisible(find.text(l10n.pushEnable));
@@ -355,7 +374,7 @@ void main() {
 
     testWidgets('the theme can be chosen and the choice is kept', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
-      await pumpScreen(tester, const ProfileScreen());
+      await pumpScreen(tester, const SettingsScreen());
 
       final selector = find.byType(SegmentedButton<ThemeMode>);
       await tester.ensureVisible(selector);
@@ -372,7 +391,7 @@ void main() {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
       when(() => authRepository.requestAccountDeletion(password: any(named: 'password')))
           .thenThrow(const ApiException(statusCode: 400, code: 'invalid_password'));
-      await pumpScreen(tester, const ProfileScreen());
+      await pumpScreen(tester, const SettingsScreen());
 
       await tester.ensureVisible(find.text(l10n.accountDelete));
       await tester.tap(find.text(l10n.accountDelete));
@@ -383,7 +402,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(l10n.errorInvalidPassword), findsOneWidget);
-      expect(find.text('@ayse'), findsOneWidget);
+      expect(persistence.value, isNotNull);
     });
 
     testWidgets('a complete, verified user sees no requirements', (tester) async {

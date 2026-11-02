@@ -73,6 +73,11 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> openSettings(WidgetTester tester) async {
+    await tester.tap(find.byTooltip(l10n.settingsTitle));
+    await pumpUntilFound(tester, find.text(l10n.homeLogout));
+  }
+
   Future<void> openProfileTab(WidgetTester tester) async {
     await pumpUntilFound(tester, find.byType(NavigationBar));
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navProfile)));
@@ -419,6 +424,7 @@ void main() {
     expect(find.text(l10n.ratingSummary(7, 1)), findsOneWidget);
 
     // Sign out, and stay signed out after another restart.
+    await openSettings(tester);
     await tapVisible(tester, find.widgetWithText(OutlinedButton, l10n.homeLogout));
     await pumpUntilFound(tester, find.text(l10n.loginTitle));
     await launchApp(tester);
@@ -459,6 +465,7 @@ void main() {
     // Delete the account: it needs the password, signs out, and ends the match for the
     // peer. Signing in again takes the deletion back.
     await waitForNotices(tester);
+    await openSettings(tester);
     // Pressed directly: on the device the test's tap at this spot does not land, though
     // the button is in view and works by hand.
     tester.widget<TextButton>(find.widgetWithText(TextButton, l10n.accountDelete)).onPressed!();

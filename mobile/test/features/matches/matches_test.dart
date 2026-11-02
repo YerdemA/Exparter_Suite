@@ -93,6 +93,7 @@ void main() {
     await SessionStore(persistence).save(testSession());
     when(() => repository.listMatches()).thenAnswer((_) async => []);
     when(() => repository.listPendingRequests(any())).thenAnswer((_) async => []);
+    stubNoOpenSwap(repository);
   });
 
   List<Override> overrides() => [
@@ -508,6 +509,47 @@ void main() {
 
       expect(find.text(l10n.interactionRequirements), findsOneWidget);
       expect(find.text('route:/users/user-deniz/request'), findsNothing);
+    });
+
+    testWidgets('leads to the open match instead of a new request', (tester) async {
+      stubProfile(offers: true);
+      final match = testMatch();
+      when(() => repository.findOpenMatch('user-deniz')).thenAnswer((_) async => match);
+      await pump(tester, const UserProfileScreen(userId: 'user-deniz'));
+
+      expect(find.text(l10n.requestSend), findsNothing);
+      await tester.tap(find.text(l10n.matchView));
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:/matches/${match.id}'), findsOneWidget);
+    });
+
+    testWidgets('says a sent request is waiting and offers nothing to press', (tester) async {
+      stubProfile(offers: true);
+      when(() => repository.findPendingRequest(Direction.outgoing, 'user-deniz')).thenAnswer((_) async => outgoingRequest());
+      await pump(tester, const UserProfileScreen(userId: 'user-deniz'));
+
+      expect(find.text(l10n.requestSend), findsNothing);
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, l10n.requestAlreadySent)).onPressed, isNull);
+    });
+
+    testWidgets('leads to a request received from this user', (tester) async {
+      stubProfile(offers: true);
+      when(() => repository.findPendingRequest(Direction.incoming, 'user-deniz')).thenAnswer((_) async => incomingRequest());
+      await pump(tester, const UserProfileScreen(userId: 'user-deniz'));
+
+      await tester.tap(find.text(l10n.requestViewIncoming));
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:/matches'), findsOneWidget);
+    });
+
+    testWidgets('still offers a request when the standing cannot be loaded', (tester) async {
+      stubProfile(offers: true);
+      when(() => repository.findOpenMatch('user-deniz')).thenThrow(const ApiException(code: ApiException.networkCode));
+      await pump(tester, const UserProfileScreen(userId: 'user-deniz'));
+
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, l10n.requestSend)).onPressed, isNotNull);
     });
 
     testWidgets('is disabled when the user offers nothing', (tester) async {

@@ -71,6 +71,21 @@ MockSessionRepository quietSessionRepository() {
   return repository;
 }
 
+/// A match repository for screens where the swap standing is not what is being tested:
+/// the two users have nothing going.
+MockMatchRepository quietMatchRepository() {
+  registerFallbackValue(Direction.incoming);
+  final repository = MockMatchRepository();
+  stubNoOpenSwap(repository);
+  return repository;
+}
+
+void stubNoOpenSwap(MockMatchRepository repository) {
+  registerFallbackValue(Direction.incoming);
+  when(() => repository.findOpenMatch(any())).thenAnswer((_) async => null);
+  when(() => repository.findPendingRequest(any(), any())).thenAnswer((_) async => null);
+}
+
 /// A real-time connection that tests drive by hand.
 class FakeRealtimeClient implements RealtimeClient {
   final _events = StreamController<RealtimeEvent>.broadcast();

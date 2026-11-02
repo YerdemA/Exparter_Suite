@@ -15,7 +15,10 @@ import 'match_labels.dart';
 
 /// The user's matches and the swap requests still waiting for an answer.
 class MatchesScreen extends ConsumerWidget {
-  const MatchesScreen({super.key});
+  const MatchesScreen({this.showIncoming = false, super.key});
+
+  /// Opens on the received requests instead of the matches.
+  final bool showIncoming;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,6 +28,7 @@ class MatchesScreen extends ConsumerWidget {
 
     return DefaultTabController(
       length: 3,
+      initialIndex: showIncoming ? 1 : 0,
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.navMatches),

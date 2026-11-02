@@ -17,6 +17,7 @@ import '../../features/messages/presentation/conversations_screen.dart';
 import '../../features/moderation/presentation/blocked_users_screen.dart';
 import '../../features/profile/presentation/profile_form_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/profile/presentation/settings_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/reviews/presentation/write_review_screen.dart';
 import '../../features/sessions/presentation/propose_session_screen.dart';
@@ -129,7 +130,12 @@ GoRouter appRouter(Ref ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.matches,
-                builder: (context, state) => const MatchesScreen(),
+                builder: (context, state) {
+                  final tab = state.uri.queryParameters[AppRoutes.matchesTabParameter];
+                  // The key restarts the tabs when a link asks for another one; the branch
+                  // otherwise keeps the screen and its selected tab alive.
+                  return MatchesScreen(key: ValueKey(tab), showIncoming: tab == AppRoutes.matchesTabIncoming);
+                },
                 routes: [
                   GoRoute(
                     path: AppRoutes.matchDetailSegment,
@@ -187,8 +193,14 @@ GoRouter appRouter(Ref ref) {
                     builder: (context, state) => const SkillProposalsScreen(),
                   ),
                   GoRoute(
-                    path: AppRoutes.blockedUsersSegment,
-                    builder: (context, state) => const BlockedUsersScreen(),
+                    path: AppRoutes.settingsSegment,
+                    builder: (context, state) => const SettingsScreen(),
+                    routes: [
+                      GoRoute(
+                        path: AppRoutes.blockedUsersSegment,
+                        builder: (context, state) => const BlockedUsersScreen(),
+                      ),
+                    ],
                   ),
                 ],
               ),

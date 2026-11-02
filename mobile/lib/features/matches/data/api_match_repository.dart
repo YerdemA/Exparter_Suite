@@ -30,6 +30,18 @@ class ApiMatchRepository implements MatchRepository {
       );
 
   @override
+  Future<SwapRequest?> findPendingRequest(Direction direction, String userId) => guardApiCall(
+        () async => (await _api.swapRequests.listSwapRequests(
+          direction: direction,
+          status: SwapRequestStatus.pending,
+          otherUserId: userId,
+          pageSize: 1,
+        ))
+            .items
+            .firstOrNull,
+      );
+
+  @override
   Future<SwapRequest> sendRequest({
     required String recipientId,
     required String offeredSkillId,
@@ -62,6 +74,14 @@ class ApiMatchRepository implements MatchRepository {
   @override
   Future<List<Match>> listMatches() =>
       guardApiCall(() async => (await _api.matches.listMatches(pageSize: _pageSize)).items);
+
+  @override
+  Future<Match?> findOpenMatch(String userId) => guardApiCall(() async {
+        // Two users have one open match at most and it is their newest, so the first
+        // of the newest-first list tells.
+        final newest = (await _api.matches.listMatches(otherUserId: userId, pageSize: 1)).items.firstOrNull;
+        return newest?.status == MatchStatus.ended ? null : newest;
+      });
 
   @override
   Future<Match> getMatch(String matchId) => guardApiCall(() => _api.matches.getMatch(matchId: matchId));
