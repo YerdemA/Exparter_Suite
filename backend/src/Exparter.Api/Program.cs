@@ -55,6 +55,7 @@ builder.WebHost.UseSentry(sentry =>
     sentry.SendDefaultPii = false;
     sentry.MaxRequestBodySize = RequestSize.None;
     sentry.TracesSampleRate = 0;
+    sentry.AddExceptionFilter(new ClientErrorFilter());
 });
 
 builder.Services.AddApplication();

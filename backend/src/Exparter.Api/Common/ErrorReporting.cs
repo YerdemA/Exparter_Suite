@@ -1,4 +1,19 @@
+using Exparter.Application.Common;
+using Exparter.Domain.Common;
+using FluentValidation;
+using Sentry.Extensibility;
+
 namespace Exparter.Api.Common;
+
+/// <summary>
+/// Keeps out of the error reports what <see cref="ApiExceptionHandler"/> answers as a client
+/// error, such as a wrong password: these are normal use and would hide the real errors.
+/// </summary>
+internal sealed class ClientErrorFilter : IExceptionFilter
+{
+    public bool Filter(Exception ex) =>
+        ex is AppException or DomainException or ValidationException or BadHttpRequestException;
+}
 
 /// <summary>What error reports carry beyond the error itself (ADR 0013).</summary>
 internal static class ErrorReporting

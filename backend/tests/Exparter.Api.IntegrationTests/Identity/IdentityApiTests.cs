@@ -216,6 +216,17 @@ public class IdentityApiTests(ApiFixture fixture)
         Assert.Equal(user.Email, body.GetProperty("email").GetString());
     }
 
+    [Theory]
+    [InlineData("/api/v1/me", "text/plain")]
+    [InlineData("/hubs/realtime", "text/event-stream")]
+    public async Task A_rejected_token_is_a_401_problem_whatever_the_client_accepts(string path, string accept)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Accept.ParseAdd(accept);
+
+        await AssertProblemAsync(await _client.SendAsync(request), HttpStatusCode.Unauthorized, "unauthorized");
+    }
+
     [Fact]
     public async Task Me_requires_a_valid_token()
     {
