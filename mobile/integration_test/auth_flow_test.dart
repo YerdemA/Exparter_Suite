@@ -5,6 +5,7 @@ import 'package:exparter/app.dart';
 import 'package:exparter/core/api/generated/export.dart';
 import 'package:exparter/core/config/app_config.dart';
 import 'package:exparter/core/router/app_routes.dart';
+import 'package:exparter/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:exparter/features/notifications/presentation/notifications_screen.dart';
 import 'package:exparter/features/profile/data/avatar_picker.dart';
 import 'package:exparter/features/profile/domain/profile_repository.dart';
@@ -67,6 +68,9 @@ void main() {
   }
 
   Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+    // The keyboard can cover the target while it slides away.
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
     await tester.ensureVisible(finder);
     await tester.pumpAndSettle();
     await tester.tap(finder);
@@ -186,7 +190,7 @@ void main() {
     final api = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
     final registered = await api.post<Map<String, dynamic>>(
       '/api/v1/auth/register',
-      data: {'email': '$peer@example.com', 'username': peer, 'password': password, 'ageConfirmed': true},
+      data: {'email': '$peer@example.com', 'username': peer, 'password': password, 'ageConfirmed': true, 'termsAccepted': true},
     );
     await api.put<void>(
       '/api/v1/me/profile',
@@ -242,7 +246,7 @@ void main() {
     expect(find.byType(Image), findsNothing);
 
     // Verify the email address with the link from the email.
-    openLink(tester, AppRoutes.verifyEmail, await tokenFromEmail(email, 'doğrulama'));
+    openLink(tester, AppRoutes.verifyEmail, await tokenFromEmail(email, 'doğrulayın'));
     await pumpUntilFound(tester, find.text(l10n.verifyEmailSuccess));
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.actionContinue));
     await openProfileTab(tester);
@@ -266,7 +270,7 @@ void main() {
     );
     await api.post<void>(
       '/api/v1/auth/email-verification/confirm',
-      data: {'token': await tokenFromEmail('$peer@example.com', 'doğrulama')},
+      data: {'token': await tokenFromEmail('$peer@example.com', 'doğrulayın')},
     );
 
     // Straight to the peer's profile, as tapping their card in discovery would.
@@ -280,6 +284,8 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Merhaba, takas yapalım mı?');
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.requestSubmit));
     await pumpUntilFound(tester, find.text(l10n.requestSent));
+    // Back on the profile, a second request is not on offer any more.
+    await pumpUntilFound(tester, find.text(l10n.requestAlreadySent));
 
     // The request waits under "sent"; once the peer accepts it becomes a match.
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navMatches)));
@@ -322,11 +328,18 @@ void main() {
     await pumpUntilFound(tester, find.text(l10n.matchStatusActive));
     expect(find.text(l10n.swapYouLearn('Yoga')), findsOneWidget);
 
-    // Messaging: write to the peer from the match, and receive their answer in real time.
-    await tester.tap(find.text('Keşif Arkadaşı'));
+    // The peer's profile now leads to the match instead of offering a new request.
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go(AppRoutes.userProfile((registered.data!['account'] as Map<String, dynamic>)['id'] as String));
+    await pumpUntilFound(tester, find.text(l10n.matchView));
+    expect(find.text(l10n.requestSend), findsNothing);
+    await tapVisible(tester, find.text(l10n.matchView));
     await pumpUntilFound(tester, find.text(l10n.matchSendMessage));
+
+    // Messaging: write to the peer from the match, and receive their answer in real time.
     await tapVisible(tester, find.text(l10n.matchSendMessage));
     await pumpUntilFound(tester, find.text(l10n.conversationNoMessages));
+    expect(find.descendant(of: find.byType(AppBar), matching: find.byType(ProfileAvatar)), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Merhaba, ne zaman başlayalım?');
     // The "request sent" notice from a moment ago floats over the send button.
     await waitForNotices(tester);
@@ -443,7 +456,7 @@ void main() {
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit));
     await pumpUntilFound(tester, find.text(l10n.forgotPasswordSent));
 
-    openLink(tester, AppRoutes.resetPassword, await tokenFromEmail(email, 'sıfırlama'));
+    openLink(tester, AppRoutes.resetPassword, await tokenFromEmail(email, 'sıfırlayın'));
     await pumpUntilFound(tester, find.text(l10n.resetPasswordTitle));
     await tester.enterText(field(l10n.passwordLabel), newPassword);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.resetPasswordSubmit));
@@ -457,6 +470,9 @@ void main() {
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
     await pumpUntilFound(tester, find.text(l10n.errorInvalidCredentials));
 
+    // Focus first: writing over text in an unfocused field loses to the keyboard reconnecting.
+    await tester.tap(field(l10n.passwordLabel));
+    await tester.pumpAndSettle();
     await tester.enterText(field(l10n.passwordLabel), newPassword);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
     await openProfileTab(tester);
@@ -480,6 +496,9 @@ void main() {
     await waitForNotices(tester);
 
     await tester.enterText(field(l10n.loginIdentifierLabel), username);
+    // Focus first: writing over text in an unfocused field loses to the keyboard reconnecting.
+    await tester.tap(field(l10n.passwordLabel));
+    await tester.pumpAndSettle();
     await tester.enterText(field(l10n.passwordLabel), newPassword);
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.loginSubmit));
     await openProfileTab(tester);
