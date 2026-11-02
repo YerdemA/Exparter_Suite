@@ -13,11 +13,11 @@ import '../../matches/presentation/match_controller.dart';
 import '../../moderation/presentation/moderation_menu.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
+import '../../profile/presentation/widgets/swap_mode_chips.dart';
 import '../../reviews/presentation/user_reviews_section.dart';
 import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/skill_labels.dart';
 import 'discovery_controller.dart';
-import 'discovery_labels.dart';
 
 /// Another user's profile and skills, read-only.
 class UserProfileScreen extends ConsumerWidget {
@@ -93,12 +93,6 @@ class _Content extends ConsumerWidget {
     final cityName = profile.city == null
         ? null
         : ref.watch(citiesProvider).value?.where((city) => city.code == profile.city).firstOrNull?.name;
-    final modes = swapModesLabel(
-      l10n,
-      acceptsOnline: profile.acceptsOnline,
-      acceptsInPerson: profile.acceptsInPerson,
-      cityName: cityName,
-    );
     final offered = skills.where((skill) => skill.type == UserSkillType.offered).toList();
     final isOwnProfile = ref.watch(sessionControllerProvider).value?.id == profile.userId;
     final wanted = skills.where((skill) => skill.type == UserSkillType.wanted).toList();
@@ -123,9 +117,13 @@ class _Content extends ConsumerWidget {
               if (profile.displayName != null)
                 Text(profile.displayName!, textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
               Text('@${profile.username}', textAlign: TextAlign.center, style: muted),
-              if (modes != null) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(modes, textAlign: TextAlign.center, style: muted),
+              if (profile.acceptsOnline || profile.acceptsInPerson) ...[
+                const SizedBox(height: AppSpacing.md),
+                SwapModeChips(
+                  acceptsOnline: profile.acceptsOnline,
+                  acceptsInPerson: profile.acceptsInPerson,
+                  cityName: cityName,
+                ),
               ],
               if (profile.displayName == null) ...[
                 const SizedBox(height: AppSpacing.lg),
