@@ -103,6 +103,15 @@ void main() {
   });
 
   group('RegisterScreen', () {
+    testWidgets('lets no spaces into the username, typed or pasted', (tester) async {
+      await pumpScreen(tester, const RegisterScreen());
+
+      await tester.enterText(field(l10n.registerUsernameLabel), ' ayse yilmaz\t ');
+      await tester.pump();
+
+      expect(find.text('ayseyilmaz'), findsOneWidget);
+    });
+
     Future<void> fill(WidgetTester tester, {String username = 'ayse', bool confirmAge = true}) async {
       await tester.enterText(field(l10n.registerEmailLabel), 'ayse@example.com');
       await tester.enterText(field(l10n.registerUsernameLabel), username);
