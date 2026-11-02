@@ -352,7 +352,8 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Site ve e-postalar (2026-10-27): `exparter.app` ana sayfası markaya uygun yeniden tasarlandı (tanıtım, nasıl çalışır, özellikler, ekranlar, güvenlik, kapalı teste katılım); yasal sayfalar ve e-posta bağlantısı sayfaları aynı başlık ve kart düzenini kullanıyor. Doğrulama ve parola sıfırlama e-postaları markalı HTML ve düz metin olarak gidiyor (ADR 0007); Mailpit'e gerçek gönderimle test edildi.
 - Testler (2026-10-27): backend 516 (170 domain, 234 uygulama, 112 entegrasyon), mobil 221.
 - Play Console (2026-10-28): uygulama `com.exparter.app` olarak oluşturuldu, formlar dolduruldu, 1.0.0 (1) kapalı test kanalında incelemeye gönderildi. İnceleme hesabı `exparter_inceleme`, `deneme_yusuf` ile aktif bir eşleşmesi var.
-- Kapalı test (2026-11-02): 1.0.0 (1) incelemeden geçti, 10 test kullanıcısının cihazında kurulu. Play'in imzalama anahtarı `assetlinks.json` dosyasına eklendi; bağlantıların cihazlarda doğrulanması için 1.0.0 (2) derlendi.
+- Kapalı test (2026-11-02): 1.0.0 (1) incelemeden geçti, 10 test kullanıcısının cihazında kurulu. Play'in imzalama anahtarı `assetlinks.json` dosyasına eklendi; bağlantıların cihazlarda doğrulanması için 1.0.0 (2) derlendi ve incelemeye gönderildi.
+- Sentry incelemesi (2026-11-02): uygulama dışında doğrulanan e-posta artık uygulama açılınca, öne gelince ve "zaten doğrulanmış" yanıtında fark ediliyor (1.0.0 (3)). JSON kabul etmeyen istekler boş 500 yerine doğru sorun yanıtını alıyor. İstemci hataları Sentry'ye gitmiyor. Backend 520, mobil 227 test.
 - Kalan: 1.0.0 (2) sürümünün yüklenmesi ve bağlantıların test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
 
 ## Geliştirme ortamı
