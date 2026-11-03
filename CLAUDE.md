@@ -31,7 +31,7 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 - **Mobil:** Flutter, feature-first (`data/`, `domain/`, `presentation/`), Riverpod (codegen), go_router, dio + üretilmiş client, freezed, flutter_secure_storage.
 - **Nesne depolama:** S3 API'si (`IObjectStorage`); lokalde Garage, canlıda Cloudflare R2 (ADR 0010, 0014).
 - **Görüntülü görüşme:** kendi sunucumuzda LiveKit; backend yalnızca görüşme anahtarı verir (ADR 0015).
-- **Canlı ortam:** Oracle Cloud'da Docker Compose (API, PostgreSQL, Caddy, LiveKit); `main`'e her merge otomatik dağıtılır (ADR 0014, `docs/deployment.md`).
+- **Canlı ortam:** Oracle Cloud'da Docker Compose (API, PostgreSQL, Caddy, LiveKit); `main`'e merge edilen backend ve `deploy/` değişiklikleri otomatik dağıtılır (ADR 0014, `docs/deployment.md`).
 
 ## Kodlama kuralları
 
