@@ -1,10 +1,12 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Exparter.Infrastructure.Calls;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Exparter.Api.IntegrationTests.Calls;
 
@@ -90,5 +92,16 @@ public sealed class LiveKitCallsTests : IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.OK, await ValidateAsync(call.Token));
         Assert.Equal(HttpStatusCode.Unauthorized, await ValidateAsync(forged.Token));
+    }
+
+    [Fact]
+    public void A_participant_may_share_the_screen_but_not_the_device_sound()
+    {
+        var call = _calls.Issue("room-1", Guid.NewGuid(), DateTimeOffset.UtcNow.AddMinutes(30));
+
+        var video = new JsonWebToken(call.Token).GetPayloadValue<JsonElement>("video");
+        var sources = video.GetProperty("canPublishSources").EnumerateArray().Select(source => source.GetString());
+        Assert.Equal(["camera", "microphone", "screen_share"], sources);
+        Assert.False(video.GetProperty("canPublishData").GetBoolean());
     }
 }

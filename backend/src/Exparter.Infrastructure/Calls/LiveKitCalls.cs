@@ -40,10 +40,11 @@ internal sealed class LiveKitCalls(IOptions<LiveKitOptions> options, TimeProvide
     : ICallTokenIssuer, ICallRooms, IDisposable
 {
     /// <summary>
-    /// What a participant may send. Screen sharing and data messages are left out: a
-    /// session needs neither.
+    /// What a participant may send. The shared screen goes without the device's sound, so
+    /// that notifications and other apps are not heard by the other user; data messages are
+    /// left out, since a session does not need them.
     /// </summary>
-    private static readonly string[] PublishSources = ["camera", "microphone"];
+    private static readonly string[] PublishSources = ["camera", "microphone", "screen_share"];
 
     private static readonly TimeSpan ServerTokenLifetime = TimeSpan.FromMinutes(1);
 
