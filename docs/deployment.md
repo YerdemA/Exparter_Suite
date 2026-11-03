@@ -106,6 +106,7 @@ sudo chown 1654:1654 secrets/firebase-adminsdk.json && sudo chmod 400 secrets/fi
 openssl rand -hex 24      # POSTGRES_PASSWORD için
 openssl rand -base64 48   # JWT_SIGNING_KEY için
 openssl rand -hex 32      # LIVEKIT_API_SECRET için; LIVEKIT_NODE_IP sunucunun genel IP'si
+                          # (boş bırakılırsa ilk dağıtımda prepare-server.sh doldurur)
 nano .env                 # tüm alanları doldurun; açıklamalar dosyanın içinde
 chmod 600 .env
 ```

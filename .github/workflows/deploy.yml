@@ -63,8 +63,10 @@ jobs:
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           echo "${{ vars.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-      - name: Copy the compose file, the proxy and media server configuration, the backup script and the public pages
-        run: scp -r deploy/docker-compose.yml deploy/Caddyfile deploy/livekit.yaml deploy/backup.sh deploy/site "$TARGET:exparter/"
+      - name: Copy the compose file, the proxy and media server configuration, the server scripts and the public pages
+        run: scp -r deploy/docker-compose.yml deploy/Caddyfile deploy/livekit.yaml deploy/backup.sh deploy/prepare-server.sh deploy/site "$TARGET:exparter/"
+      - name: Add the settings and firewall rules the new version needs
+        run: ssh "$TARGET" "bash exparter/prepare-server.sh"
       - name: Migrate the database, then start the new version
         run: |
           ssh "$TARGET" "cd exparter \
