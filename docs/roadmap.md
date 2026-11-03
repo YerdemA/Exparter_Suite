@@ -385,6 +385,17 @@ dotnet user-secrets set --project src/Exparter.Api "LiveKit:ApiSecret" "<.env i�
 
 Uygulama emülatörde `ws://10.0.2.2:7880` adresine bağlanır. Medya UDP 7882'den (engelliyse TCP 7881'den) gider; `LIVEKIT_NODE_IP` sunucunun istemcilere bildirdiği adrestir.
 
+#### Canlıya alma (ertelendi, kullanıcı, 2026-11-03)
+
+Dilim branch'te bitti ve emülatörde denendi; canlıya alma kullanıcı bilgisayar başına dönünce yapılacak. Sıra önemli: `main`'e merge edilen backend hemen canlıya çıkar ve LiveKit ayarları olmadan açılmaz, bu yüzden 1–4 merge'den önce yapılır.
+
+1. Sunucudaki `.env`: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` (`openssl rand -hex 32`), `RTC_HOST=rtc.exparter.app`, `LIVEKIT_NODE_IP` (sunucunun genel IP'si). Ayrıntı `docs/deployment.md`.
+2. Cloudflare DNS: `rtc` için sunucu IP'sine A kaydı, proxy kapalı (gri bulut); Caddy sertifikayı kendisi alır.
+3. Oracle: Security List'e TCP 7881 ve UDP 7882 giriş kuralları, sunucuda aynı portlar için `iptables` kuralları (`docs/deployment.md` 2. adım). Yurt ağında SSH kapalı; başka bir ağdan ya da GitHub Actions üzerinden yapılmalı.
+4. Branch'i güncel `main` ile birleştir (1.0.0 (5) düzeltmeleri; çakışma beklenen dosyalar: `error_messages.dart`, `app_tr.arb`, `pubspec.yaml`, `roadmap.md`), testleri çalıştır, onayla `main`'e merge et; dağıtımdan sonra `rtc.exparter.app` üzerinden iki cihazla görüşme ve ekran paylaşımı dene (karşıdan gelen ekran henüz cihazda görülmedi).
+5. Play Console: Data safety'de fotoğraf ve video (kamera görüntüsü ve paylaşılan ekran) ile ses kaydı; ön plan servisi beyanında `microphone` ve `mediaProjection` türleri, gerekçe metinleri `docs/store/listing.md`, Play isterse kısa ekran kayıtları.
+6. Sürümü artır, AAB derle, kapalı teste yükle.
+
 ## Geliştirme ortamı
 
 2026-10-06 tarihinde ölçülen sürümler:
