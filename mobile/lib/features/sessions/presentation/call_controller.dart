@@ -40,10 +40,12 @@ class CallState {
     this.microphoneOn = true,
     this.cameraOn = true,
     this.closingSoon = false,
+    this.sharingScreen = false,
     this.end,
     this.error,
     this.localVideo,
     this.remoteVideo,
+    this.remoteScreen,
   });
 
   /// How long before the call closes the users are told.
@@ -56,10 +58,14 @@ class CallState {
   /// The call closes within [closingWarning].
   final bool closingSoon;
 
+  /// This user's screen is being sent.
+  final bool sharingScreen;
+
   final CallEnd? end;
   final Object? error;
   final VideoTrack? localVideo;
   final VideoTrack? remoteVideo;
+  final VideoTrack? remoteScreen;
 }
 
 /// One video call: joining, the controls, and leaving when the window closes. Keeps the
@@ -74,6 +80,11 @@ class CallController extends _$CallController {
   // Kept here because a provider cannot be read once this one is being disposed.
   CallKeepAlive? _keepAlive;
   bool _cameraOffForBackground = false;
+
+  /// The keep-alive service declares screen capture; it keeps doing so until the call
+  /// ends (see [CallKeepAlive.allowScreenCapture]).
+  bool _captureAllowed = false;
+  bool _startingShare = false;
 
   @override
   CallState build(String sessionId) {
@@ -134,6 +145,39 @@ class CallController extends _$CallController {
 
   Future<void> switchCamera() async => _connection?.switchCamera();
 
+  /// Starts or stops sending the screen. Declining the system's capture prompt leaves
+  /// things as they were.
+  Future<void> toggleScreenShare() async {
+    final connection = _connection;
+    if (connection == null || !_isLive || _startingShare) {
+      return;
+    }
+
+    if (state.sharingScreen) {
+      await connection.setScreenShare(enabled: false);
+      return;
+    }
+
+    _startingShare = true;
+    try {
+      if (!await connection.requestScreenCapture()) {
+        return;
+      }
+
+      if (!_captureAllowed) {
+        await _keepAlive?.allowScreenCapture();
+        _captureAllowed = true;
+      }
+
+      await connection.setScreenShare(enabled: true);
+    } on CallMediaException {
+      // The capture could not start; nothing to tell beyond the button staying off.
+    } finally {
+      _startingShare = false;
+      _sync();
+    }
+  }
+
   Future<void> leave() => _finish(CallEnd.left);
 
   /// The app went to the background, where Android does not let it use the camera.
@@ -190,8 +234,10 @@ class CallController extends _$CallController {
       microphoneOn: state.microphoneOn,
       cameraOn: state.cameraOn,
       closingSoon: state.closingSoon,
+      sharingScreen: connection.sharingScreen,
       localVideo: connection.localVideo,
       remoteVideo: connection.remoteVideo,
+      remoteScreen: connection.remoteScreen,
     );
   }
 
@@ -205,8 +251,10 @@ class CallController extends _$CallController {
       microphoneOn: microphoneOn ?? state.microphoneOn,
       cameraOn: cameraOn ?? state.cameraOn,
       closingSoon: closingSoon ?? state.closingSoon,
+      sharingScreen: state.sharingScreen,
       localVideo: _connection?.localVideo,
       remoteVideo: _connection?.remoteVideo,
+      remoteScreen: _connection?.remoteScreen,
     );
   }
 
@@ -226,6 +274,7 @@ class CallController extends _$CallController {
     final connection = _connection;
     _changes = null;
     _connection = null;
+    _captureAllowed = false;
     await changes?.cancel();
     final keepAlive = _keepAlive;
     _keepAlive = null;

@@ -92,19 +92,24 @@ class _InCall extends StatelessWidget {
     final banner = switch (call) {
       CallState(phase: CallPhase.reconnecting) => l10n.callReconnecting,
       CallState(closingSoon: true) => l10n.callClosingSoon,
+      CallState(sharingScreen: true) => l10n.callSharingScreen,
       _ => null,
     };
+    // While the other user shares their screen, it fills the view and their camera takes
+    // the small corner instead of this user's own.
+    final corner = call.remoteScreen != null ? call.remoteVideo : (call.cameraOn ? call.localVideo : null);
 
     return Stack(
       children: [
         Positioned.fill(
           child: switch (call) {
+            CallState(remoteScreen: final VideoTrack screen) => VideoTrackRenderer(screen, fit: VideoViewFit.contain),
             CallState(remoteVideo: final VideoTrack video) => VideoTrackRenderer(video, fit: VideoViewFit.cover),
             CallState(phase: CallPhase.inCall) => _Message(icon: Icons.videocam_off_outlined, text: l10n.callRemoteCameraOff),
             _ => _Message(icon: Icons.hourglass_empty, text: l10n.callWaiting),
           },
         ),
-        if (call.localVideo case final VideoTrack video when call.cameraOn)
+        if (corner case final VideoTrack video)
           Positioned(
             top: AppSpacing.md,
             right: AppSpacing.md,
@@ -150,6 +155,11 @@ class _InCall extends StatelessWidget {
                 icon: Icons.cameraswitch_outlined,
                 tooltip: l10n.callSwitchCamera,
                 onPressed: call.cameraOn ? controller.switchCamera : null,
+              ),
+              _ControlButton(
+                icon: call.sharingScreen ? Icons.stop_screen_share_outlined : Icons.screen_share_outlined,
+                tooltip: call.sharingScreen ? l10n.callStopSharing : l10n.callShareScreen,
+                onPressed: controller.toggleScreenShare,
               ),
               _ControlButton(
                 icon: Icons.call_end,

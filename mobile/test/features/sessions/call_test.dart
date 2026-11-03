@@ -21,9 +21,15 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../helpers.dart';
 
-/// A media server connection that tests drive by hand.
+/// A media server connection that tests drive by hand. [log] is shared with the
+/// [FakeKeepAlive], to check the order of the steps of screen sharing.
 class FakeCallConnection implements CallConnection {
+  FakeCallConnection(this.log);
+
+  final List<String> log;
   final _changes = StreamController<void>.broadcast();
+  bool captureAllowed = true;
+  Object? screenError;
 
   Object? connectError;
   String? connectedWith;
@@ -49,10 +55,17 @@ class FakeCallConnection implements CallConnection {
   VideoTrack? get remoteVideo => null;
 
   @override
+  VideoTrack? get remoteScreen => null;
+
+  @override
+  bool sharingScreen = false;
+
+  @override
   Stream<void> get changes => _changes.stream;
 
-  void change({bool? otherPresent, bool? reconnecting, bool? lost}) {
+  void change({bool? otherPresent, bool? reconnecting, bool? lost, bool? sharingScreen}) {
     this.otherPresent = otherPresent ?? this.otherPresent;
+    this.sharingScreen = sharingScreen ?? this.sharingScreen;
     this.reconnecting = reconnecting ?? this.reconnecting;
     this.lost = lost ?? this.lost;
     _changes.add(null);
@@ -85,12 +98,34 @@ class FakeCallConnection implements CallConnection {
   Future<void> switchCamera() async => switches++;
 
   @override
+  Future<bool> requestScreenCapture() async {
+    log.add('prompt');
+    return captureAllowed;
+  }
+
+  @override
+  Future<void> setScreenShare({required bool enabled}) async {
+    log.add('share $enabled');
+    if (enabled && screenError != null) {
+      throw screenError!;
+    }
+
+    change(sharingScreen: enabled);
+  }
+
+  @override
   Future<void> disconnect() async => disconnected = true;
 }
 
 class FakeKeepAlive implements CallKeepAlive {
+  FakeKeepAlive(this.log);
+
+  final List<String> log;
   String? started;
   bool stopped = false;
+
+  @override
+  Future<void> allowScreenCapture() async => log.add('capture');
 
   @override
   Future<void> start({required String title, required String text}) async => started = '$title / $text';
@@ -106,6 +141,7 @@ void main() {
   late MockSessionRepository repository;
   late FakeCallConnection connection;
   late FakeKeepAlive keepAlive;
+  late List<String> log;
 
   SwapSession session({
     SessionMode mode = SessionMode.online,
@@ -144,8 +180,9 @@ void main() {
 
   setUp(() {
     repository = MockSessionRepository();
-    connection = FakeCallConnection();
-    keepAlive = FakeKeepAlive();
+    log = [];
+    connection = FakeCallConnection(log);
+    keepAlive = FakeKeepAlive(log);
     when(() => repository.listMatchSessions(any())).thenAnswer((_) async => []);
     stubToken();
   });
@@ -268,6 +305,51 @@ void main() {
       expect(connection.camera, isFalse);
     });
 
+    test('the screen is shared once the system allowed it and the service declares the capture', () async {
+      await start();
+
+      await controller().toggleScreenShare();
+      expect(state().sharingScreen, isTrue);
+      expect(log, ['prompt', 'capture', 'share true']);
+
+      await controller().toggleScreenShare();
+      await pumpEventQueue();
+      expect(state().sharingScreen, isFalse);
+
+      // The service keeps declaring the capture; sharing again only asks the user again.
+      log.clear();
+      await controller().toggleScreenShare();
+      expect(log, ['prompt', 'share true']);
+    });
+
+    test('a declined prompt or a failed capture leaves the call as it was', () async {
+      await start();
+
+      connection.captureAllowed = false;
+      await controller().toggleScreenShare();
+      expect(log, ['prompt']);
+      expect(state().sharingScreen, isFalse);
+
+      connection
+        ..captureAllowed = true
+        ..screenError = const CallMediaException();
+      log.clear();
+      await controller().toggleScreenShare();
+      await pumpEventQueue();
+      expect(log, ['prompt', 'capture', 'share true']);
+      expect((state().sharingScreen, state().phase), (false, CallPhase.waiting));
+    });
+
+    test('sharing that the system stopped by itself shows as stopped', () async {
+      await start();
+      await controller().toggleScreenShare();
+
+      connection.change(sharingScreen: false);
+      await pumpEventQueue();
+
+      expect(state().sharingScreen, isFalse);
+    });
+
     test('the users are warned before the window closes and the call ends when it does', () async {
       stubToken(closesIn: const Duration(milliseconds: 100));
       await start();
@@ -327,6 +409,11 @@ void main() {
       connection.change(otherPresent: true);
       await tester.pumpAndSettle();
       expect(find.text(l10n.callRemoteCameraOff), findsOneWidget);
+
+      await tester.tap(find.byTooltip(l10n.callShareScreen));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.callSharingScreen), findsOneWidget);
+      expect(find.byTooltip(l10n.callStopSharing), findsOneWidget);
 
       await tester.tap(find.byTooltip(l10n.callEnd));
       await tester.pumpAndSettle();

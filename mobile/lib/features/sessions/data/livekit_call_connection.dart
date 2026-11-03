@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -14,7 +16,7 @@ part 'livekit_call_connection.g.dart';
 CallConnection Function() callConnectionFactory(Ref ref) => LiveKitCallConnection.new;
 
 @riverpod
-CallKeepAlive callKeepAlive(Ref ref) => const ForegroundCallKeepAlive();
+CallKeepAlive callKeepAlive(Ref ref) => ForegroundCallKeepAlive();
 
 class LiveKitCallConnection implements CallConnection {
   LiveKitCallConnection()
@@ -27,8 +29,12 @@ class LiveKitCallConnection implements CallConnection {
           ),
         );
 
+  /// Fires when the system ended the screen share by itself (MainActivity.kt).
+  static const _captureStops = EventChannel('com.exparter.app/screen_capture');
+
   final Room _room;
   final _changes = StreamController<void>.broadcast();
+  StreamSubscription<void>? _captureStopsSubscription;
   EventsListener<RoomEvent>? _listener;
   bool _reconnecting = false;
   bool _lost = false;
@@ -41,10 +47,19 @@ class LiveKitCallConnection implements CallConnection {
   bool get otherPresent => _room.remoteParticipants.isNotEmpty;
 
   @override
-  VideoTrack? get localVideo => _videoOf(_room.localParticipant?.videoTrackPublications);
+  VideoTrack? get localVideo => _videoOf(_room.localParticipant?.videoTrackPublications, TrackSource.camera);
 
   @override
-  VideoTrack? get remoteVideo => _videoOf(_room.remoteParticipants.values.firstOrNull?.videoTrackPublications);
+  VideoTrack? get remoteVideo => _videoOf(_remoteVideoPublications, TrackSource.camera);
+
+  @override
+  VideoTrack? get remoteScreen => _videoOf(_remoteVideoPublications, TrackSource.screenShareVideo);
+
+  @override
+  bool get sharingScreen => _room.localParticipant?.isScreenShareEnabled() ?? false;
+
+  List<TrackPublication>? get _remoteVideoPublications =>
+      _room.remoteParticipants.values.firstOrNull?.videoTrackPublications;
 
   @override
   bool get reconnecting => _reconnecting;
@@ -52,8 +67,8 @@ class LiveKitCallConnection implements CallConnection {
   @override
   bool get lost => _lost;
 
-  static VideoTrack? _videoOf(List<TrackPublication>? publications) => publications
-      ?.where((publication) => publication.source == TrackSource.camera && !publication.muted)
+  static VideoTrack? _videoOf(List<TrackPublication>? publications, TrackSource source) => publications
+      ?.where((publication) => publication.source == source && !publication.muted)
       .map((publication) => publication.track)
       .whereType<VideoTrack>()
       .firstOrNull;
@@ -113,9 +128,32 @@ class LiveKitCallConnection implements CallConnection {
     }
   }
 
+  // The SDK's own way to ask for screen capture on Android, marked experimental by it.
+  @override
+  // ignore: experimental_member_use
+  Future<bool> requestScreenCapture() => Hardware.instance.requestCapturePermission();
+
+  @override
+  Future<void> setScreenShare({required bool enabled}) async {
+    try {
+      await _room.localParticipant?.setScreenShareEnabled(enabled);
+      await _captureStopsSubscription?.cancel();
+      _captureStopsSubscription = null;
+      if (enabled && defaultTargetPlatform == TargetPlatform.android) {
+        _captureStopsSubscription =
+            _captureStops.receiveBroadcastStream().listen((_) => unawaited(setScreenShare(enabled: false)));
+      }
+    } on TrackCreateException {
+      throw const CallMediaException();
+    } finally {
+      _notify();
+    }
+  }
+
   @override
   Future<void> disconnect() async {
     _leaving = true;
+    await _captureStopsSubscription?.cancel();
     _room.removeListener(_notify);
     await _listener?.dispose();
     await _room.disconnect();
@@ -136,10 +174,15 @@ class LiveKitCallConnection implements CallConnection {
 }
 
 class ForegroundCallKeepAlive implements CallKeepAlive {
-  const ForegroundCallKeepAlive();
+  ForegroundCallKeepAlive();
+
+  String _title = '';
+  String _text = '';
 
   @override
   Future<void> start({required String title, required String text}) async {
+    _title = title;
+    _text = text;
     await WakelockPlus.enable();
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
@@ -158,6 +201,22 @@ class ForegroundCallKeepAlive implements CallKeepAlive {
         notificationText: text,
       );
     }
+  }
+
+  /// A running service cannot add to what it declares, so it is started again while the
+  /// app is in front; the notification blinks once, and the call is not affected.
+  @override
+  Future<void> allowScreenCapture() async {
+    if (!await FlutterForegroundTask.isRunningService) {
+      return;
+    }
+
+    await FlutterForegroundTask.stopService();
+    await FlutterForegroundTask.startService(
+      serviceTypes: [ForegroundServiceTypes.microphone, ForegroundServiceTypes.mediaProjection],
+      notificationTitle: _title,
+      notificationText: _text,
+    );
   }
 
   @override

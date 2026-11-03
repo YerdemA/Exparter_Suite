@@ -54,6 +54,13 @@ abstract interface class CallConnection {
   /// Null while the other user is not there or their camera is off.
   VideoTrack? get remoteVideo;
 
+  /// The other user's shared screen; null while they are not sharing.
+  VideoTrack? get remoteScreen;
+
+  /// Whether this user's screen is being sent. Becomes false by itself when the system
+  /// stops the capture, for instance from its own "stop sharing" control.
+  bool get sharingScreen;
+
   bool get reconnecting;
 
   /// The connection ended without [disconnect], for instance because the server closed
@@ -71,6 +78,13 @@ abstract interface class CallConnection {
   /// Front to back and back to front.
   Future<void> switchCamera();
 
+  /// Asks the system for permission to capture the screen; false if the user declined.
+  /// Needed before each [setScreenShare] that turns sharing on.
+  Future<bool> requestScreenCapture();
+
+  /// Sends the screen without the device's sound, or stops sending it.
+  Future<void> setScreenShare({required bool enabled});
+
   Future<void> disconnect();
 }
 
@@ -79,6 +93,12 @@ abstract interface class CallConnection {
 /// screen is kept on while the app is in front.
 abstract interface class CallKeepAlive {
   Future<void> start({required String title, required String text});
+
+  /// Android only lets the screen be captured while the service declares it. Called
+  /// after the user allowed the capture and before it starts. The declaration then stays
+  /// until [stop]: taking it back means starting the service again, which Android does
+  /// not allow while the app is in the background, where sharing often ends.
+  Future<void> allowScreenCapture();
 
   Future<void> stop();
 }

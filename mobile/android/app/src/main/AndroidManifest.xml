@@ -10,6 +10,8 @@
     <!-- Keeps the microphone open while a call goes on in the background. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <!-- Screen sharing: Android only lets a foreground service capture the screen. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
     <!-- The call service never starts on its own after a reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove"/>
     <!-- Calls work without a camera too, so devices without one are not filtered out. -->
@@ -62,7 +64,7 @@
         <!-- The "call in progress" service; the name is the plugin's. -->
         <service
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
-            android:foregroundServiceType="microphone"
+            android:foregroundServiceType="microphone|mediaProjection"
             android:stopWithTask="true"
             android:exported="false"/>
         <!-- Pushes shown while the app is closed use the mark, tinted with the brand color. -->
