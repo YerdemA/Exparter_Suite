@@ -14,6 +14,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
 | 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
+| 8 | MVP sonrası modüller | Sürüyor: dilim 1 (görüntülü görüşme) |
 
 ## Faz 0 — Kurulum
 
@@ -357,6 +358,43 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Test geri bildirimi (2026-11-03, 1.0.0 (4)): sohbet başlığında profil fotoğrafı; profilde devam eden eşleşme veya bekleyen istek varsa yeni istek yerine durum ve ilgili ekrana geçiş (`otherUserId` filtresi); kullanıcı adına boşluk girilemiyor; "Çevrimiçi takas" / "Yüz yüze takas" adları; profildeki çark simgesinden açılan Ayarlar ekranı (görünüm, bildirim, engellenenler, yasal, çıkış, hesap silme). Backend 521, mobil 234 test; uçtan uca test emülatörde geçti.
 - Test geri bildirimi (2026-11-03, 1.0.0 (5)): kayıtta kullanıcı adındaki büyük harfler yazılırken küçük harfe dönüyor; keşfette sunulan ve istenen yetenekler ayrı çiplerde; bir kullanıcı aynı anda iki oturumda olamıyor. Kabul edilmiş oturumlar ve kişinin kendi açık teklifleri, aynı veya farklı eşleşmelerde, o zamanı tutuyor. Çakışan teklif veya kabul `session_time_taken` (kendi zamanı) ya da `other_user_busy` (karşı tarafın zamanı) ile reddediliyor. Eşzamanlı iki istek nadiren ikisi de geçebilir; veritabanı kısıtı eklenmedi. Eski uygulama sürümleri bu iki kod için genel hata mesajı gösterir. Backend 534 (178 domain, 238 uygulama, 118 entegrasyon), mobil 236 test.
 - Kalan: 1.0.0 (4) sürümünün yüklenmesi ve bağlantıların test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
+
+## Faz 8 — MVP sonrası modüller
+
+Kapalı test sürerken MVP sonrasına bırakılan modüller geliştirilir (kullanıcı kararı, 2026-11-03). Her modül bir dilimdir, kendi branch'inde (`phase-8/<n>-<konu>`) yapılır ve onayla `main`'e merge edilir. `main`'e yapılan backend değişiklikleri otomatik olarak canlıya çıktığı için yalnızca eski uygulama sürümlerini bozmayan değişiklikler merge edilir; kapalı testten gelen düzeltmeler önceliklidir. Brief'te Faz 7 (web istemcisi) olarak duran iş bu fazdan sonra ele alınır.
+
+| Dilim | Konu | Durum |
+|---|---|---|
+| 1 | Görüntülü görüşme | Sürüyor |
+
+### Dilim 1 — Görüntülü görüşme
+
+Kararlar (kullanıcı, 2026-11-03; ADR 0015): altyapı kendi sunucumuzdaki LiveKit; görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir, süre bittikten 15 dakika sonra görüşme kapanır, 5 dakika kala uyarı gösterilir; katılım kaydı tutulmaz; uygulama arka plandayken ses sürer, kamera durur. Ekran paylaşımı da bu dilimde (kullanıcı kararı, 2026-11-03): iki taraf da ekranını paylaşabilir, paylaşırken kamera açık kalır, cihazın sesi paylaşılmaz.
+
+Plan: sözleşme (`POST /sessions/{id}/call-token`, oturumda pencere alanları), backend (pencere kuralı, anahtar, süresi dolan odaların kapatılması), yerel ve canlı LiveKit servisi, mobil görüşme ekranı, gizlilik metni ve Play beyanları, iki cihaz arasında uçtan uca deneme.
+
+- Paketler: LiveKit sunucusu v1.13.11, livekit_client 2.13.2.
+
+#### Görüşme için ek lokal ayar
+
+`.env` dosyasına `LIVEKIT_API_SECRET` değerini yazın (`openssl rand -hex 32`); `docker compose up -d --wait` LiveKit'i de başlatır. API'ye aynı anahtarı verin:
+
+```powershell
+dotnet user-secrets set --project src/Exparter.Api "LiveKit:ApiKey" "<.env içindeki LIVEKIT_API_KEY>"
+dotnet user-secrets set --project src/Exparter.Api "LiveKit:ApiSecret" "<.env içindeki LIVEKIT_API_SECRET>"
+```
+
+Uygulama emülatörde `ws://10.0.2.2:7880` adresine bağlanır. Medya UDP 7882'den (engelliyse TCP 7881'den) gider; `LIVEKIT_NODE_IP` sunucunun istemcilere bildirdiği adrestir.
+
+#### Canlıya alma (kullanıcı, 2026-11-03)
+
+Sunucuya SSH yurt ağından kapalı olduğu için sunucudaki işleri dağıtım üstlenir: `deploy/prepare-server.sh` her dağıtımda yeni sürüm başlamadan çalışır; `.env`'de eksikse `RTC_HOST`, `LIVEKIT_API_KEY`, sunucuda üretilen `LIVEKIT_API_SECRET` ve sunucunun genel IP'si olarak `LIVEKIT_NODE_IP` ekler, `iptables`'ta TCP 7881 ve UDP 7882'yi açar. Hazır sunucuda hiçbir şey değiştirmez. Gizli anahtar sunucudan çıkmaz; yerel `exparter-prod.env` yedeğinde bu değerler yoktur.
+
+1. Cloudflare DNS (kullanıcı): `rtc` için sunucu IP'sine A kaydı, proxy kapalı (gri bulut); Caddy sertifikayı kendisi alır. Merge'den önce.
+2. Oracle Security List (kullanıcı): TCP 7881 ve UDP 7882 giriş kuralları, kaynak `0.0.0.0/0`. Merge'den önce.
+3. Branch güncel `main` ile birleştirildi, testler geçti. Onayla `main`'e merge; dağıtım kaydında "Add the settings and firewall rules" adımının çıktısına bakılır, ardından iki cihazla görüşme ve ekran paylaşımı denenir (karşıdan gelen ekran henüz cihazda görülmedi).
+4. Play Console: Data safety'de fotoğraf ve video (kamera görüntüsü ve paylaşılan ekran) ile ses kaydı; ön plan servisi beyanında `microphone` ve `mediaProjection` türleri, gerekçe metinleri `docs/store/listing.md`, Play isterse kısa ekran kayıtları.
+5. Sürümü artır, AAB derle, kapalı teste yükle.
 
 ## Geliştirme ortamı
 

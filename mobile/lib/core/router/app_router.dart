@@ -20,6 +20,7 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/settings_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/reviews/presentation/write_review_screen.dart';
+import '../../features/sessions/presentation/call_screen.dart';
 import '../../features/sessions/presentation/propose_session_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/skills/presentation/skill_picker_screen.dart';
@@ -91,6 +92,10 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.resetPassword,
         builder: (context, state) =>
             ResetPasswordScreen(token: state.uri.queryParameters[AppRoutes.tokenParameter]),
+      ),
+      GoRoute(
+        path: AppRoutes.call,
+        builder: (context, state) => CallScreen(sessionId: state.pathParameters[AppRoutes.sessionIdParameter]!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),

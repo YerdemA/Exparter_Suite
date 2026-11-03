@@ -31,7 +31,7 @@ Aşağıda `<alan-adı>` sizin alan adınız (ör. `exparter.app`), `<ip>` sunuc
    - Networking: genel IPv4 adresi atansın.
    - SSH keys: kendi genel anahtarınızı yükleyin (`~/.ssh/id_ed25519.pub`; yoksa `ssh-keygen -t ed25519`).
    - "Out of capacity" hatası alırsanız başka bir availability domain seçin veya birkaç saat sonra yeniden deneyin.
-2. **Ağ:** Instance → Subnet → Security List → Ingress Rules: `0.0.0.0/0` kaynaktan TCP 80, TCP 443 ve UDP 443.
+2. **Ağ:** Instance → Subnet → Security List → Ingress Rules: `0.0.0.0/0` kaynaktan TCP 80, TCP 443 ve UDP 443; görüntülü görüşmenin medyası için TCP 7881 ve UDP 7882 (ADR 0015).
 3. **Sunucunun güvenlik duvarı:** Oracle'ın Ubuntu imajı 22 dışındaki portları kendi iptables kurallarıyla kapatır. Bağlanıp açın:
 
    ```sh
@@ -39,6 +39,8 @@ Aşağıda `<alan-adı>` sizin alan adınız (ör. `exparter.app`), `<ip>` sunuc
    sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
    sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
    sudo iptables -I INPUT 6 -m state --state NEW -p udp --dport 443 -j ACCEPT
+   sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 7881 -j ACCEPT
+   sudo iptables -I INPUT 6 -m state --state NEW -p udp --dport 7882 -j ACCEPT
    sudo netfilter-persistent save
    ```
 
@@ -63,6 +65,7 @@ DNS → Records:
 |---|---|---|---|
 | A | `@` | `<ip>` | **DNS only** (gri bulut) |
 | A | `api` | `<ip>` | **DNS only** |
+| A | `rtc` | `<ip>` | **DNS only** |
 
 Vekil sunucu (turuncu bulut) kapalı kalmalı: sertifikayı Caddy alır ve WebSocket bağlantısı doğrudan sunucuya gelir.
 
@@ -102,6 +105,8 @@ cd ~/exparter
 sudo chown 1654:1654 secrets/firebase-adminsdk.json && sudo chmod 400 secrets/firebase-adminsdk.json
 openssl rand -hex 24      # POSTGRES_PASSWORD için
 openssl rand -base64 48   # JWT_SIGNING_KEY için
+openssl rand -hex 32      # LIVEKIT_API_SECRET için; LIVEKIT_NODE_IP sunucunun genel IP'si
+                          # (boş bırakılırsa ilk dağıtımda prepare-server.sh doldurur)
 nano .env                 # tüm alanları doldurun; açıklamalar dosyanın içinde
 chmod 600 .env
 ```

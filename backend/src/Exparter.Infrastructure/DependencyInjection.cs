@@ -8,6 +8,7 @@ using Exparter.Application.Reviews;
 using Exparter.Application.Sessions;
 using Exparter.Application.Profiles;
 using Exparter.Application.Skills;
+using Exparter.Infrastructure.Calls;
 using Exparter.Infrastructure.Email;
 using Exparter.Infrastructure.Identity;
 using Exparter.Infrastructure.Notifications;
@@ -80,6 +81,14 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<IObjectStorage, S3ObjectStorage>();
+
+        services.AddOptions<LiveKitOptions>()
+            .Bind(configuration.GetSection(LiveKitOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddSingleton<LiveKitCalls>();
+        services.AddSingleton<ICallTokenIssuer>(serviceProvider => serviceProvider.GetRequiredService<LiveKitCalls>());
+        services.AddSingleton<ICallRooms>(serviceProvider => serviceProvider.GetRequiredService<LiveKitCalls>());
 
         services.AddOptions<FirebaseOptions>().Bind(configuration.GetSection(FirebaseOptions.SectionName));
         if (string.IsNullOrWhiteSpace(configuration[$"{FirebaseOptions.SectionName}:{nameof(FirebaseOptions.CredentialsPath)}"]))

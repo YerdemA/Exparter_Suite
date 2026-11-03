@@ -119,7 +119,9 @@ public sealed record SwapSessionDto(
     Guid? CancelledByUserId,
     string? CancelReason,
     DateTimeOffset? CancelledAt,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? CallOpensAt,
+    DateTimeOffset? CallClosesAt)
 {
     /// <summary>Describes the session as it stands at <paramref name="now"/>, passed deadlines included.</summary>
     public static SwapSessionDto From(SwapSession session, DateTimeOffset now)
@@ -143,7 +145,9 @@ public sealed record SwapSessionDto(
             session.CancelledByUserId,
             session.CancelReason,
             session.CancelledAt,
-            session.CreatedAt);
+            session.CreatedAt,
+            session.CallOpensAt,
+            session.CallClosesAt);
     }
 }
 

@@ -1,0 +1,16 @@
+# Media server for video calls (ADR 0015). Keys come from LIVEKIT_KEYS, the public
+# address from --node-ip; both are set in docker-compose.yml from .env.
+port: 7880
+rtc:
+  tcp_port: 7881
+  # One UDP port for all media, so that a single port mapping and firewall rule is enough.
+  udp_port: 7882
+  use_external_ip: false
+room:
+  # Only the two users of a session get a token, so the room needs no size limit; a
+  # limit could even turn away a user rejoining before their old connection timed out.
+  # The room closes soon after both leave.
+  empty_timeout: 300
+  departure_timeout: 20
+logging:
+  level: info

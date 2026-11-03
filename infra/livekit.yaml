@@ -1,0 +1,13 @@
+# Local media server for video calls (see ADR 0015). Keys come from LIVEKIT_KEYS.
+port: 7880
+rtc:
+  tcp_port: 7881
+  # One UDP port for all media, so that a single port mapping is enough in Docker.
+  udp_port: 7882
+  use_external_ip: false
+room:
+  # Same as on the server (deploy/livekit.yaml): the room closes soon after both leave.
+  empty_timeout: 300
+  departure_timeout: 20
+logging:
+  level: info

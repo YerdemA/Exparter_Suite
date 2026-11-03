@@ -28,4 +28,7 @@ abstract interface class SessionRepository {
   Future<SwapSession> cancel(String sessionId, {required String reason});
 
   Future<UserStats> getUserStats(String userId);
+
+  /// A token to join the session's video call; refused outside its window.
+  Future<CallToken> createCallToken(String sessionId);
 }

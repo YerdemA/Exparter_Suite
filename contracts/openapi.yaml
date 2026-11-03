@@ -1205,6 +1205,28 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
+  /api/v1/sessions/{sessionId}/call-token:
+    post:
+      tags: [Sessions]
+      operationId: createSessionCallToken
+      summary: Get a token to join the video call of an online session
+      description: |
+        Either user of a scheduled online session can join its video call while the call
+        window is open: from `callOpensAt` until `callClosesAt`. The token is for the
+        media server at `url` and is valid until the window closes. Audio and video are
+        relayed, never recorded.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: A token for the session's call.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CallToken' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
   # ------------------------------------------------------------- Reviews
   /api/v1/reviews:
     post:
@@ -2462,6 +2484,29 @@ components:
         cancelReason: { type: string, nullable: true }
         cancelledAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
+        callOpensAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the video call can first be joined, 10 minutes before the start. Null for in-person meetings.
+        callClosesAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the video call closes, 15 minutes after the planned end. Null for in-person meetings.
+
+    CallToken:
+      type: object
+      required: [url, token, expiresAt]
+      properties:
+        url:
+          type: string
+          description: WebSocket address of the media server.
+        token: { type: string }
+        expiresAt:
+          type: string
+          format: date-time
+          description: The call cannot be joined with this token after this time; it is when the call closes.
 
     UserStats:
       type: object

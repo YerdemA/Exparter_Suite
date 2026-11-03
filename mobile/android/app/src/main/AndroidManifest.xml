@@ -1,6 +1,22 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Video calls of online sessions (docs/adr/0015-video-calls.md). -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Keeps the microphone open while a call goes on in the background. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <!-- Screen sharing: Android only lets a foreground service capture the screen. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+    <!-- The call service never starts on its own after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove"/>
+    <!-- Calls work without a camera too, so devices without one are not filtered out. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
     <application
         android:label="Exparter"
         android:name="${applicationName}"
@@ -45,6 +61,12 @@
                 <data android:scheme="exparter" android:host="app"/>
             </intent-filter>
         </activity>
+        <!-- The "call in progress" service; the name is the plugin's. -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="microphone|mediaProjection"
+            android:stopWithTask="true"
+            android:exported="false"/>
         <!-- Pushes shown while the app is closed use the mark, tinted with the brand color. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"

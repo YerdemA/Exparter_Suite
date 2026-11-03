@@ -31,6 +31,13 @@
 	reverse_proxy api:8080
 }
 
+# Signalling of the video calls, over WebSocket (ADR 0015). The token in the address is
+# cut from the traffic log like the hub's.
+{$RTC_HOST} {
+	import traffic_log
+	reverse_proxy livekit:7880
+}
+
 # Public pages the store listing links to, and the pages email links open when the app is
 # not installed (docs/adr/0009-email-deep-links.md).
 {$SITE_HOST} {

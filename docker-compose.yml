@@ -48,6 +48,21 @@ services:
       - garage-meta:/var/lib/garage/meta
       - garage-data:/var/lib/garage/data
 
+  # Media server for the video calls of online sessions (see ADR 0015). Signalling on
+  # 7880; media over UDP 7882, or TCP 7881 where UDP is blocked.
+  livekit:
+    image: livekit/livekit-server:v1.13.11
+    restart: unless-stopped
+    command: ["--config", "/etc/livekit.yaml", "--node-ip", "${LIVEKIT_NODE_IP:-10.0.2.2}"]
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-exparter-dev}: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET in .env}"
+    ports:
+      - "127.0.0.1:7880:7880"
+      - "127.0.0.1:7881:7881"
+      - "127.0.0.1:7882:7882/udp"
+    volumes:
+      - ./infra/livekit.yaml:/etc/livekit.yaml:ro
+
 volumes:
   garage-meta:
   garage-data:

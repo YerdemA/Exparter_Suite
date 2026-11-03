@@ -1,11 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Exparter.Application.Sessions;
 using Exparter.Infrastructure.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Exparter.Api.IntegrationTests.Sessions;
 
@@ -112,6 +115,78 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.Equal("Completed", StatusOf(await ali.GetJsonAsync(path)));
         await ProblemAssert.IsAsync(
             await PostAsync(ali, $"{path}/cancel", new { reason = "Vazgeçtim aslında" }), HttpStatusCode.Conflict, "invalid_state");
+    }
+
+    [Fact]
+    public async Task Both_users_get_a_call_token_only_while_the_call_window_is_open()
+    {
+        var (ali, ayse, matchPath) = await MatchedPairAsync();
+        var stranger = await TestSession.RegisterVisibleAsync(_client, fixture);
+        var proposed = await OkAsync(ProposeAsync(ali, matchPath, duration: 30), HttpStatusCode.Created);
+        var sessionId = proposed.GetProperty("id").GetGuid();
+        var path = PathOf(proposed);
+        var start = proposed.GetProperty("scheduledAt").GetDateTimeOffset();
+        Assert.Equal(start.AddMinutes(-10), proposed.GetProperty("callOpensAt").GetDateTimeOffset());
+        Assert.Equal(start.AddMinutes(45), proposed.GetProperty("callClosesAt").GetDateTimeOffset());
+
+        await ProblemAssert.IsAsync(await PostAsync(ali, $"{path}/call-token"), HttpStatusCode.Conflict, "invalid_state");
+        await OkAsync(PostAsync(ayse, $"{path}/accept"));
+        await ProblemAssert.IsAsync(await PostAsync(ali, $"{path}/call-token"), HttpStatusCode.Conflict, "call_not_open_yet");
+
+        await ExecuteSqlAsync($"UPDATE sessions.swap_sessions SET scheduled_at = now() + interval '5 minutes' WHERE id = {sessionId}");
+        var closesAt = (await ali.GetJsonAsync(path)).GetProperty("callClosesAt").GetDateTimeOffset();
+        foreach (var user in new[] { ali, ayse })
+        {
+            var call = await OkAsync(PostAsync(user, $"{path}/call-token"));
+            Assert.Equal("wss://rtc.test", call.GetProperty("url").GetString());
+            Assert.Equal(closesAt, call.GetProperty("expiresAt").GetDateTimeOffset());
+
+            var token = await new JsonWebTokenHandler().ValidateTokenAsync(
+                call.GetProperty("token").GetString(),
+                new TokenValidationParameters
+                {
+                    ValidIssuer = "test-key",
+                    ValidateAudience = false,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ApiFixture.LiveKitSecret)),
+                });
+            Assert.True(token.IsValid);
+            var jwt = (JsonWebToken)token.SecurityToken;
+            Assert.Equal(user.UserId.ToString(), jwt.Subject);
+            Assert.Equal(closesAt.ToUnixTimeSeconds(), new DateTimeOffset(jwt.ValidTo).ToUnixTimeSeconds());
+            var video = JsonDocument.Parse(Base64UrlEncoder.Decode(jwt.EncodedPayload)).RootElement.GetProperty("video");
+            Assert.Equal(sessionId.ToString(), video.GetProperty("room").GetString());
+            Assert.True(video.GetProperty("roomJoin").GetBoolean());
+            Assert.False(video.TryGetProperty("roomAdmin", out _));
+        }
+
+        await ProblemAssert.IsAsync(await PostAsync(stranger, $"{path}/call-token"), HttpStatusCode.NotFound, "not_found");
+
+        await ExecuteSqlAsync($"UPDATE sessions.swap_sessions SET scheduled_at = now() - interval '46 minutes' WHERE id = {sessionId}");
+        await ProblemAssert.IsAsync(await PostAsync(ayse, $"{path}/call-token"), HttpStatusCode.Conflict, "call_window_closed");
+    }
+
+    [Fact]
+    public async Task The_room_of_a_call_is_closed_once_the_session_is_cancelled()
+    {
+        var (ali, ayse, matchPath) = await MatchedPairAsync();
+        var proposed = await OkAsync(ProposeAsync(ali, matchPath), HttpStatusCode.Created);
+        var room = proposed.GetProperty("id").GetString()!;
+        await OkAsync(PostAsync(ayse, $"{PathOf(proposed)}/accept"));
+        await ExecuteSqlAsync($"UPDATE sessions.swap_sessions SET scheduled_at = now() - interval '5 minutes' WHERE id = {Guid.Parse(room)}");
+        fixture.CallRooms.Open(room);
+
+        await CloseEndedCallsAsync();
+        Assert.True(fixture.CallRooms.IsOpen(room));
+
+        await OkAsync(PostAsync(ali, $"{PathOf(proposed)}/cancel", new { reason = "Bağlantım koptu" }));
+        await CloseEndedCallsAsync();
+        Assert.False(fixture.CallRooms.IsOpen(room));
+    }
+
+    private async Task CloseEndedCallsAsync()
+    {
+        await using var scope = fixture.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<ISender>().Send(new CloseEndedCallsCommand());
     }
 
     [Fact]

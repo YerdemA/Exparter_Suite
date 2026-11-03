@@ -57,9 +57,29 @@ services:
       Storage__SecretKey: ${STORAGE_SECRET_KEY:?set STORAGE_SECRET_KEY in .env}
       Firebase__CredentialsPath: /run/secrets/firebase-adminsdk.json
       Sentry__Dsn: ${SENTRY_DSN:-}
+      LiveKit__Url: wss://${RTC_HOST:?set RTC_HOST in .env}
+      LiveKit__ApiUrl: http://livekit:7880
+      LiveKit__ApiKey: ${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY in .env}
+      LiveKit__ApiSecret: ${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET in .env}
       Sentry__Environment: production
     volumes:
       - ./secrets/firebase-adminsdk.json:/run/secrets/firebase-adminsdk.json:ro
+
+  # Media server for the video calls of online sessions (ADR 0015). Clients reach its
+  # signalling through Caddy; media goes straight to it over UDP 7882, or TCP 7881 where
+  # UDP is blocked. Nothing is recorded.
+  livekit:
+    image: livekit/livekit-server:v1.13.11
+    restart: unless-stopped
+    logging: *logging
+    command: ["--config", "/etc/livekit.yaml", "--node-ip", "${LIVEKIT_NODE_IP:?set LIVEKIT_NODE_IP in .env}"]
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
 
   caddy:
     image: caddy:2.11.7
@@ -67,8 +87,10 @@ services:
     logging: *logging
     depends_on:
       - api
+      - livekit
     environment:
       API_HOST: ${API_HOST}
+      RTC_HOST: ${RTC_HOST}
       SITE_HOST: ${SITE_HOST:?set SITE_HOST in .env}
     ports:
       - "80:80"

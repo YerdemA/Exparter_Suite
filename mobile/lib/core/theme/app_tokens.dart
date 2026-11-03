@@ -66,4 +66,10 @@ abstract final class AppSizes {
 
   /// Forms stop growing at this width on tablets and landscape phones.
   static const formMaxWidth = 440.0;
+
+  /// The user's own camera in a corner of the call screen, in portrait.
+  static const callPreviewWidth = 112.0;
+  static const callPreviewHeight = 160.0;
+
+  static const callControlIcon = 28.0;
 }
