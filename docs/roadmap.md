@@ -368,7 +368,7 @@ Kapalı test sürerken MVP sonrasına bırakılan modüller geliştirilir (kulla
 
 ### Dilim 1 — Görüntülü görüşme
 
-Kararlar (kullanıcı, 2026-11-03; ADR 0015): altyapı kendi sunucumuzdaki LiveKit; görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir, süre bittikten 15 dakika sonra görüşme kapanır, 5 dakika kala uyarı gösterilir; katılım kaydı tutulmaz; uygulama arka plandayken ses sürer, kamera durur.
+Kararlar (kullanıcı, 2026-11-03; ADR 0015): altyapı kendi sunucumuzdaki LiveKit; görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir, süre bittikten 15 dakika sonra görüşme kapanır, 5 dakika kala uyarı gösterilir; katılım kaydı tutulmaz; uygulama arka plandayken ses sürer, kamera durur. Ekran paylaşımı da bu dilimde (kullanıcı kararı, 2026-11-03): iki taraf da ekranını paylaşabilir, paylaşırken kamera açık kalır, cihazın sesi paylaşılmaz.
 
 Plan: sözleşme (`POST /sessions/{id}/call-token`, oturumda pencere alanları), backend (pencere kuralı, anahtar, süresi dolan odaların kapatılması), yerel ve canlı LiveKit servisi, mobil görüşme ekranı, gizlilik metni ve Play beyanları, iki cihaz arasında uçtan uca deneme.
 

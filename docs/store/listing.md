@@ -108,10 +108,10 @@ Hiçbir veri geçici olarak işlenmiyor; hepsi saklanıyor. Form bu yanıtlarla 
 
 | Play'deki tür | Bizde karşılığı | Zorunlu mu | Amaç |
 |---|---|---|---|
-| Fotoğraflar ve videolar → Videolar | Görüşmede kameranın görüntüsü | Zorunlu değil (kullanıcı görüşmeye katılırsa) | Uygulama işlevi; **geçici olarak işlenir** (yalnızca iletilir, saklanmaz) |
+| Fotoğraflar ve videolar → Videolar | Görüşmede kameranın görüntüsü ve kullanıcı paylaşırsa ekranının görüntüsü | Zorunlu değil (kullanıcı görüşmeye katılırsa) | Uygulama işlevi; **geçici olarak işlenir** (yalnızca iletilir, saklanmaz) |
 | Ses → Ses kayıtları | Görüşmede mikrofonun sesi | Zorunlu değil (kullanıcı görüşmeye katılırsa) | Uygulama işlevi; **geçici olarak işlenir** |
 
-İzin beyanları: kamera ve mikrofon için ayrı beyan gerekmez; **ön plan servisi (Foreground service) beyanı** gerekir: tür `microphone`, gerekçe "Kullanıcı başlattığı bir görüntülü görüşmede uygulamadan çıkınca ses sürsün diye", istenirse kısa bir ekran kaydı. Content rating anketinde "Kullanıcılar birbiriyle iletişim kurabiliyor mu" yanıtına görüntülü görüşme de eklenir.
+İzin beyanları: kamera ve mikrofon için ayrı beyan gerekmez; **ön plan servisi (Foreground service) beyanı** gerekir, iki tür için: `microphone`, gerekçe "Kullanıcı başlattığı bir görüntülü görüşmede uygulamadan çıkınca ses sürsün diye"; `mediaProjection`, gerekçe "Kullanıcı görüşmede ekranını paylaşmayı seçtiğinde, sistemin izin penceresinden sonra ve yalnızca paylaşım süresince". Play her tür için kısa bir video bağlantısı isteyebilir (görüşmeye katılma, uygulamadan çıkma, ekranı paylaşma). Content rating anketinde "Kullanıcılar birbiriyle iletişim kurabiliyor mu" yanıtına görüntülü görüşme de eklenir.
 
 Play bu formu uygulamanın gerçek davranışıyla karşılaştırır; uygulamaya yeni bir veri türü eklenirse form da güncellenmelidir.
 
