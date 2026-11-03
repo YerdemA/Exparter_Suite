@@ -14,6 +14,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
 | 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
+| 8 | MVP sonrası modüller | Sürüyor: dilim 1 (görüntülü görüşme) |
 
 ## Faz 0 — Kurulum
 
@@ -356,6 +357,22 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Sentry incelemesi (2026-11-02): uygulama dışında doğrulanan e-posta artık uygulama açılınca, öne gelince ve "zaten doğrulanmış" yanıtında fark ediliyor (1.0.0 (3)). JSON kabul etmeyen istekler boş 500 yerine doğru sorun yanıtını alıyor. İstemci hataları Sentry'ye gitmiyor. Backend 520, mobil 227 test.
 - Test geri bildirimi (2026-11-03, 1.0.0 (4)): sohbet başlığında profil fotoğrafı; profilde devam eden eşleşme veya bekleyen istek varsa yeni istek yerine durum ve ilgili ekrana geçiş (`otherUserId` filtresi); kullanıcı adına boşluk girilemiyor; "Çevrimiçi takas" / "Yüz yüze takas" adları; profildeki çark simgesinden açılan Ayarlar ekranı (görünüm, bildirim, engellenenler, yasal, çıkış, hesap silme). Backend 521, mobil 234 test; uçtan uca test emülatörde geçti.
 - Kalan: 1.0.0 (4) sürümünün yüklenmesi ve bağlantıların test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
+
+## Faz 8 — MVP sonrası modüller
+
+Kapalı test sürerken MVP sonrasına bırakılan modüller geliştirilir (kullanıcı kararı, 2026-11-03). Her modül bir dilimdir, kendi branch'inde (`phase-8/<n>-<konu>`) yapılır ve onayla `main`'e merge edilir. `main`'e yapılan backend değişiklikleri otomatik olarak canlıya çıktığı için yalnızca eski uygulama sürümlerini bozmayan değişiklikler merge edilir; kapalı testten gelen düzeltmeler önceliklidir. Brief'te Faz 7 (web istemcisi) olarak duran iş bu fazdan sonra ele alınır.
+
+| Dilim | Konu | Durum |
+|---|---|---|
+| 1 | Görüntülü görüşme | Sürüyor |
+
+### Dilim 1 — Görüntülü görüşme
+
+Kararlar (kullanıcı, 2026-11-03; ADR 0015): altyapı kendi sunucumuzdaki LiveKit; görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir, süre bittikten 15 dakika sonra görüşme kapanır, 5 dakika kala uyarı gösterilir; katılım kaydı tutulmaz; uygulama arka plandayken ses sürer, kamera durur.
+
+Plan: sözleşme (`POST /sessions/{id}/call-token`, oturumda pencere alanları), backend (pencere kuralı, anahtar, süresi dolan odaların kapatılması), yerel ve canlı LiveKit servisi, mobil görüşme ekranı, gizlilik metni ve Play beyanları, iki cihaz arasında uçtan uca deneme.
+
+- Paketler: LiveKit sunucusu v1.13.11, livekit_client 2.13.2.
 
 ## Geliştirme ortamı
 
