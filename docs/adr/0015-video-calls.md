@@ -21,11 +21,11 @@ Değerlendirilen seçenekler:
 - **Pencere kapanınca oda sunucuda kapatılır.** LiveKit anahtarın süresini yalnızca katılırken denetler. Bu yüzden arka plan işi süresi dolan, iptal edilen veya eşleşmesi biten oturumların odasını LiveKit'in RoomService API'siyle siler. İstemci de pencerenin sonunda kendisi ayrılır; sunucudaki silme bunun güvencesidir.
 - **Katılım kaydı tutulmaz** (kullanıcı kararı, 2026-11-03). Tamamlama akışı eskisi gibi iki tarafın onayıyla yürür.
 - **Arka planda ses sürer, kamera durur** (kullanıcı kararı, 2026-11-03). Android'de bir ön plan servisi (mikrofon türü) "görüşme sürüyor" bildirimi gösterir.
-- **Ağ:** LiveKit medya için UDP, UDP'nin engellendiği ağlar için TCP ve gömülü TURN kullanır. Portlar `docs/deployment.md` içinde listelenir; Oracle güvenlik listesinde ve sunucu güvenlik duvarında açılır.
+- **Ağ:** Medya tek bir UDP portundan (7882), UDP'nin engellendiği ağlarda TCP 7881'den gider. Sunucunun genel bir IP'si olduğu için NAT arkasındaki istemciler de doğrudan bağlanabilir, bu yüzden ilk sürümde TURN açılmaz. LiveKit Docker'ın köprü ağında çalışır; portlar `docs/deployment.md` içinde listelenir, Oracle güvenlik listesinde ve sunucu güvenlik duvarında açılır.
 
 ## Sonuçlar
 
 - Sunucuda ek bir servis ve açık portlar var. Bire bir görüşmenin trafiği Oracle'ın aylık ücretsiz çıkış kotasının çok altında kalır, ama aynı anda çok sayıda görüşme olursa sunucunun işlemci ve bant genişliği izlenmeli.
-- Yalnızca 443/TCP'ye izin veren ağlarda görüşme için TURN/TLS'in 443'ten verilmesi gerekir; 443'ü Caddy kullandığından bu, SNI'ye göre ayrıştırma (ör. Caddy'nin layer4 eklentisi) ister. İlk sürümde yapılmaz; bu tür ağlarda sorun çıkarsa ayrı bir kararla eklenir.
+- Yalnızca 443/TCP'ye izin veren ağlarda (bazı kurum ve yurt ağları) görüşme kurulamaz. Bunun için TURN/TLS'in 443'ten verilmesi gerekir; 443'ü Caddy kullandığından bu, SNI'ye göre ayrıştırma (ör. Caddy'nin layer4 eklentisi) ister. İlk sürümde yapılmaz; bu tür ağlarda sorun çıkarsa ayrı bir kararla eklenir.
 - Gizlilik metni (ses ve görüntü aktarılır, kaydedilmez) ve Play'deki Data safety formu ile kamera, mikrofon ve ön plan servisi izin beyanları güncellenmelidir.
 - Web istemcisi aynı uç noktadan anahtar alıp LiveKit'in web SDK'sıyla katılır; backend'de değişiklik gerekmez.
