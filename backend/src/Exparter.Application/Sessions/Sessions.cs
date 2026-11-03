@@ -35,6 +35,16 @@ public interface ISessionRepository
     /// <summary>The proposed and scheduled sessions of a match.</summary>
     Task<IReadOnlyList<SwapSession>> ListUpcomingByMatchAsync(Guid matchId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// The online sessions of any of the users that may overlap the given time, whatever
+    /// their status; callers check the exact overlap and whether a session still counts.
+    /// </summary>
+    Task<IReadOnlyList<SwapSession>> ListOnlineAroundAsync(
+        IReadOnlyCollection<Guid> userIds,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        CancellationToken cancellationToken);
+
     /// <summary>Sessions whose stored status is behind a passed deadline, oldest first.</summary>
     Task<IReadOnlyList<SwapSession>> ListOverdueAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
 
@@ -145,6 +155,12 @@ public static class SessionConflicts
 {
     public static AppException InPersonAlreadyReported() =>
         AppException.Conflict("in_person_already_reported", "The two users have already reported an in-person meeting.");
+
+    public static AppException TimeTaken() =>
+        AppException.Conflict("session_time_taken", "The user already has a session at this time.");
+
+    public static AppException OtherUserBusy() =>
+        AppException.Conflict("other_user_busy", "The other user already has a session at this time.");
 }
 
 internal static class SessionExtensions
@@ -183,6 +199,36 @@ internal static class SessionExtensions
         await matches.FindAsync(matchId, cancellationToken) is { } match && match.IsParticipant(userId)
             ? match
             : throw AppException.NotFound("The match was not found.");
+
+    /// <summary>
+    /// Nobody can be in two sessions at once, whichever matches they belong to. Checked
+    /// before a session is proposed and again when it is accepted, since either user may
+    /// have planned something else at that time meanwhile.
+    /// </summary>
+    public static async Task EnsureTimeIsFreeAsync(
+        this ISessionRepository sessions,
+        SwapSession session,
+        Guid actingUserId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var start = session.ScheduledAt!.Value;
+        var end = session.EndsAt!.Value;
+        var otherUserId = session.OtherThan(actingUserId);
+        var overlapping = (await sessions.ListOnlineAroundAsync([actingUserId, otherUserId], start, end, cancellationToken))
+            .Where(other => other.Id != session.Id && other.OverlapsWith(start, end))
+            .ToList();
+
+        if (overlapping.Any(other => other.OccupiesTimeOf(actingUserId, now)))
+        {
+            throw SessionConflicts.TimeTaken();
+        }
+
+        if (overlapping.Any(other => other.OccupiesTimeOf(otherUserId, now)))
+        {
+            throw SessionConflicts.OtherUserBusy();
+        }
+    }
 
     /// <summary>New sessions belong to a match that is running and not about to end.</summary>
     public static void EnsureAcceptsSessions(this MatchInfo match)
@@ -234,6 +280,7 @@ public sealed class ProposeSessionCommandHandler(
             command.DurationMinutes,
             command.Note,
             now);
+        await sessions.EnsureTimeIsFreeAsync(session, command.UserId, now, cancellationToken);
         sessions.Add(session);
         notifier.Notify(session.OtherUserId, NotificationType.SessionProposed, session.NotificationData(command.UserId));
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -356,6 +403,7 @@ public sealed class ChangeSessionCommandHandler(
         switch (command.Action)
         {
             case SessionAction.Accept:
+                await sessions.EnsureTimeIsFreeAsync(session, command.UserId, now, cancellationToken);
                 session.Accept(command.UserId, now);
                 type = NotificationType.SessionAccepted;
                 break;

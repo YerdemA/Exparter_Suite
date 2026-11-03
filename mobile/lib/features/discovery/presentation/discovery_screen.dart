@@ -443,18 +443,25 @@ class _SkillLine extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w700)),
-          TextSpan(
-            text: skills
-                .map((item) => '${item.skill.name} · ${userSkillLevelLabel(l10n, type, item.level)}')
-                .join(', '),
-          ),
-        ],
-      ),
-      style: theme.textTheme.bodyMedium,
+    // One chip per skill: in a comma-separated line, names and levels ran together.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: theme.textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [
+            for (final item in skills)
+              Chip(
+                label: Text('${item.skill.name} · ${userSkillLevelLabel(l10n, type, item.level)}'),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
