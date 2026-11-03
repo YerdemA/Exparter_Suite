@@ -220,4 +220,75 @@ public class SwapSessionTests
         Assert.Equal(SwapSessionStatus.CompletionPending, pending.Status);
         Assert.Equal(SwapSessionStatus.Declined, declined.Status);
     }
+
+    [Fact]
+    public void The_call_window_opens_ten_minutes_before_the_start_and_closes_fifteen_minutes_after_the_end()
+    {
+        var session = Proposed(duration: 45);
+
+        Assert.Equal(Start.AddMinutes(-10), session.CallOpensAt);
+        Assert.Equal(Start.AddMinutes(60), session.CallClosesAt);
+    }
+
+    [Fact]
+    public void An_in_person_meeting_has_no_call()
+    {
+        var meeting = SwapSession.ReportInPerson(MatchId, Ali, Ayse, Now);
+
+        Assert.Null(meeting.CallOpensAt);
+        Assert.Null(meeting.CallClosesAt);
+        Assert.False(meeting.IsCallOpenAt(Now));
+        Assert.Equal(SessionErrors.InvalidStateCode, CodeOf(() => meeting.EnsureCanJoinCall(Ali, Now)));
+    }
+
+    [Theory]
+    [InlineData(-11, SessionErrors.CallNotOpenYetCode)]
+    [InlineData(-10, null)]
+    [InlineData(74, null)]
+    [InlineData(75, SessionErrors.CallWindowClosedCode)]
+    public void Both_users_can_join_the_call_of_a_scheduled_session_only_while_its_window_is_open(int minutesFromStart, string? error)
+    {
+        var session = Scheduled();
+        var at = Start.AddMinutes(minutesFromStart);
+
+        Assert.Equal(error is null, session.IsCallOpenAt(at));
+        if (error is null)
+        {
+            session.EnsureCanJoinCall(Ali, at);
+            session.EnsureCanJoinCall(Ayse, at);
+        }
+        else
+        {
+            Assert.Equal(error, CodeOf(() => session.EnsureCanJoinCall(Ali, at)));
+        }
+    }
+
+    [Fact]
+    public void Only_the_two_users_can_join_the_call() =>
+        Assert.Equal(DomainErrorCodes.NotParticipant, CodeOf(() => Scheduled().EnsureCanJoinCall(Guid.NewGuid(), Start)));
+
+    [Fact]
+    public void A_proposal_has_no_call_yet() =>
+        Assert.Equal(SessionErrors.InvalidStateCode, CodeOf(() => Proposed().EnsureCanJoinCall(Ali, Start.AddMinutes(-5))));
+
+    [Fact]
+    public void A_cancelled_session_has_no_call()
+    {
+        var session = Scheduled();
+        session.Cancel(Ali, "Something came up", Start.AddMinutes(-30));
+
+        Assert.False(session.IsCallOpenAt(Start));
+        Assert.Equal(SessionErrors.InvalidStateCode, CodeOf(() => session.EnsureCanJoinCall(Ayse, Start)));
+    }
+
+    [Fact]
+    public void Marking_the_session_completed_does_not_end_its_call()
+    {
+        var session = Scheduled();
+        session.MarkCompleted(Ali, Start.AddMinutes(50));
+        session.ConfirmCompleted(Ayse, Start.AddMinutes(55));
+
+        Assert.True(session.IsCallOpenAt(Start.AddMinutes(60)));
+        session.EnsureCanJoinCall(Ali, Start.AddMinutes(60));
+    }
 }

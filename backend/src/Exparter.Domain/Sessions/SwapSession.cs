@@ -24,6 +24,8 @@ public static class SessionErrors
     public const string SessionInPastCode = "session_in_past";
     public const string SessionNotStartedCode = "session_not_started";
     public const string InvalidSessionCode = "invalid_session";
+    public const string CallNotOpenYetCode = "call_not_open_yet";
+    public const string CallWindowClosedCode = "call_window_closed";
 
     public static DomainException InvalidState(string message) => new(InvalidStateCode, message);
 
@@ -35,6 +37,11 @@ public static class SessionErrors
     public static DomainException InvalidSession(string message) => new(InvalidSessionCode, message);
 
     public static DomainException NotParticipant(string message) => new(DomainErrorCodes.NotParticipant, message);
+
+    public static DomainException CallNotOpenYet() =>
+        new(CallNotOpenYetCode, $"The call can be joined from {SwapSession.CallOpensBefore.TotalMinutes} minutes before the start.");
+
+    public static DomainException CallWindowClosed() => new(CallWindowClosedCode, "The call of this session has closed.");
 }
 
 /// <summary>
@@ -63,6 +70,12 @@ public sealed class SwapSession
 
     /// <inheritdoc cref="DayReminderLeadTime"/>
     public static readonly TimeSpan HourReminderLeadTime = TimeSpan.FromHours(1);
+
+    /// <summary>How long before its start the video call of an online session can be joined.</summary>
+    public static readonly TimeSpan CallOpensBefore = TimeSpan.FromMinutes(10);
+
+    /// <summary>How long after its planned end the video call stays open, so that a late or long session is not cut off.</summary>
+    public static readonly TimeSpan CallClosesAfter = TimeSpan.FromMinutes(15);
 
     private SwapSession()
     {
@@ -163,6 +176,40 @@ public sealed class SwapSession
             CompletionConfirmDeadline = now + ConfirmationPeriod,
             CreatedAt = now,
         };
+
+    /// <summary>Null for in-person meetings, which have no call.</summary>
+    public DateTimeOffset? CallOpensAt => Mode == SessionMode.Online ? ScheduledAt - CallOpensBefore : null;
+
+    /// <inheritdoc cref="CallOpensAt"/>
+    public DateTimeOffset? CallClosesAt =>
+        Mode == SessionMode.Online ? ScheduledAt + TimeSpan.FromMinutes(DurationMinutes!.Value) + CallClosesAfter : null;
+
+    /// <summary>
+    /// Whether the call can be in progress: the session was accepted and not cancelled,
+    /// and the window is open. Marking it completed does not end the call, since users
+    /// often do that before hanging up.
+    /// </summary>
+    public bool IsCallOpenAt(DateTimeOffset now) =>
+        HasCall(now) && now >= CallOpensAt && now < CallClosesAt;
+
+    public void EnsureCanJoinCall(Guid userId, DateTimeOffset now)
+    {
+        EnsureParticipant(userId);
+        if (!HasCall(now))
+        {
+            throw SessionErrors.InvalidState("Only an accepted online session that was not cancelled has a call.");
+        }
+
+        if (now < CallOpensAt)
+        {
+            throw SessionErrors.CallNotOpenYet();
+        }
+
+        if (now >= CallClosesAt)
+        {
+            throw SessionErrors.CallWindowClosed();
+        }
+    }
 
     public bool IsParticipant(Guid userId) => userId == ProposedByUserId || userId == OtherUserId;
 
@@ -335,6 +382,10 @@ public sealed class SwapSession
             CompletionConfirmDeadline = null;
         }
     }
+
+    private bool HasCall(DateTimeOffset now) =>
+        Mode == SessionMode.Online
+        && StatusAt(now) is SwapSessionStatus.Scheduled or SwapSessionStatus.CompletionPending or SwapSessionStatus.Completed;
 
     private void EnsureParticipant(Guid userId)
     {

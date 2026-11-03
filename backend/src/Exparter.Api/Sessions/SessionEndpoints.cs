@@ -52,6 +52,9 @@ internal static class SessionEndpoints
                 new CancelSessionCommand(user.GetUserId(), sessionId, request.Reason ?? string.Empty),
                 cancellationToken)));
 
+        sessions.MapPost("/{sessionId}/call-token", async (Guid sessionId, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
+            Results.Ok(await sender.Send(new CreateCallTokenCommand(user.GetUserId(), sessionId), cancellationToken)));
+
         routes.MapGet("/users/{userId}/stats", async (Guid userId, ISender sender, CancellationToken cancellationToken) =>
             Results.Ok(await sender.Send(new GetUserStatsQuery(userId), cancellationToken)))
             .RequireAuthorization();

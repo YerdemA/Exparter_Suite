@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Exparter.Application.Common;
 using Exparter.Application.Identity;
 using Exparter.Application.Notifications;
+using Exparter.Application.Sessions;
 using Exparter.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -26,6 +27,11 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     public InMemoryObjectStorage Storage { get; } = new();
 
     public RecordingPushSender Pushes { get; } = new();
+
+    public InMemoryCallRooms CallRooms { get; } = new();
+
+    /// <summary>Signs the call tokens, so that tests can check them.</summary>
+    public const string LiveKitSecret = "integration-tests-livekit-secret-0123456789";
 
     public async Task InitializeAsync()
     {
@@ -74,6 +80,10 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Storage:Endpoint", "http://localhost:3900");
         builder.UseSetting("Storage:AccessKey", "unused");
         builder.UseSetting("Storage:SecretKey", "unused");
+        builder.UseSetting("LiveKit:Url", "wss://rtc.test");
+        builder.UseSetting("LiveKit:ApiUrl", "http://localhost:7880");
+        builder.UseSetting("LiveKit:ApiKey", "test-key");
+        builder.UseSetting("LiveKit:ApiSecret", LiveKitSecret);
         builder.UseSetting("Email:EmailVerificationUrl", "exparter://app/verify-email?token={token}");
         builder.UseSetting("Email:PasswordResetUrl", "exparter://app/reset-password?token={token}");
         ConfigureRateLimits(builder);
@@ -89,6 +99,10 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 
             services.RemoveAll<IPushSender>();
             services.AddSingleton<IPushSender>(Pushes);
+
+            // The real room API is covered by LiveKitCallsTests.
+            services.RemoveAll<ICallRooms>();
+            services.AddSingleton<ICallRooms>(CallRooms);
 
             ConfigureTestServices(services);
         });
@@ -122,6 +136,26 @@ public sealed class InMemoryObjectStorage : IObjectStorage
     public Task DeleteAsync(string key, CancellationToken cancellationToken)
     {
         _objects.TryRemove(key, out _);
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>Stands in for the media server's rooms.</summary>
+public sealed class InMemoryCallRooms : ICallRooms
+{
+    private readonly ConcurrentDictionary<string, bool> _rooms = new();
+
+    /// <summary>Stands in for someone joining the call, which opens its room.</summary>
+    public void Open(string room) => _rooms[room] = true;
+
+    public bool IsOpen(string room) => _rooms.ContainsKey(room);
+
+    public Task<IReadOnlyList<string>> ListAsync(CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<string>>(_rooms.Keys.ToList());
+
+    public Task CloseAsync(string room, CancellationToken cancellationToken)
+    {
+        _rooms.TryRemove(room, out _);
         return Task.CompletedTask;
     }
 }

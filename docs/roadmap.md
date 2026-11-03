@@ -374,6 +374,17 @@ Plan: sözleşme (`POST /sessions/{id}/call-token`, oturumda pencere alanları),
 
 - Paketler: LiveKit sunucusu v1.13.11, livekit_client 2.13.2.
 
+#### Görüşme için ek lokal ayar
+
+`.env` dosyasına `LIVEKIT_API_SECRET` değerini yazın (`openssl rand -hex 32`); `docker compose up -d --wait` LiveKit'i de başlatır. API'ye aynı anahtarı verin:
+
+```powershell
+dotnet user-secrets set --project src/Exparter.Api "LiveKit:ApiKey" "<.env içindeki LIVEKIT_API_KEY>"
+dotnet user-secrets set --project src/Exparter.Api "LiveKit:ApiSecret" "<.env içindeki LIVEKIT_API_SECRET>"
+```
+
+Uygulama emülatörde `ws://10.0.2.2:7880` adresine bağlanır. Medya UDP 7882'den (engelliyse TCP 7881'den) gider; `LIVEKIT_NODE_IP` sunucunun istemcilere bildirdiği adrestir.
+
 ## Geliştirme ortamı
 
 2026-10-06 tarihinde ölçülen sürümler:

@@ -11,7 +11,7 @@ namespace Exparter.Api.Matching;
 /// Periodically records the deadlines that have passed (swap requests, match end
 /// requests, session proposals and session completion marks), sends the reminders that
 /// are due, removes notifications and closed reports past their retention period and erases the accounts
-/// whose deletion can no longer be taken back.
+/// whose deletion can no longer be taken back, and closes the video calls that have ended.
 /// Reads never depend on it having run (they compare deadlines with the clock); it only
 /// makes the stored state catch up.
 /// </summary>
@@ -46,6 +46,21 @@ internal sealed class MatchingDeadlineWorker(
             {
                 // One failed run must not stop the worker; the next tick tries again.
                 logger.LogError(exception, "Processing deadlines failed");
+            }
+
+            // Apart from the rest, so that the media server being down does not hold up the deadlines.
+            try
+            {
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var closed = await scope.ServiceProvider.GetRequiredService<ISender>().Send(new CloseEndedCallsCommand(), stoppingToken);
+                if (closed > 0)
+                {
+                    logger.LogInformation("Closed {Count} ended calls", closed);
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogError(exception, "Closing ended calls failed");
             }
         }
     }
