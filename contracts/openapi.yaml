@@ -1006,6 +1006,12 @@ paths:
         before its start time is declined automatically. In-person meetings are not
         planned here: the two users arrange them in their conversation and report them
         afterwards (`reportInPersonSession`).
+
+        A user cannot be in two sessions at once, in the same match or in different ones.
+        A user's time is taken by their accepted sessions that were not cancelled and by
+        the proposals they made that are still open. A proposal whose time overlaps one
+        of those is refused with `session_time_taken` for the proposer's own sessions and
+        with `other_user_busy` for the other user's.
       parameters:
         - $ref: '#/components/parameters/MatchId'
       requestBody:
@@ -1102,6 +1108,10 @@ paths:
       tags: [Sessions]
       operationId: acceptSession
       summary: Accept a session proposed by the other user
+      description: |
+        Refused, as in `proposeSession`, if the session's time is taken by another session
+        meanwhile: with `session_time_taken` for the accepting user's sessions and with
+        `other_user_busy` for the proposer's.
       parameters:
         - $ref: '#/components/parameters/SessionId'
       responses:

@@ -38,6 +38,52 @@ public class SwapSessionTests
     }
 
     [Theory]
+    [InlineData(-60, 61, true)]
+    [InlineData(-60, 60, false)]
+    [InlineData(59, 30, true)]
+    [InlineData(-30, 31, true)]
+    [InlineData(60, 30, false)]
+    [InlineData(-30, 30, false)]
+    public void Sessions_overlap_when_their_times_share_a_moment(int startOffsetMinutes, int durationMinutes, bool overlaps)
+    {
+        var start = Start.AddMinutes(startOffsetMinutes);
+
+        Assert.Equal(Start.AddMinutes(60), Proposed().EndsAt);
+        Assert.Equal(overlaps, Proposed().OverlapsWith(start, start.AddMinutes(durationMinutes)));
+    }
+
+    [Fact]
+    public void An_in_person_meeting_takes_nobody_s_time()
+    {
+        var meeting = SwapSession.ReportInPerson(MatchId, Ali, Ayse, Now);
+
+        Assert.Null(meeting.EndsAt);
+        Assert.False(meeting.OverlapsWith(Now.AddHours(-1), Now.AddHours(1)));
+        Assert.False(meeting.OccupiesTimeOf(Ali, Now));
+    }
+
+    [Fact]
+    public void A_proposal_takes_its_proposer_s_time_and_an_accepted_session_both_users_until_cancelled()
+    {
+        var proposal = Proposed();
+        Assert.True(proposal.OccupiesTimeOf(Ali, Now));
+        Assert.False(proposal.OccupiesTimeOf(Ayse, Now));
+        Assert.False(proposal.OccupiesTimeOf(Guid.NewGuid(), Now));
+        Assert.False(proposal.OccupiesTimeOf(Ali, Start), "an unanswered proposal lapses at its start");
+
+        var scheduled = Scheduled();
+        Assert.True(scheduled.OccupiesTimeOf(Ali, Now));
+        Assert.True(scheduled.OccupiesTimeOf(Ayse, Now));
+
+        scheduled.Cancel(Ayse, "Uygun değilim", Now);
+        Assert.False(scheduled.OccupiesTimeOf(Ali, Now));
+
+        var declined = Proposed();
+        declined.Decline(Ayse, Now);
+        Assert.False(declined.OccupiesTimeOf(Ali, Now));
+    }
+
+    [Theory]
     [InlineData(0)]
     [InlineData(-1)]
     public void A_session_cannot_be_proposed_for_now_or_the_past(int minutesFromNow) =>

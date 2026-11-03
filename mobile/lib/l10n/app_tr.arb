@@ -381,6 +381,8 @@
   "reviewDeleted": "Değerlendirmeniz silindi.",
   "errorSessionInPast": "Oturum için gelecekte bir tarih ve saat seçin.",
   "errorSessionNotStarted": "Oturum başlamadan tamamlandı olarak işaretlenemez.",
+  "errorSessionTimeTaken": "Bu saatte başka bir oturumunuz ya da yanıt bekleyen bir teklifiniz var. Başka bir saat seçin.",
+  "errorOtherUserBusy": "Karşı tarafın bu saatte başka bir oturumu ya da yanıt bekleyen bir teklifi var. Başka bir saat seçin.",
   "errorMatchEndPending": "Eşleşme için sonlandırma isteği beklerken yeni oturum eklenemez.",
   "errorInPersonAlreadyReported": "Bu kullanıcıyla yüz yüze buluşmanızı daha önce bildirdiniz. Yüz yüze buluşma yalnızca bir kez bildirilebilir.",
   "sessionsTitle": "Oturumlar",

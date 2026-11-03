@@ -79,6 +79,15 @@ internal sealed class InMemorySessions : ISessionRepository
             .Select(x => (Guid?)x.Id)
             .FirstOrDefault());
 
+    public Task<IReadOnlyList<SwapSession>> ListOnlineAroundAsync(
+        IReadOnlyCollection<Guid> userIds,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<SwapSession>>(Items
+            .Where(x => x.Mode == SessionMode.Online && userIds.Any(x.IsParticipant) && x.ScheduledAt < end)
+            .ToList());
+
     public void Add(SwapSession session) => Items.Add(session);
 
     private static PagedList<SwapSession> Paged(IEnumerable<SwapSession> source, PageRequest page)
@@ -128,9 +137,28 @@ public class SessionHandlerTests
 
     private DateTimeOffset Tomorrow => _clock.GetUtcNow().AddDays(1);
 
-    private Task<SwapSessionDto> ProposeAsync(Guid? userId = null, Guid? matchId = null, string? note = null) =>
+    private Task<SwapSessionDto> ProposeAsync(
+        Guid? userId = null,
+        Guid? matchId = null,
+        string? note = null,
+        DateTimeOffset? at = null,
+        int durationMinutes = 60) =>
         new ProposeSessionCommandHandler(_matches, _sessions, _notifier, _unitOfWork, _clock)
-            .Handle(new ProposeSessionCommand(userId ?? _ali, matchId ?? _matchId, Tomorrow, 60, note), CancellationToken.None).AsTask();
+            .Handle(
+                new ProposeSessionCommand(userId ?? _ali, matchId ?? _matchId, at ?? Tomorrow, durationMinutes, note),
+                CancellationToken.None)
+            .AsTask();
+
+    /// <summary>A second match of each of the two users, with a third user.</summary>
+    private (Guid AliCan, Guid AyseCan, Guid Can) AddOtherMatches()
+    {
+        var can = Guid.NewGuid();
+        var aliCan = Guid.NewGuid();
+        var ayseCan = Guid.NewGuid();
+        _matches.Items[aliCan] = new MatchInfo(aliCan, _ali, can, true, false);
+        _matches.Items[ayseCan] = new MatchInfo(ayseCan, _ayse, can, true, false);
+        return (aliCan, ayseCan, can);
+    }
 
     private Task<SwapSessionDto> ReportAsync(Guid? userId = null) =>
         new ReportInPersonSessionCommandHandler(_matches, _sessions, _notifier, _unitOfWork, _clock)
@@ -194,6 +222,78 @@ public class SessionHandlerTests
 
         Assert.Equal(code, await AppCodeOfAsync(() => ProposeAsync()));
         Assert.Equal(code, await AppCodeOfAsync(() => ReportAsync()));
+    }
+
+    [Fact]
+    public async Task Nobody_can_propose_two_sessions_at_the_same_time_in_one_match_or_across_matches()
+    {
+        var (aliCan, _, can) = AddOtherMatches();
+        await ProposeAsync(at: Tomorrow, durationMinutes: 60);
+
+        Assert.Equal("session_time_taken", await AppCodeOfAsync(() => ProposeAsync(at: Tomorrow.AddMinutes(30))));
+        Assert.Equal(
+            "session_time_taken",
+            await AppCodeOfAsync(() => ProposeAsync(matchId: aliCan, at: Tomorrow.AddMinutes(-30), durationMinutes: 45)));
+
+        // Ali's open proposal holds his time, though not Ayşe's yet.
+        Assert.Equal("other_user_busy", await AppCodeOfAsync(() => ProposeAsync(userId: _ayse, at: Tomorrow)));
+        Assert.Equal(
+            "other_user_busy",
+            await AppCodeOfAsync(() => ProposeAsync(userId: can, matchId: aliCan, at: Tomorrow)));
+        await ProposeAsync(userId: can, matchId: aliCan, at: Tomorrow.AddHours(3));
+
+        // Back to back is fine.
+        await ProposeAsync(matchId: aliCan, at: Tomorrow.AddHours(1));
+        await ProposeAsync(matchId: aliCan, at: Tomorrow.AddMinutes(-30), durationMinutes: 30);
+        Assert.Equal(4, _sessions.Items.Count);
+    }
+
+    [Fact]
+    public async Task A_proposal_is_refused_when_the_other_user_is_already_booked()
+    {
+        var (aliCan, ayseCan, can) = AddOtherMatches();
+        var booked = await ProposeAsync(userId: can, matchId: ayseCan, at: Tomorrow);
+        await ChangeAsync(booked.Id, _ayse, SessionAction.Accept);
+
+        Assert.Equal("other_user_busy", await AppCodeOfAsync(() => ProposeAsync(at: Tomorrow.AddMinutes(15))));
+        Assert.Equal("session_time_taken", await AppCodeOfAsync(() => ProposeAsync(userId: _ayse, at: Tomorrow.AddMinutes(15))));
+
+        // Can is also booked, by the same session.
+        Assert.Equal("other_user_busy", await AppCodeOfAsync(() => ProposeAsync(matchId: aliCan, at: Tomorrow)));
+    }
+
+    [Fact]
+    public async Task Accepting_is_refused_when_either_user_has_meanwhile_planned_that_time()
+    {
+        var (aliCan, ayseCan, can) = AddOtherMatches();
+        var fromAli = await ProposeAsync(at: Tomorrow);
+        var fromCan = await ProposeAsync(userId: can, matchId: ayseCan, at: Tomorrow.AddMinutes(30));
+
+        // Ayşe takes Can's session first; Ali's proposal at that time can no longer be accepted.
+        await ChangeAsync(fromCan.Id, _ayse, SessionAction.Accept);
+        Assert.Equal("session_time_taken", await AppCodeOfAsync(() => ChangeAsync(fromAli.Id, _ayse, SessionAction.Accept)));
+        Assert.Equal(SwapSessionStatus.Proposed, (await GetAsync(fromAli.Id, _ali)).Status);
+
+        // A proposer's own proposal holds their time, so they can only have been booked by
+        // a race or by sessions planned before this rule; the answer is refused all the same.
+        var later = await ProposeAsync(at: Tomorrow.AddHours(5));
+        var clash = SwapSession.ProposeOnline(aliCan, can, _ali, Tomorrow.AddHours(5), 30, null, _clock.GetUtcNow());
+        clash.Accept(_ali, _clock.GetUtcNow());
+        _sessions.Add(clash);
+        Assert.Equal("other_user_busy", await AppCodeOfAsync(() => ChangeAsync(later.Id, _ayse, SessionAction.Accept)));
+    }
+
+    [Fact]
+    public async Task Declined_and_cancelled_sessions_free_their_time()
+    {
+        var declined = await ProposeAsync(at: Tomorrow);
+        await ChangeAsync(declined.Id, _ayse, SessionAction.Decline);
+        var cancelled = await ProposeAsync(at: Tomorrow);
+        await ChangeAsync(cancelled.Id, _ayse, SessionAction.Accept);
+        await CancelAsync(cancelled.Id, _ali);
+
+        var again = await ProposeAsync(at: Tomorrow);
+        Assert.Equal(SwapSessionStatus.Scheduled, (await ChangeAsync(again.Id, _ayse, SessionAction.Accept)).Status);
     }
 
     [Fact]
@@ -308,7 +408,7 @@ public class SessionHandlerTests
     public async Task Ending_the_match_cancels_only_the_sessions_still_ahead()
     {
         var proposed = await ProposeAsync();
-        var scheduled = await ProposeAsync();
+        var scheduled = await ProposeAsync(at: Tomorrow.AddHours(2));
         await ChangeAsync(scheduled.Id, _ayse, SessionAction.Accept);
         var reported = await ReportAsync();
 

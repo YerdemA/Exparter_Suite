@@ -168,6 +168,28 @@ public sealed class SwapSession
 
     public Guid OtherThan(Guid userId) => userId == ProposedByUserId ? OtherUserId : ProposedByUserId;
 
+    /// <summary>Null for in-person meetings, whose time is not kept.</summary>
+    public DateTimeOffset? EndsAt => ScheduledAt + TimeSpan.FromMinutes(DurationMinutes ?? 0);
+
+    /// <summary>Whether the session's planned time and the given one have any moment in common.</summary>
+    public bool OverlapsWith(DateTimeOffset start, DateTimeOffset end) =>
+        Mode == SessionMode.Online && ScheduledAt < end && start < EndsAt;
+
+    /// <summary>
+    /// Whether the session keeps the user from planning another one at the same time:
+    /// once accepted it does, until it is cancelled; as an open proposal it does only for
+    /// the user who made it, since the other user has not agreed to it.
+    /// </summary>
+    public bool OccupiesTimeOf(Guid userId, DateTimeOffset now) =>
+        Mode == SessionMode.Online
+        && IsParticipant(userId)
+        && StatusAt(now) switch
+        {
+            SwapSessionStatus.Scheduled or SwapSessionStatus.CompletionPending or SwapSessionStatus.Completed => true,
+            SwapSessionStatus.Proposed => userId == ProposedByUserId,
+            _ => false,
+        };
+
     public SwapSessionStatus StatusAt(DateTimeOffset now) => Status switch
     {
         SwapSessionStatus.Proposed when now >= ScheduledAt => SwapSessionStatus.Declined,

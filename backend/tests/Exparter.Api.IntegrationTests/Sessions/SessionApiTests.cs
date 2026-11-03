@@ -18,16 +18,22 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     {
         var ali = await TestSession.RegisterVisibleAsync(_client, fixture);
         var ayse = await TestSession.RegisterVisibleAsync(_client, fixture);
-        var guitar = await ali.FindSkillIdAsync("gitar");
+        return (ali, ayse, await MatchAsync(ali, ayse));
+    }
+
+    /// <returns>The path of the new match.</returns>
+    private static async Task<string> MatchAsync(TestSession first, TestSession second)
+    {
+        var guitar = await first.FindSkillIdAsync("gitar");
         var request = await OkAsync(
-            ali.SendAsync(
+            first.SendAsync(
                 HttpMethod.Post,
                 "/api/v1/swap-requests",
-                new { recipientId = ayse.UserId, offeredSkillId = guitar, requestedSkillId = guitar }),
+                new { recipientId = second.UserId, offeredSkillId = guitar, requestedSkillId = guitar }),
             HttpStatusCode.Created);
         var match = await OkAsync(
-            ayse.SendAsync(HttpMethod.Post, $"/api/v1/swap-requests/{request.GetProperty("id").GetGuid()}/accept"));
-        return (ali, ayse, $"/api/v1/matches/{match.GetProperty("id").GetGuid()}");
+            second.SendAsync(HttpMethod.Post, $"/api/v1/swap-requests/{request.GetProperty("id").GetGuid()}/accept"));
+        return $"/api/v1/matches/{match.GetProperty("id").GetGuid()}";
     }
 
     private static async Task<JsonElement> OkAsync(Task<HttpResponseMessage> pending, HttpStatusCode expected = HttpStatusCode.OK)
@@ -194,6 +200,33 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task Nobody_is_booked_into_two_sessions_at_once_in_any_of_their_matches()
+    {
+        var (ali, ayse, matchPath) = await MatchedPairAsync();
+        var can = await TestSession.RegisterVisibleAsync(_client, fixture);
+        var aliCan = await MatchAsync(can, ali);
+        var ayseCan = await MatchAsync(can, ayse);
+        var start = DateTimeOffset.UtcNow.AddDays(2);
+
+        var first = await OkAsync(ProposeAsync(ali, matchPath, start, 90), HttpStatusCode.Created);
+        await ProblemAssert.IsAsync(
+            await ProposeAsync(ali, matchPath, start.AddMinutes(60)), HttpStatusCode.Conflict, "session_time_taken");
+        await ProblemAssert.IsAsync(
+            await ProposeAsync(ali, aliCan, start.AddMinutes(-30), 45), HttpStatusCode.Conflict, "session_time_taken");
+        await ProblemAssert.IsAsync(await ProposeAsync(can, aliCan, start), HttpStatusCode.Conflict, "other_user_busy");
+
+        // Ayşe books the time with Can, so Ali's proposal can no longer be accepted.
+        var withCan = await OkAsync(ProposeAsync(can, ayseCan, start.AddMinutes(30)), HttpStatusCode.Created);
+        await OkAsync(PostAsync(ayse, $"{PathOf(withCan)}/accept"));
+        await ProblemAssert.IsAsync(await PostAsync(ayse, $"{PathOf(first)}/accept"), HttpStatusCode.Conflict, "session_time_taken");
+
+        // Right after the end is free, and a cancelled session frees its time.
+        await OkAsync(ProposeAsync(ali, aliCan, start.AddMinutes(90)), HttpStatusCode.Created);
+        await OkAsync(PostAsync(ayse, $"{PathOf(withCan)}/cancel", new { reason = "Başka bir işim çıktı" }));
+        Assert.Equal("Scheduled", StatusOf(await OkAsync(PostAsync(ayse, $"{PathOf(first)}/accept"))));
+    }
+
+    [Fact]
     public async Task Sessions_are_listed_per_match_and_across_matches()
     {
         var (ali, ayse, matchPath) = await MatchedPairAsync();
@@ -252,7 +285,7 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     {
         var (ali, ayse, matchPath) = await MatchedPairAsync();
         var proposed = await OkAsync(ProposeAsync(ali, matchPath), HttpStatusCode.Created);
-        var scheduled = await OkAsync(ProposeAsync(ali, matchPath), HttpStatusCode.Created);
+        var scheduled = await OkAsync(ProposeAsync(ali, matchPath, DateTimeOffset.UtcNow.AddDays(3)), HttpStatusCode.Created);
         await OkAsync(PostAsync(ayse, $"{PathOf(scheduled)}/accept"));
         var reported = await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
 
