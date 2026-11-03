@@ -112,6 +112,15 @@ void main() {
       expect(find.text('ayseyilmaz'), findsOneWidget);
     });
 
+    testWidgets('turns capitals in the username into small letters', (tester) async {
+      await pumpScreen(tester, const RegisterScreen());
+
+      await tester.enterText(field(l10n.registerUsernameLabel), 'AyşeYILMAZ_İnci');
+      await tester.pump();
+
+      expect(find.text('ayşeyilmaz_inci'), findsOneWidget);
+    });
+
     Future<void> fill(WidgetTester tester, {String username = 'ayse', bool confirmAge = true}) async {
       await tester.enterText(field(l10n.registerEmailLabel), 'ayse@example.com');
       await tester.enterText(field(l10n.registerUsernameLabel), username);
@@ -127,7 +136,7 @@ void main() {
       await pumpScreen(tester, const RegisterScreen());
 
       await tester.enterText(field(l10n.registerEmailLabel), 'not-an-email');
-      await tester.enterText(field(l10n.registerUsernameLabel), 'Ayse');
+      await tester.enterText(field(l10n.registerUsernameLabel), 'ay');
       await tester.enterText(field(l10n.passwordLabel), 'short');
       await tester.tap(find.widgetWithText(FilledButton, l10n.registerSubmit));
       await tester.pump();

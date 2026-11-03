@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/auth_validators.dart';
@@ -10,6 +11,25 @@ String? fieldErrorText(AppLocalizations l10n, FieldError? error) => switch (erro
       FieldError.username => l10n.validationUsername,
       FieldError.password => l10n.validationPassword,
     };
+
+/// Usernames are lowercase only, so capitals are turned into small letters as they are
+/// typed or pasted instead of being rejected afterwards.
+class LowercaseFormatter extends TextInputFormatter {
+  const LowercaseFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    // The Turkish dotted capital I would otherwise become "i" plus a combining dot.
+    final text = newValue.text.replaceAll('İ', 'i').toLowerCase();
+    if (text == newValue.text) {
+      return newValue;
+    }
+
+    return text.length == newValue.text.length
+        ? newValue.copyWith(text: text)
+        : TextEditingValue(text: text, selection: TextSelection.collapsed(offset: text.length));
+  }
+}
 
 class PasswordField extends StatefulWidget {
   const PasswordField({
