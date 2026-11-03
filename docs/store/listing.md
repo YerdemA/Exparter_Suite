@@ -104,6 +104,15 @@ Yeniden çekmek için: yerelde boş bir veritabanı oluşturup API'yi ona bağla
 
 Hiçbir veri geçici olarak işlenmiyor; hepsi saklanıyor. Form bu yanıtlarla 2026-10-28'de dolduruldu.
 
+**Görüntülü görüşmeyle eklenecekler** (Faz 8 dilim 1, ADR 0015; görüşmeli sürüm yüklenmeden önce forma girilmeli):
+
+| Play'deki tür | Bizde karşılığı | Zorunlu mu | Amaç |
+|---|---|---|---|
+| Fotoğraflar ve videolar → Videolar | Görüşmede kameranın görüntüsü | Zorunlu değil (kullanıcı görüşmeye katılırsa) | Uygulama işlevi; **geçici olarak işlenir** (yalnızca iletilir, saklanmaz) |
+| Ses → Ses kayıtları | Görüşmede mikrofonun sesi | Zorunlu değil (kullanıcı görüşmeye katılırsa) | Uygulama işlevi; **geçici olarak işlenir** |
+
+İzin beyanları: kamera ve mikrofon için ayrı beyan gerekmez; **ön plan servisi (Foreground service) beyanı** gerekir: tür `microphone`, gerekçe "Kullanıcı başlattığı bir görüntülü görüşmede uygulamadan çıkınca ses sürsün diye", istenirse kısa bir ekran kaydı. Content rating anketinde "Kullanıcılar birbiriyle iletişim kurabiliyor mu" yanıtına görüntülü görüşme de eklenir.
+
 Play bu formu uygulamanın gerçek davranışıyla karşılaştırır; uygulamaya yeni bir veri türü eklenirse form da güncellenmelidir.
 
 ## 6. Kapalı test
