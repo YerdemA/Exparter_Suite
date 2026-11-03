@@ -65,6 +65,8 @@ void main() {
       expect(errorMessage(l10n, const ApiException(code: 'username_already_taken')), l10n.errorUsernameTaken);
       expect(errorMessage(l10n, const ApiException(code: ApiException.networkCode)), l10n.errorNetwork);
       expect(errorMessage(l10n, const ApiException(statusCode: 429, code: 'rate_limited')), l10n.errorRateLimited);
+      expect(errorMessage(l10n, const ApiException(code: 'session_time_taken')), l10n.errorSessionTimeTaken);
+      expect(errorMessage(l10n, const ApiException(code: 'other_user_busy')), l10n.errorOtherUserBusy);
     });
 
     test('never exposes raw error text', () {

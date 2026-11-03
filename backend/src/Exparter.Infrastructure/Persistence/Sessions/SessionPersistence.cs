@@ -91,6 +91,25 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
                 && (x.Status == SwapSessionStatus.Proposed || x.Status == SwapSessionStatus.Scheduled))
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<SwapSession>> ListOnlineAroundAsync(
+        IReadOnlyCollection<Guid> userIds,
+        DateTimeOffset start,
+        DateTimeOffset end,
+        CancellationToken cancellationToken)
+    {
+        // A session that starts this long before the given start may still be running then.
+        var earliestStart = start - TimeSpan.FromMinutes(SwapSession.AllowedDurations.Max());
+        return await dbContext.SwapSessions
+            .AsNoTracking()
+            .Where(x => x.Mode == SessionMode.Online
+                && (userIds.Contains(x.ProposedByUserId) || userIds.Contains(x.OtherUserId))
+                && x.Status != SwapSessionStatus.Declined
+                && x.Status != SwapSessionStatus.Cancelled
+                && x.ScheduledAt > earliestStart
+                && x.ScheduledAt < end)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<SwapSession>> ListOverdueAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
         await dbContext.SwapSessions
             .Where(x => (x.Status == SwapSessionStatus.Proposed && x.ScheduledAt <= now)

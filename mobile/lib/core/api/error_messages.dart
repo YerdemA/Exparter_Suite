@@ -42,6 +42,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'conversation_closed' => l10n.errorConversationClosed,
     'session_in_past' => l10n.errorSessionInPast,
     'session_not_started' => l10n.errorSessionNotStarted,
+    'session_time_taken' => l10n.errorSessionTimeTaken,
+    'other_user_busy' => l10n.errorOtherUserBusy,
     'match_end_pending' => l10n.errorMatchEndPending,
     'review_already_exists' => l10n.errorReviewAlreadyExists,
     'session_not_completed' => l10n.errorSessionNotCompleted,

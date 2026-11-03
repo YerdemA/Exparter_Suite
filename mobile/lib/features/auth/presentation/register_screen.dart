@@ -80,7 +80,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 // lowercase-only rule would reject.
                 textCapitalization: TextCapitalization.none,
                 // A username cannot contain spaces, so they are not let in, typed or pasted.
-                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
+                inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s')), const LowercaseFormatter()],
                 autofillHints: const [AutofillHints.newUsername],
                 textInputAction: TextInputAction.next,
                 validator: (value) => fieldErrorText(l10n, AuthValidators.username(value)),

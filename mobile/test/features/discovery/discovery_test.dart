@@ -120,13 +120,16 @@ void main() {
     }
 
     testWidgets('shows each user with their fit, skills and where they meet', (tester) async {
+      // Tall enough for all three cards, now that skills are chips.
+      tester.view.physicalSize = const Size(1080, 4000);
+      addTearDown(tester.view.resetPhysicalSize);
       stubPage([
         testDiscoveryUser(
           'deniz',
           displayName: 'Deniz Kaya',
           compatibility: Compatibility.mutual,
           offered: [testDiscoverySkill('Gitar', level: SkillLevel.advanced)],
-          wanted: [testDiscoverySkill('Yoga')],
+          wanted: [testDiscoverySkill('Yoga'), testDiscoverySkill('Piyano')],
         ),
         testDiscoveryUser('yeni', compatibility: Compatibility.oneWay),
         testDiscoveryUser('can', displayName: 'Can'),
@@ -138,17 +141,12 @@ void main() {
       expect(find.text('@deniz'), findsOneWidget);
       expect(find.text(l10n.discoverMutual), findsOneWidget);
       expect(find.text(l10n.discoverOneWay), findsOneWidget);
-      expect(
-        find.text('${l10n.discoverOffers}: Gitar · ${l10n.skillLevelAdvanced}', findRichText: true),
-        findsOneWidget,
-      );
-      expect(
-        find.text(
-          '${l10n.discoverWants}: Yoga · ${l10n.skillWantedLevel(l10n.skillLevelIntermediate)}',
-          findRichText: true,
-        ),
-        findsOneWidget,
-      );
+      // Each skill is a chip of its own.
+      expect(find.text(l10n.discoverOffers), findsOneWidget);
+      expect(find.widgetWithText(Chip, 'Gitar · ${l10n.skillLevelAdvanced}'), findsOneWidget);
+      expect(find.text(l10n.discoverWants), findsOneWidget);
+      expect(find.widgetWithText(Chip, 'Yoga · ${l10n.skillWantedLevel(l10n.skillLevelIntermediate)}'), findsOneWidget);
+      expect(find.widgetWithText(Chip, 'Piyano · ${l10n.skillWantedLevel(l10n.skillLevelIntermediate)}'), findsOneWidget);
       expect(find.textContaining('İstanbul'), findsNWidgets(3));
       // A user without a profile is shown by username alone.
       expect(find.text('@yeni'), findsOneWidget);
