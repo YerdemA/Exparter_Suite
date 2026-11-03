@@ -1,24 +1,26 @@
 # ERD
 
-Durum: **Onaylandı (2026-10-07).** Alan açıklamaları için `docs/domain/domain-model.md` dosyasına bak.
+Durum: **Onaylandı (2026-10-07); 2026-11-03'te migration'lardaki haliyle eşitlendi.** Alan açıklamaları için `docs/domain/domain-model.md` dosyasına bak.
 
-Bu şema mantıksal modeldir. Tablo ve sütun adları, tipler ve index'ler Faz 3'te EF Core migration'larıyla kesinleşir.
+Şemanın kaynağı EF Core migration'larıdır (`backend/src/Exparter.Infrastructure/Persistence/Migrations`); bu belge onların okunur özetidir. Her modülün tabloları kendi PostgreSQL şemasındadır (ör. `identity.users`, ADR 0006).
 
 Farklı modüllerdeki tablolar arasındaki ilişkiler yalnızca kimlik referansıdır; kodda navigation property yoktur. Bu ilişkiler diyagramda kesikli çizgiyle gösterilir.
 
 ## Tablo sahipliği
 
-| Modül | Tablolar |
+| Modül (şema) | Tablolar |
 |---|---|
-| Identity | `USER`, `REFRESH_TOKEN`, `ONE_TIME_TOKEN` |
-| Profiles | `PROFILE` |
-| Skills | `SKILL_CATEGORY`, `SKILL`, `USER_SKILL` |
-| Matching | `SWAP_REQUEST`, `MATCH` |
-| Messaging | `CONVERSATION`, `CONVERSATION_PARTICIPANT`, `MESSAGE` |
-| Sessions | `SWAP_SESSION` |
-| Reviews | `REVIEW`, `USER_RATING_SUMMARY` |
-| Notifications | `NOTIFICATION`, `DEVICE` |
-| Moderation | `BLOCK`, `REPORT` |
+| Identity (`identity`) | `users`, `refresh_tokens`, `one_time_tokens`, `blocked_emails` |
+| Profiles (`profiles`) | `profiles` |
+| Skills (`skills`) | `skill_categories`, `skills`, `user_skills` |
+| Matching (`matching`) | `swap_requests`, `matches` |
+| Messaging (`messaging`) | `conversations`, `messages` |
+| Sessions (`sessions`) | `swap_sessions` |
+| Reviews (`reviews`) | `reviews` |
+| Notifications (`notifications`) | `notifications`, `devices` |
+| Moderation (`moderation`) | `blocks`, `reports` |
+
+Okuma durumu ayrı bir katılımcı tablosunda değil, sohbetin kendisinde tutulur; puan özeti tablo değildir, her okumada hesaplanır.
 
 ## Diyagram
 
@@ -30,9 +32,10 @@ erDiagram
     USER ||..o{ USER_SKILL : "lists"
     USER ||..o{ SWAP_REQUEST : "sends or receives"
     USER ||..o{ MATCH : "participates"
+    USER ||..o{ CONVERSATION : "participates"
     USER ||..o{ MESSAGE : "sends"
+    USER ||..o{ SWAP_SESSION : "proposes or attends"
     USER ||..o{ REVIEW : "writes or receives"
-    USER ||..|| USER_RATING_SUMMARY : "has"
     USER ||..o{ NOTIFICATION : "receives"
     USER ||..o{ DEVICE : "registers"
     USER ||..o{ BLOCK : "blocks"
@@ -43,9 +46,7 @@ erDiagram
     SKILL ||..o{ SWAP_REQUEST : "offered or requested in"
 
     SWAP_REQUEST ||--o| MATCH : "becomes"
-    USER ||..o{ CONVERSATION : "participates"
     MATCH ||..o{ SWAP_SESSION : "schedules"
-    CONVERSATION ||--|{ CONVERSATION_PARTICIPANT : "has"
     CONVERSATION ||--o{ MESSAGE : "contains"
     SWAP_SESSION ||..o{ REVIEW : "justifies"
 
@@ -59,9 +60,9 @@ erDiagram
         string role
         timestamp email_verified_at
         timestamp age_confirmed_at
+        timestamp terms_accepted_at
+        string terms_version
         timestamp deletion_requested_at
-        timestamp deleted_at
-        string deleted_email_hash
         timestamp created_at
     }
     REFRESH_TOKEN {
@@ -81,6 +82,11 @@ erDiagram
         string token_hash UK
         timestamp expires_at
         timestamp used_at
+    }
+    BLOCKED_EMAIL {
+        uuid id PK
+        string email_hash
+        timestamp blocked_until
     }
     PROFILE {
         uuid user_id PK
@@ -114,7 +120,7 @@ erDiagram
         uuid user_id
         uuid skill_id FK
         string type
-        string level
+        int level
         timestamp created_at
     }
     SWAP_REQUEST {
@@ -123,6 +129,7 @@ erDiagram
         uuid recipient_id
         uuid offered_skill_id
         uuid requested_skill_id
+        string message
         string status
         timestamp created_at
         timestamp expires_at
@@ -138,7 +145,10 @@ erDiagram
         string status
         uuid end_requested_by_user_id
         timestamp end_requested_at
+        timestamp end_request_expires_at
+        timestamp end_reminder_sent_at
         string end_reason
+        uuid ended_by_user_id
         timestamp created_at
         timestamp ended_at
     }
@@ -146,38 +156,43 @@ erDiagram
         uuid id PK
         uuid user_low_id
         uuid user_high_id
+        timestamp user_low_last_read_at
+        timestamp user_high_last_read_at
+        timestamp last_activity_at
+        uuid last_message_id
         timestamp created_at
         timestamp closed_at
         uuid closed_by_user_id
-    }
-    CONVERSATION_PARTICIPANT {
-        uuid conversation_id PK
-        uuid user_id PK
-        timestamp last_read_at
     }
     MESSAGE {
         uuid id PK
         uuid conversation_id FK
         uuid sender_id
         string body
+        uuid client_message_id
         timestamp sent_at
     }
     SWAP_SESSION {
         uuid id PK
         uuid match_id
         uuid proposed_by_user_id
+        uuid other_user_id
+        string mode
         timestamp scheduled_at
         int duration_minutes
-        string mode
         string note
         string status
         uuid completion_marked_by_user_id
         timestamp completion_marked_at
+        timestamp completion_confirm_deadline
         boolean completed_automatically
         timestamp completed_at
         uuid cancelled_by_user_id
         string cancel_reason
         timestamp cancelled_at
+        timestamp day_reminder_sent_at
+        timestamp hour_reminder_sent_at
+        timestamp completion_reminder_sent_at
         timestamp created_at
     }
     REVIEW {
@@ -190,16 +205,18 @@ erDiagram
         timestamp created_at
         timestamp deleted_at
     }
-    USER_RATING_SUMMARY {
-        uuid user_id PK
-        int review_count
-        decimal average_rating
-    }
     NOTIFICATION {
         uuid id PK
         uuid user_id
         string type
-        json payload
+        uuid actor_user_id
+        uuid swap_request_id
+        uuid match_id
+        uuid session_id
+        uuid review_id
+        uuid skill_id
+        string reason
+        timestamp deadline
         timestamp created_at
         timestamp read_at
     }
@@ -208,6 +225,7 @@ erDiagram
         uuid user_id
         string fcm_token UK
         string platform
+        timestamp created_at
         timestamp last_seen_at
     }
     BLOCK {
@@ -220,6 +238,8 @@ erDiagram
         uuid reporter_id
         string target_type
         uuid target_id
+        uuid target_user_id
+        string target_content
         string reason
         string description
         string status
@@ -243,20 +263,29 @@ erDiagram
 | `MATCH` | `swap_request_id` benzersiz | MT-01 |
 | `MATCH` | Sırasız kullanıcı çifti benzersiz, yalnızca `status <> Ended` satırlarda (kısmi index) | MT-02 |
 | `CONVERSATION` | (`user_low_id`, `user_high_id`) benzersiz | MS-01 |
+| `MESSAGE` | (`conversation_id`, `sender_id`, `client_message_id`) benzersiz | MS-11 |
+| `SWAP_SESSION` | Sırasız kullanıcı çifti benzersiz, yalnızca iptal edilmemiş yüz yüze buluşmalarda (kısmi index) | SS-19 |
 | `REVIEW` | (`reviewer_id`, `reviewee_id`) benzersiz, silinmiş satırlar dahil | RV-01, RV-07 |
-| `DEVICE` | `fcm_token` benzersiz | — |
+| `DEVICE` | `fcm_token` benzersiz | NT-10 |
+| `BLOCK` | (`blocker_id`, `blocked_id`) birincil anahtar | — |
+| `REPORT` | (`reporter_id`, `target_type`, `target_id`) benzersiz, yalnızca `status = Open` satırlarda | MD-08 |
+
+Benzersizlik ihlali API'de iş kuralının hata koduna çevrilir (`UniqueConstraints`); böylece eşzamanlı iki istekten ikincisi 500 değil, kuralın 409'unu alır. Oturum çakışması (SS-20) için veritabanı kısıtı yoktur.
 
 "Sırasız kullanıcı çifti", iki kimliğin küçüğü ve büyüğü üzerinden kurulan ifade index'idir; böylece A→B ve B→A aynı çift sayılır.
 
-## Sorgu index'leri (ilk tahmin)
+## Sorgu index'leri
 
-Kesin liste Faz 6'daki performans kontrolünde gözden geçirilir.
+Faz 6 dilim 4'te (performans) sorguların hepsinin index kullandığı doğrulandı. Benzersizlik index'lerine ek olarak:
 
-- `USER_SKILL` (`skill_id`, `type`): keşfette "bu yeteneği sunanlar/isteyenler".
-- `SWAP_REQUEST` (`recipient_id`, `status`) ve (`requester_id`, `status`): gelen/giden istek listeleri.
-- `SWAP_REQUEST` (`expires_at`) yalnızca `Pending` satırlarda: süre aşımı taraması.
-- `MATCH` (`user_a_id`), (`user_b_id`): eşleşme listesi.
-- `MESSAGE` (`conversation_id`, `sent_at`, `id`): cursor tabanlı sayfalama.
-- `SWAP_SESSION` (`match_id`, `scheduled_at`).
-- `REVIEW` (`reviewee_id`, `created_at`).
-- `NOTIFICATION` (`user_id`, `created_at`).
+- `users` (`deletion_requested_at`), yalnızca `PendingDeletion` satırlarda: kalıcı silme işi.
+- `one_time_tokens` (`user_id`, `purpose`); `refresh_tokens` (`user_id`), (`family_id`); `blocked_emails` (`email_hash`).
+- `skills` (`category_id`), (`status`, `category_id`); `user_skills` (`skill_id`, `type`): katalog ve keşfet.
+- `swap_requests` (`recipient_id`, `created_at`), (`requester_id`, `created_at`), (`status`, `expires_at`): listeler ve süre aşımı.
+- `matches` (`user_a_id`, `created_at`), (`user_b_id`, `created_at`), (`status`, `end_request_expires_at`).
+- `conversations` (`user_low_id`, `last_activity_at`), (`user_high_id`, `last_activity_at`): sohbet listesi.
+- `messages` (`conversation_id`, `sent_at`, `id`): cursor tabanlı sayfalama.
+- `swap_sessions` (`match_id`, `created_at`), (`proposed_by_user_id`), (`other_user_id`), (`status`, `scheduled_at`), (`status`, `completion_confirm_deadline`).
+- `reviews` (`reviewee_id`, `created_at`).
+- `notifications` (`user_id`, `created_at`), (`created_at`): liste ve 90 günlük temizlik.
+- `devices` (`user_id`); `blocks` (`blocked_id`); `reports` (`status`, `created_at`).

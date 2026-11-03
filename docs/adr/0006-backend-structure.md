@@ -24,6 +24,6 @@ ADR 0001 modüler monoliti seçti ama iki noktayı Faz 3'e bıraktı: modülleri
 
 ## Sonuçlar
 
-- Modül sınırını derleyici korumaz. Katman bağımlılıkları testle denetlenir (`ArchitectureTests`). Modüller arası sınır testi ikinci modül geldiğinde (Faz 5) eklenir; tek modülle denetleyecek bir şey yoktur.
+- Modül sınırını derleyici korumaz. Katman bağımlılıkları testle denetlenir (`ArchitectureTests`). Modüller arası sınır testi Faz 5 dilim 1'de eklendi: modüller birbirine yalnızca yayınlanmış sözleşme tipleri üzerinden başvurabilir.
 - Bir modül ileride ayrı servise çıkarılırsa şeması ve klasörleri birlikte taşınır.
 - Sözleşme ile uygulama arasındaki uyum, entegrasyon testlerindeki `ContractConformanceTests` ile rota düzeyinde denetlenir: uygulanan her rota sözleşmede olmalı, uygulanmış modüllerin sözleşmedeki her operasyonunun rotası olmalı. İstek ve yanıt şemaları bu testle karşılaştırılmaz.

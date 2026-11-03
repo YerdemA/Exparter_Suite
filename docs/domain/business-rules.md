@@ -14,7 +14,7 @@ Durum: **Onaylandı (2026-10-07).**
 |---|---|---|
 | ID-01 | E-posta benzersizdir; büyük/küçük harf ayrımı yapılmaz. | Application, DB |
 | ID-02 | Kayıt e-posta, kullanıcı adı ve parola ile yapılır. Harici giriş (Google/Apple) MVP'de yoktur. | — |
-| ID-15 | Kullanıcı adı benzersizdir. 3–30 karakterdir; yalnızca küçük harf (a–z), rakam, alt çizgi ve nokta içerebilir; noktayla başlayamaz, noktayla bitemez ve art arda iki nokta içeremez. Büyük harf içeren ad reddedilir, küçük harfe çevrilmez. | Domain, DB |
+| ID-15 | Kullanıcı adı benzersizdir. 3–30 karakterdir; yalnızca küçük harf (a–z), rakam, alt çizgi ve nokta içerebilir; noktayla başlayamaz, noktayla bitemez ve art arda iki nokta içeremez. Büyük harf içeren ad sunucuda reddedilir, küçük harfe çevrilmez; mobil uygulama yazılan büyük harfleri yazarken küçük harfe çevirir (2026-11-03). | Domain, DB |
 | ID-16 | Ayrılmış adlar (ör. `admin`, `exparter`, `destek`) kullanıcı adı olarak alınamaz. | Domain |
 | ID-17 | Giriş, parola ile birlikte e-posta veya kullanıcı adı verilerek yapılır. Girişte büyük/küçük harf ayrımı yapılmaz. | Application |
 | ID-18 | Kullanıcı, kullanıcı adını 7 günde bir kez değiştirebilir; kayıtta seçilen ad bu süreyi başlatmaz. Yeni ad ID-15 ve ID-16 kurallarına uymalıdır; bırakılan ad hemen başkası tarafından alınabilir. | Domain |
@@ -39,7 +39,7 @@ Durum: **Onaylandı (2026-10-07).**
 | PR-02 | Konum olarak yalnızca şehir tutulur; koordinat veya adres tutulmaz. | — |
 | PR-03 | Çevrimiçi ve yüz yüze tercihlerinden en az biri seçili olmalıdır. | Domain |
 | PR-04 | Yüz yüze tercihi seçiliyse şehir zorunludur. | Domain |
-| PR-05 | Profil, eşleşme için gereken bilgiler girildiğinde tamamlanmış sayılır: görünen ad, en az bir takas tercihi (yüz yüze ise şehirle birlikte) ve en az bir sunulan yetenek. (Yetenek koşulu, yeteneklerin geldiği dilim 2'de uygulanır.) | Application |
+| PR-05 | Profil, eşleşme için gereken bilgiler girildiğinde tamamlanmış sayılır: görünen ad, en az bir takas tercihi (yüz yüze ise şehirle birlikte) ve en az bir sunulan yetenek. | Application |
 | PR-06 | Etkileşim koşullarını sağlamayan kullanıcı keşfette öneri olarak gösterilmez. Ama gizli değildir: kullanıcı adı veya görünen adla aranınca bulunur ve profili açılabilir. Askıya alınmış ve silinmekte olan hesaplar hiçbir yerde görünmez. | Application |
 | PR-07 | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir (keşfet dahil), başka kullanıcıların profillerine ve yeteneklerine bakabilir, ama başkalarıyla etkileşime giremez (bkz. ID-04). Koşul yalnızca başka kullanıcıları etkileyen işlemlerde aranır: istek, eşleşme, mesaj, oturum, değerlendirme ve ileride beğeni ile yorum. Etkileşim denemesinde "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." uyarısı gösterilir. | Application |
 | PR-08 | Avatar JPEG, PNG veya WebP olabilir ve en fazla 5 MB'tır. Dosya doğrudan depolamaya yüklenir; sınırlar yüklenen dosya üzerinde denetlenir. | Application |
@@ -96,7 +96,7 @@ Durum: **Onaylandı (2026-10-07).**
 | No | Kural | Katman |
 |---|---|---|
 | MS-01 | Sohbet yalnızca eşleşme ile başlar; hiç eşleşmemiş iki kullanıcı birbirine mesaj atamaz. İki kullanıcı arasında tek bir sohbet olur. | Application, DB |
-| MS-02 | Mesaj yalnızca metindir. Boş olamaz ve uzunluk sınırı vardır (sınır Faz 2'de sözleşmede belirlenir). | Domain |
+| MS-02 | Mesaj yalnızca metindir. Boş olamaz ve en fazla 2000 karakterdir. | Domain |
 | MS-03 | Yalnızca sohbetin iki tarafı mesaj gönderebilir ve okuyabilir. | Application |
 | MS-04 | Eşleşme sona erince sohbet açık kalır; devam edip etmemek kullanıcılara bırakılır. | — |
 | MS-05 | Aktif eşleşme yokken taraflardan biri sohbeti tek başına kapatabilir. Kapatılan sohbet salt okunur olur; geçmiş mesajlar iki tarafta da görünür kalır. | Domain |
@@ -130,6 +130,9 @@ Durum: **Onaylandı (2026-10-07).**
 | SS-17 | SS-09'daki iptal yalnızca henüz gerçekleşmemiş (önerilmiş veya planlanmış) oturumları kapsar; onay bekleyen tamamlandı işareti eşleşme bittikten sonra da onaylanabilir. | Domain |
 | SS-18 | Süresi geçen öneri ve onay, arka plan işi kaydetmeden önce de her okumada ve işlemde sonuçlanmış sayılır. | Domain |
 | SS-19 | Bir kullanıcı çifti, bütün eşleşmeleri boyunca yalnızca bir yüz yüze buluşma bildirebilir (sahte bildirimle istatistik şişirmeye karşı). İptal edilmiş bildirim sayılmaz; onay bekleyen veya tamamlanmış bildirim varken yenisi `in_person_already_reported` ile reddedilir. | Application + veritabanı |
+| SS-20 | Bir kullanıcı aynı anda iki oturumda olamaz; aynı eşleşmede de farklı eşleşmelerde de. Kullanıcının zamanını kabul edilmiş ve iptal edilmemiş çevrimiçi oturumları ile kendi yaptığı, süresi geçmemiş teklifleri tutar. Teklif ve kabul anında denetlenir: işlemi yapanın zamanı doluysa `session_time_taken`, karşı tarafınki doluysa `other_user_busy`. Biri biterken diğeri başlayan oturumlar çakışmaz. Veritabanı kısıtı yoktur; aynı anda gelen iki istek nadiren ikisi de geçebilir (kullanıcı kararı, 2026-11-03). | Domain, Application |
+| SS-21 | Kabul edilmiş ve iptal edilmemiş çevrimiçi oturumun görüntülü görüşmesi vardır. Görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir; süre bittikten 15 dakika sonra görüşme kapanır ve oda sunucuda kapatılır. Daha önce `call_not_open_yet`, sonra `call_window_closed`. Tamamlandı işareti görüşmeyi bitirmez (ADR 0015). | Domain |
+| SS-22 | Görüşmenin sesi, görüntüsü ve paylaşılan ekran kaydedilmez; kimin ne zaman katıldığı tutulmaz. Paylaşılan ekranla cihazın sesi gitmez. | — |
 
 ### Kullanıcı istatistikleri
 
@@ -194,7 +197,7 @@ Durum: **Onaylandı (2026-10-07).**
 
 ## Keşfet sıralaması (MVP: kural tabanlı)
 
-Ayrıntılı skor formülü Faz 5.3'te belirlenir. Sıralama önceliği:
+Formül tek bir SQL sorgusudur (ADR 0011). Sıralama önceliği:
 
 1. **Karşılıklı uyum:** Benim sunduğum onun istediği **ve** onun sunduğu benim istediğim.
 2. **Tek yönlü uyum:** Onun sunduğu benim istediğim.
@@ -208,4 +211,4 @@ Hiç uyumu olmayan kullanıcılar da listenin sonunda gösterilir; yeteneği olm
 
 Arama: Ad veya kullanıcı adıyla arama yapıldığında etkileşim koşulu aranmaz (bkz. PR-06); sıralama aynıdır.
 
-Kullanıcının kendisi, engellediği/engellendiği kullanıcılar (engelleme geldiğinde) ve askıya alınmış veya silinmekte olan hesaplar listede görünmez.
+Kullanıcının kendisi, engellediği/engellendiği kullanıcılar ve askıya alınmış veya silinmekte olan hesaplar listede görünmez.

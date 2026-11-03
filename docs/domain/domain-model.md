@@ -1,6 +1,6 @@
 # Domain Modeli
 
-Durum: **Onaylandı (2026-10-07).** Kararların dökümü `open-questions.md` dosyasındadır.
+Durum: **Onaylandı (2026-10-07).** Kararların dökümü `open-questions.md` dosyasındadır. Model uygulama sırasında gelişti; bu belge 2026-11-03'te koddaki haliyle eşitlendi. Tabloların tam listesi: `docs/erd/erd.md`.
 
 Ortak kurallar:
 
@@ -15,18 +15,19 @@ Ortak kurallar:
 | Alan | Açıklama |
 |---|---|
 | `Id` | |
-| `Email` | Küçük harfe normalize edilir, benzersizdir. Kalıcı silmede boşaltılır. |
-| `Username` | Benzersiz kullanıcı adı; yalnızca küçük harf, rakam, alt çizgi ve nokta. Girişte e-posta yerine kullanılabilir, diğer kullanıcılara görünür ve değiştirilebilir. Kalıcı silmede boşaltılır. |
+| `Email` | Küçük harfe normalize edilir, benzersizdir. Kalıcı silmede yer tutucuyla değiştirilir. |
+| `Username` | Benzersiz kullanıcı adı; yalnızca küçük harf, rakam, alt çizgi ve nokta. Girişte e-posta yerine kullanılabilir, diğer kullanıcılara görünür ve değiştirilebilir. Kalıcı silmede yer tutucuyla değiştirilir. |
 | `PasswordHash` | |
 | `Status` | `Active`, `Suspended`, `PendingDeletion`, `Deleted` |
 | `Role` | `User`, `Admin`. Admin işlemleri MVP'de arayüzsüz endpoint'lerle yapılır. |
 | `EmailVerifiedAt` | Boşsa e-posta doğrulanmamıştır. |
 | `UsernameChangedAt` | Kullanıcı adının son değiştirildiği an. Sonraki değişiklik 7 gün sonra yapılabilir. |
 | `AgeConfirmedAt` | Kullanıcının 18 yaş ve üstü olduğunu onayladığı an. Kayıtta zorunludur; doğum tarihi tutulmaz. |
+| `TermsAcceptedAt`, `TermsVersion` | Kullanım koşullarının kabul anı ve kabul edilen sürüm (ID-09). |
 | `CreatedAt` | |
-| `DeletionRequestedAt` | Silme isteğinin zamanı. 30 gün içinde giriş yapılırsa silme geri alınır. |
-| `DeletedAt` | Kalıcı silmenin zamanı. |
-| `DeletedEmailHash` | Kalıcı silmede e-posta silinir, yalnızca hash'i kalır. Aynı e-postayla yeniden kaydı 3 ay engellemek için tutulur, sonra temizlenir. |
+| `DeletionRequestedAt` | Silme isteğinin zamanı. 30 gün içinde giriş yapılırsa silme geri alınır. 30 gün dolunca hesap `Deleted` olur: e-posta ve kullanıcı adı başkalarının alabilmesi için anlamsız yer tutucularla değiştirilir, parola hash'i silinir; satır yalnızca kullanıcının yazdıkları bir yere bağlı kalsın diye durur. |
+
+**`BlockedEmail`**: `Id`, `EmailHash`, `BlockedUntil`. Kalıcı silinen hesabın e-postasının hash'i; aynı adresle yeniden kaydı 3 ay engeller (ID-14), süre dolunca silinir.
 
 **`RefreshToken`** (User aggregate'inin parçası)
 
@@ -58,7 +59,7 @@ Ortak kurallar:
 | `AvatarKey` | Nesne depolamadaki anahtar. URL saklanmaz, istek anında presigned URL üretilir. |
 | `City` | Koordinat tutulmaz. 81 ilden biri. Boş olabilir. |
 | `AcceptsOnline`, `AcceptsInPerson` | Takas tercihi; en az biri seçili olmalı. |
-| `IsComplete` (türetilmiş) | Profil bilgileri (görünen ad ve en az bir takas tercihi) girilmişse doğrudur. Etkileşim için ayrıca en az bir sunulan yetenek ve doğrulanmış e-posta gerekir; bu birleşik koşul dilim 2'de modellenir. |
+| `IsComplete` (türetilmiş) | Profil bilgileri (görünen ad ve en az bir takas tercihi) girilmişse doğrudur. Etkileşim için ayrıca en az bir sunulan yetenek ve doğrulanmış e-posta gerekir; birleşik koşul `IInteractionRequirements` içindedir. |
 | `CreatedAt`, `UpdatedAt` | |
 
 ## 3. Skills
@@ -126,8 +127,10 @@ stateDiagram-v2
 | `UserAId`, `UserBId` | A isteği gönderen, B alan taraftır. |
 | `SkillTaughtByAId`, `SkillTaughtByBId` | İstekten kopyalanır; istek sonradan değişmez ama eşleşme kendi başına okunabilir olmalı. |
 | `Status` | `Active`, `EndRequested`, `Ended` |
-| `EndRequestedByUserId`, `EndRequestedAt` | İstek 7 gün cevapsız kalırsa eşleşme kendiliğinden sonlanır. |
+| `EndRequestedByUserId`, `EndRequestedAt`, `EndRequestExpiresAt` | İstek 7 gün cevapsız kalırsa eşleşme kendiliğinden sonlanır. |
+| `EndReminderSentAt` | Sürenin bitmesine 24 saat kala gönderilen hatırlatmanın zamanı. |
 | `EndReason` | `MutualConsent`, `EndRequestExpired`, `Blocked`, `AccountDeleted` |
+| `EndedByUserId` | Eşleşmeyi engelleyerek bitiren kullanıcı; `Blocked` sebebini yalnızca o görür. |
 | `CreatedAt`, `EndedAt` | |
 
 ```mermaid
@@ -150,13 +153,13 @@ stateDiagram-v2
 | `Id` | |
 | `UserLowId`, `UserHighId` | Sohbet eşleşmeye değil kullanıcı çiftine aittir; iki kullanıcı arasında tek sohbet olur. Kimlikler sıralı saklanır, böylece çift benzersizdir. |
 | `CreatedAt` | İlk eşleşmede açılır. |
+| `LastActivityAt`, `LastMessageId` | Sohbet listesinin sırası ve son mesaj önizlemesi için. |
+| `UserLowLastReadAt`, `UserHighLastReadAt` | Her tarafın sohbeti en son okuduğu an; okunmamış sayısı ve "Görüldü" bundan türetilir. |
 | `ClosedAt`, `ClosedByUserId` | Doluysa sohbet salt okunurdur. |
 
 Eşleşme sona erince sohbet açık kalır ve iki taraf yazmaya devam edebilir. Aktif eşleşme yokken taraflardan biri sohbeti tek başına kapatabilir. Engelleme ve hesap silme de sohbeti kapatır. Aynı çift yeniden eşleşirse sohbet geçmişiyle birlikte yeniden açılır.
 
-**`ConversationParticipant`**: `ConversationId`, `UserId`, `LastReadAt`. Okunmamış mesaj sayısı için gerekir.
-
-**`Message`**: `Id`, `ConversationId`, `SenderId`, `Body` (yalnızca metin), `SentAt`. Mesaj düzenlenmez ve silinmez.
+**`Message`**: `Id`, `ConversationId`, `SenderId`, `Body` (yalnızca metin, en fazla 2000 karakter), `ClientMessageId` (aynı gönderimin yinelenmesini önler), `SentAt`. Mesaj düzenlenmez ve silinmez.
 
 ## 6. Sessions
 
@@ -165,21 +168,25 @@ Eşleşme sona erince sohbet açık kalır ve iki taraf yazmaya devam edebilir. 
 | Alan | Açıklama |
 |---|---|
 | `Id`, `MatchId` | |
-| `ProposedByUserId` | |
-| `ScheduledAt`, `DurationMinutes` | |
+| `ProposedByUserId`, `OtherUserId` | Öneren (veya yüz yüze buluşmayı bildiren) ve karşı taraf; kullanıcının oturumlarını eşleşmeye sormadan bulmak için ikisi de saklanır. |
+| `ScheduledAt`, `DurationMinutes` | Yalnızca çevrimiçi oturumda; yüz yüze buluşmanın zamanı tutulmaz. |
 | `Mode` | `Online`, `InPerson` |
-| `Note` | Serbest metin: bağlantı, buluşma yeri vb. |
+| `Note` | Çevrimiçi oturumun isteğe bağlı notu. |
 | `Status` | `Proposed`, `Scheduled`, `CompletionPending`, `Completed`, `Declined`, `Cancelled` |
-| `CompletionMarkedByUserId`, `CompletionMarkedAt` | İşaret 72 saat cevapsız kalırsa oturum kendiliğinden tamamlanmış sayılır. |
+| `CompletionMarkedByUserId`, `CompletionMarkedAt`, `CompletionConfirmDeadline` | İşaret 72 saat cevapsız kalırsa oturum kendiliğinden tamamlanmış sayılır. |
+| `DayReminderSentAt`, `HourReminderSentAt`, `CompletionReminderSentAt` | Hatırlatmaların bir kez gitmesi için. |
+| `CallOpensAt`, `CallClosesAt` (türetilmiş) | Görüntülü görüşmenin penceresi: başlangıçtan 10 dakika önce ile süre bittikten 15 dakika sonrası (SS-21). |
 | `CompletedAt`, `CompletedAutomatically` | `CompletedAutomatically`, onayın süre dolduğu için sistemce verildiğini gösterir. |
 | `CancelledByUserId`, `CancelReason`, `CancelledAt` | `CancelReason` iptalde zorunludur. |
 | `CreatedAt` | |
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Proposed
+    [*] --> Proposed: çevrimiçi oturum önerilir
+    [*] --> CompletionPending: yüz yüze buluşma bildirilir
     Proposed --> Scheduled: diğer taraf kabul eder
     Proposed --> Declined: diğer taraf reddeder
+    Proposed --> Declined: başlangıç zamanı cevapsız geçer
     Scheduled --> CompletionPending: bir taraf tamamlandı işaretler
     CompletionPending --> Completed: diğer taraf onaylar
     CompletionPending --> Completed: 72 saat cevapsız kalır
@@ -188,7 +195,7 @@ stateDiagram-v2
     CompletionPending --> Cancelled: taraflardan biri iptal eder
 ```
 
-İptal tek taraflıdır ve sebep metni zorunludur. Sebep karşı tarafa bildirim olarak gider ve admin tarafından listelenebilir.
+İptal tek taraflıdır ve sebep metni zorunludur. Sebep karşı tarafa bildirim olarak gider ve admin tarafından listelenebilir. Bir kullanıcı aynı anda iki oturumda olamaz (SS-20).
 
 ## 7. Reviews
 
@@ -203,13 +210,13 @@ stateDiagram-v2
 | `Comment` | İsteğe bağlı. |
 | `CreatedAt`, `DeletedAt` | Düzenlenemez. Yazarı silebilir; silme geri alınmaz. |
 
-**`UserRatingSummary`**: `UserId`, `ReviewCount`, `AverageRating`. Silinmemiş değerlendirmelerden türetilir; keşfet sıralamasında ve profilde kullanılır.
+Puan özeti (değerlendirme sayısı ve ortalama) tablo değildir: silinmemiş değerlendirmelerden her okumada hesaplanır; keşfet sıralamasında ve profilde kullanılır (RV-08).
 
 ## 8. Notifications
 
-**`Notification`**: `Id`, `UserId`, `Type`, `Payload` (olaya özgü veri), `CreatedAt`, `ReadAt`.
+**`Notification`**: `Id`, `UserId`, `Type`, `ActorUserId`, ilgili kimlikler (`SwapRequestId`, `MatchId`, `SessionId`, `ReviewId`, `SkillId`), `Reason` (ör. iptal sebebi), `Deadline` (ör. son cevap tarihi), `CreatedAt`, `ReadAt`. Metin saklanmaz; istemci türe göre kurar (NT-08).
 
-**`Device`**: `Id`, `UserId`, `FcmToken` (benzersiz), `Platform` (`Android`, `Ios`, `Web`), `LastSeenAt`.
+**`Device`**: `Id`, `UserId`, `FcmToken` (benzersiz), `Platform` (`Android`, `Ios`, `Web`), `CreatedAt`, `LastSeenAt`.
 
 ## 9. Moderation
 
@@ -217,30 +224,26 @@ Dokuzuncu modül olarak 2026-10-07'de onaylandı (bkz. ADR 0001).
 
 **`Block`**: `BlockerId`, `BlockedId`, `CreatedAt`. Çift benzersizdir.
 
-**`Report`**: `Id`, `ReporterId`, `TargetType` (`User`, `Message`, `Review`), `TargetId`, `Reason`, `Description`, `Status` (`Open`, `Resolved`, `Dismissed`), `CreatedAt`, `ResolvedAt`, `ResolvedByUserId`.
+**`Report`**: `Id`, `ReporterId`, `TargetType` (`User`, `Message`, `Review`), `TargetId`, `TargetUserId` (hedefin sahibi), `TargetContent` (şikâyet anındaki metin), `Reason`, `Description`, `Status` (`Open`, `Resolved`, `Dismissed`), `CreatedAt`, `ResolvedAt`, `ResolvedByUserId`.
 
 ## 10. Modüller arası domain event'leri
 
+Olaylar süreç içinde, onları doğuran işlemle aynı transaction'da işlenir (ADR 0001). Bildirimler olayla değil, işlemi yapan handler'ın içinden `IUserNotifier` ile üretilir (NT-02).
+
 | Event | Yayınlayan | Dinleyen ve etkisi |
 |---|---|---|
-| `UserRegistered` | Identity | Profiles: boş profil oluşturur. Kayıt kaydedilmeden önce yayınlanır; profil hesapla aynı transaction'da oluşur. |
-| `SkillProposalReviewed` | Skills | Notifications: öneren kullanıcıya sonuç bildirilir. |
-| `SwapRequestSent` / `Accepted` / `Declined` / `Cancelled` / `Expired` | Matching | Notifications: ilgili tarafa bildirim. |
-| `MatchCreated` | Matching | Messaging: çiftin sohbetini açar, kapalıysa yeniden açar. İstek sahibine bildirim, isteğin kabulüyle birlikte gider. |
-| `MatchEndRequested` | Matching | Notifications: karşı tarafa bildirim. |
-| `MatchEnded` | Matching | Sessions: tamamlanmamış oturumları iptal eder. Notifications: iki tarafa bildirim. Sohbet açık kalır. |
-| `MessageSent` | Messaging | Notifications: alıcı çevrimdışıysa push. |
-| `SessionProposed` / `Scheduled` / `Declined` / `CompletionMarked` / `Completed` / `Cancelled` | Sessions | Notifications: karşı tarafa bildirim (iptalde sebep metniyle). |
-| `ReviewCreated` / `ReviewDeleted` | Reviews | Notifications: değerlendirilen kullanıcıya bildirim (yalnızca oluşturmada). |
-| `UserBlocked` | Moderation | Matching: aradaki bekleyen istekleri iptal eder, aktif eşleşmeyi sonlandırır. Messaging: aradaki sohbeti kapatır. |
-| `UserDeletionRequested` | Identity | Profiles: profili gizler. Matching: bekleyen istekleri iptal eder, aktif eşleşmeyi sonlandırır. Messaging: sohbetleri kapatır. |
-| `UserDeletionCancelled` | Identity | Profiles: profili yeniden görünür yapar. |
-| `UserDeleted` | Identity | Tüm modüller: kullanıcının verisini kalıcı olarak siler veya anonimleştirir. |
+| `UserRegistered` | Identity | Profiles: boş profil oluşturur; profil hesapla aynı transaction'da oluşur. |
+| `MatchCreated` | Matching | Messaging: çiftin sohbetini açar, kapalıysa yeniden açar. |
+| `MatchEnded` | Matching | Sessions: henüz gerçekleşmemiş oturumları iptal eder (SS-09). Sohbet açık kalır. |
+| `UserBlocked` | Moderation | Matching: bekleyen istekleri iptal eder, eşleşmeyi bitirir (bu da `MatchEnded` doğurur). Messaging: sohbeti kapatır. |
+| `AccountDeletionRequested` | Identity | Matching: bekleyen istekleri iptal eder, eşleşmeleri bitirir. Messaging: sohbetleri kapatır. Notifications: cihaz kayıtlarını siler. |
+| `AccountErased` | Identity | 30 gün sonunda Profiles, Skills, Reviews ve Notifications kullanıcının verisini siler (ID-13). |
 
-Senkron sorgular (event değil, uygulama servisi çağrısı):
+Senkron sorgular (event değil, uygulama servisi arayüzü):
 
-- Matching → Skills: yetenek gönderenin/alıcının sunduğu yetenekler arasında mı?
-- Matching, Messaging, Sessions → Identity: kullanıcının e-postası doğrulanmış mı?
-- Matching → Moderation: taraflar arasında engelleme var mı?
-- Reviews → Sessions: iki kullanıcı arasında tamamlanmış oturum var mı?
-- Keşfet (Matching) → Profiles, Skills, Reviews: listeleme verisi.
+- `IUserDirectory` (Identity), `IProfileDirectory` (Profiles), `IUserSkillDirectory` (Skills): kullanıcı, profil ve sunulan yetenek bilgisi.
+- `IInteractionRequirements`: etkileşim koşulları (doğrulanmış e-posta, tamamlanmış profil, en az bir sunulan yetenek).
+- `IBlockDirectory` (Moderation): taraflar arasında engelleme var mı.
+- `IMatchDirectory` (Matching): eşleşme, tarafları ve oturum eklenebilirliği.
+- `IConversationDirectory` (Messaging), `IReviewDirectory` (Reviews), `ISessionDirectory` (Sessions): sohbet, puan ve tamamlanmış oturum bilgisi.
+- Keşfet: modül sınırının tek istisnası olan okuma sorgusu (`IDiscoveryReadModel`, ADR 0011).

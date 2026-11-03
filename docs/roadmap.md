@@ -14,7 +14,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
 | 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
-| 8 | MVP sonrası modüller | Sürüyor: dilim 1 (görüntülü görüşme) |
+| 8 | MVP sonrası modüller | Sürüyor: dilim 1 (görüntülü görüşme) canlıda, cihaz denemesi bekliyor |
 
 ## Faz 0 — Kurulum
 
@@ -337,7 +337,7 @@ IP saklamayı kapatmak için: Sentry → Settings → Organization (`exparter`) 
 Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankfurt), e-posta Brevo, alan adı alınacak, kişisel Play Console hesabı açılacak. Önerilen ve plana alınan: DNS ve nesne depolama Cloudflare (R2). Gerekçe: ADR 0014; ADR 0007, 0010 ve 0013 güncellendi.
 
 - Backend imajı: `backend/Dockerfile`, arm64 için çapraz derleme. `--migrate` argümanıyla migration uygulanır ve süreç çıkar. Backend CI imajı her push'ta derler.
-- Sunucu: `deploy/` (Compose ile API, PostgreSQL ve Caddy; `.env.example`; gece yedeği `backup.sh`; herkese açık sayfalar `site/`). Kurulum ve günlük işler: `docs/deployment.md`.
+- Sunucu: `deploy/` (Compose ile API, PostgreSQL ve Caddy; Faz 8'den beri LiveKit de; `.env.example`; gece yedeği `backup.sh`; herkese açık sayfalar `site/`). Kurulum ve günlük işler: `docs/deployment.md`.
 - Dağıtım: `Deploy` iş akışı `main`'den imajı GHCR'ye yayımlar. `DEPLOY_HOST` değişkeni tanımlanınca migration'ı ve yeni sürümü SSH ile sunucuda çalıştırır.
 - Android: yayın derlemesi repo dışındaki yükleme anahtarıyla imzalanır (`mobile/android/key.properties`); dosya yoksa debug anahtarı kullanılır.
 - Mağaza: metinler, form yanıtları ve kapalı test adımları `docs/store/listing.md`; simge ve öne çıkan görsel `docs/store/` (üretici: `mobile/tool/generate_store_assets.dart`).
@@ -357,7 +357,8 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Sentry incelemesi (2026-11-02): uygulama dışında doğrulanan e-posta artık uygulama açılınca, öne gelince ve "zaten doğrulanmış" yanıtında fark ediliyor (1.0.0 (3)). JSON kabul etmeyen istekler boş 500 yerine doğru sorun yanıtını alıyor. İstemci hataları Sentry'ye gitmiyor. Backend 520, mobil 227 test.
 - Test geri bildirimi (2026-11-03, 1.0.0 (4)): sohbet başlığında profil fotoğrafı; profilde devam eden eşleşme veya bekleyen istek varsa yeni istek yerine durum ve ilgili ekrana geçiş (`otherUserId` filtresi); kullanıcı adına boşluk girilemiyor; "Çevrimiçi takas" / "Yüz yüze takas" adları; profildeki çark simgesinden açılan Ayarlar ekranı (görünüm, bildirim, engellenenler, yasal, çıkış, hesap silme). Backend 521, mobil 234 test; uçtan uca test emülatörde geçti.
 - Test geri bildirimi (2026-11-03, 1.0.0 (5)): kayıtta kullanıcı adındaki büyük harfler yazılırken küçük harfe dönüyor; keşfette sunulan ve istenen yetenekler ayrı çiplerde; bir kullanıcı aynı anda iki oturumda olamıyor. Kabul edilmiş oturumlar ve kişinin kendi açık teklifleri, aynı veya farklı eşleşmelerde, o zamanı tutuyor. Çakışan teklif veya kabul `session_time_taken` (kendi zamanı) ya da `other_user_busy` (karşı tarafın zamanı) ile reddediliyor. Eşzamanlı iki istek nadiren ikisi de geçebilir; veritabanı kısıtı eklenmedi. Eski uygulama sürümleri bu iki kod için genel hata mesajı gösterir. Backend 534 (178 domain, 238 uygulama, 118 entegrasyon), mobil 236 test.
-- Kalan: 1.0.0 (4) sürümünün yüklenmesi ve bağlantıların test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
+- Kapalı testteki sürüm (2026-11-03): 1.0.0 (6), görüntülü görüşmeyle birlikte Play incelemesinde (Faz 8 dilim 1).
+- Kalan: e-posta bağlantılarının test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
 
 ## Faz 8 — MVP sonrası modüller
 
@@ -365,7 +366,7 @@ Kapalı test sürerken MVP sonrasına bırakılan modüller geliştirilir (kulla
 
 | Dilim | Konu | Durum |
 |---|---|---|
-| 1 | Görüntülü görüşme | Sürüyor |
+| 1 | Görüntülü görüşme | Canlıda (2026-11-03); iki cihazla deneme bekliyor |
 
 ### Dilim 1 — Görüntülü görüşme
 
@@ -373,7 +374,12 @@ Kararlar (kullanıcı, 2026-11-03; ADR 0015): altyapı kendi sunucumuzdaki LiveK
 
 Plan: sözleşme (`POST /sessions/{id}/call-token`, oturumda pencere alanları), backend (pencere kuralı, anahtar, süresi dolan odaların kapatılması), yerel ve canlı LiveKit servisi, mobil görüşme ekranı, gizlilik metni ve Play beyanları, iki cihaz arasında uçtan uca deneme.
 
+- Sözleşme: `POST /api/v1/sessions/{sessionId}/call-token`; oturumda `callOpensAt` ve `callClosesAt`; yeni hata kodları `call_not_open_yet` ve `call_window_closed`.
+- Backend: pencere kuralı `SwapSession` içinde; anahtar LiveKit'e kamera, mikrofon ve ekran yayını izni verir, veri kanalı ve cihaz sesi yoktur; pencere kapanan, iptal edilen veya eşleşmesi biten oturumların odası arka plan işiyle kapatılır.
+- Mobil: oturum kartında "Görüşmeye katıl" (pencere açılınca), görüşme ekranı (mikrofon, kamera, kamera çevirme, ekran paylaşımı, bitirme; 5 dakika kala uyarı), arka planda "Görüşme sürüyor" bildirimiyle süren ses. Ekran paylaşımı sistemce durdurulunca (durum çubuğu, ekran kilidi) `MainActivity.kt` bunu yakalar.
 - Paketler: LiveKit sunucusu v1.13.11, livekit_client 2.13.2.
+- Testler (2026-11-03, `main` ile birleştikten sonra): backend 552 (188 domain, 241 uygulama, 123 entegrasyon), mobil 252. Emülatörde canlı olmayan ortamda uçtan uca denendi: iki taraflı görüntü, arka planda ses, ekran paylaşımı ve sistemce durdurulması, iptalde odanın kapanması.
+- Bilinen sınırlar: karşıdan gelen paylaşılan ekranın gösterimi cihazda denenmedi (ikinci emülatör belleğe sığmadı). Bağlantı tamamen yeniden kurulursa SDK ekran paylaşımını yeniden yayımlayamıyor; paylaşım kapalı görünür, kullanıcı yeniden başlatabilir (emülatör ağır yük altındayken görüldü). Yalnızca 443/TCP'ye izin veren ağlarda görüşme kurulamaz (ADR 0015).
 
 #### Görüşme için ek lokal ayar
 
@@ -386,19 +392,21 @@ dotnet user-secrets set --project src/Exparter.Api "LiveKit:ApiSecret" "<.env i�
 
 Uygulama emülatörde `ws://10.0.2.2:7880` adresine bağlanır. Medya UDP 7882'den (engelliyse TCP 7881'den) gider; `LIVEKIT_NODE_IP` sunucunun istemcilere bildirdiği adrestir.
 
-#### Canlıya alma (kullanıcı, 2026-11-03)
+#### Canlıya alma (kullanıcı, 2026-11-03; tamamlandı)
 
 Sunucuya SSH yurt ağından kapalı olduğu için sunucudaki işleri dağıtım üstlenir: `deploy/prepare-server.sh` her dağıtımda yeni sürüm başlamadan çalışır; `.env`'de eksikse `RTC_HOST`, `LIVEKIT_API_KEY`, sunucuda üretilen `LIVEKIT_API_SECRET` ve sunucunun genel IP'si olarak `LIVEKIT_NODE_IP` ekler, `iptables`'ta TCP 7881 ve UDP 7882'yi açar. Hazır sunucuda hiçbir şey değiştirmez. Gizli anahtar sunucudan çıkmaz; yerel `exparter-prod.env` yedeğinde bu değerler yoktur.
 
 1. Cloudflare DNS (kullanıcı): `rtc` için sunucu IP'sine A kaydı, proxy kapalı (gri bulut); Caddy sertifikayı kendisi alır. Merge'den önce.
 2. Oracle Security List (kullanıcı): TCP 7881 ve UDP 7882 giriş kuralları, kaynak `0.0.0.0/0`. Merge'den önce.
-3. Branch güncel `main` ile birleştirildi, testler geçti. Onayla `main`'e merge; dağıtım kaydında "Add the settings and firewall rules" adımının çıktısına bakılır, ardından iki cihazla görüşme ve ekran paylaşımı denenir (karşıdan gelen ekran henüz cihazda görülmedi).
-4. Play Console: Data safety'de fotoğraf ve video (kamera görüntüsü ve paylaşılan ekran) ile ses kaydı; ön plan servisi beyanında `microphone` ve `mediaProjection` türleri, gerekçe metinleri `docs/store/listing.md`, Play isterse kısa ekran kayıtları.
-5. Sürümü artır, AAB derle, kapalı teste yükle.
+3. `main`'e merge (2026-11-03): dağıtım sunucuyu hazırladı; `rtc.exparter.app` sertifikayla yanıt veriyor, TCP 7881 dışarıdan açık.
+4. Play Console: Data safety'de video (kamera görüntüsü ve paylaşılan ekran) ve ses kaydı, ön plan servisi beyanında "Arka planda ses girişi" (`microphone`) ve "Medya ve içerik projeksiyonu, yayın" (`mediaProjection`); beyan videosu emülatörde çekildi (`marketing/08-play-beyanlari/`, repo dışında). Ayrıntı `docs/store/listing.md`.
+5. 1.0.0 (6) derlendi ve kapalı teste yüklendi (2026-11-03).
+
+Kalan: iki gerçek cihazla görüşme ve iki yönde ekran paylaşımı denemesi; ardından dilim kapanır.
 
 ## Geliştirme ortamı
 
-2026-10-06 tarihinde ölçülen sürümler:
+2026-10-06 tarihinde ölçülen sürümler (2026-11-03'te yeniden kontrol edildi, değişmedi):
 
 | Araç | Sürüm |
 |---|---|
@@ -412,6 +420,7 @@ Sunucuya SSH yurt ağından kapalı olduğu için sunucudaki işleri dağıtım 
 | PostgreSQL imajı | `postgres:18.6-alpine` |
 | Mailpit imajı | `axllent/mailpit:v1.31.4` |
 | Garage imajı | `dxflrs/garage:v2.4.1` |
+| LiveKit imajı (2026-11-03) | `livekit/livekit-server:v1.13.11` |
 | Node.js (lint için) | 24.14.0 |
 
 Notlar:

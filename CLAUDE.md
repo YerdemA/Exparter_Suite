@@ -29,7 +29,9 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 
 - **Backend:** .NET 10, ASP.NET Core Web API, Clean Architecture, PostgreSQL + EF Core, `Mediator` (martinothamar; **MediatR kullanma**), FluentValidation, ProblemDetails (RFC 9457), JWT + rotasyonlu refresh token, Serilog, xUnit + Testcontainers.
 - **Mobil:** Flutter, feature-first (`data/`, `domain/`, `presentation/`), Riverpod (codegen), go_router, dio + üretilmiş client, freezed, flutter_secure_storage.
-- **Nesne depolama:** S3 API'si (`IObjectStorage`); lokalde Garage, canlı ortam Faz 6'da seçilecek (ADR 0010).
+- **Nesne depolama:** S3 API'si (`IObjectStorage`); lokalde Garage, canlıda Cloudflare R2 (ADR 0010, 0014).
+- **Görüntülü görüşme:** kendi sunucumuzda LiveKit; backend yalnızca görüşme anahtarı verir (ADR 0015).
+- **Canlı ortam:** Oracle Cloud'da Docker Compose (API, PostgreSQL, Caddy, LiveKit); `main`'e her merge otomatik dağıtılır (ADR 0014, `docs/deployment.md`).
 
 ## Kodlama kuralları
 
@@ -45,7 +47,7 @@ Güncel faz durumu ve geliştirme ortamı: `docs/roadmap.md`.
 ## Ortam
 
 - Windows 11, PowerShell. Altyapı Docker Desktop üzerinde.
-- Altyapıyı başlatma: `.env.example` dosyasını `.env` olarak kopyala, sonra `docker compose up -d --wait` (PostgreSQL, Mailpit ve Garage).
+- Altyapıyı başlatma: `.env.example` dosyasını `.env` olarak kopyala, sonra `docker compose up -d --wait` (PostgreSQL, Mailpit, Garage ve LiveKit).
 - Backend komutları `backend/` klasöründen: `dotnet build`, `dotnet test` (Docker gerekir), `dotnet run --project src/Exparter.Api`. Gizli ayarlar user-secrets ile verilir; ayrıntı `docs/roadmap.md` içinde.
 - Migration: `dotnet ef migrations add <Ad> --project src/Exparter.Infrastructure --startup-project src/Exparter.Api --output-dir Persistence/Migrations`.
 - Sözleşme lint'i (kökten): `npx --yes @redocly/cli@2.60.0 lint`.

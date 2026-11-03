@@ -29,13 +29,14 @@ NASIL ÇALIŞIR?
 • Sunabildiğiniz yetenekleri seviyesiyle, öğrenmek istediklerinizi de ekleyin.
 • Keşfet ekranında karşılıklı uyumlu kişiler öne çıkar: sizin sunduğunuzu isteyen ve sizin istediğinizi sunan kişiler.
 • Takas isteği gönderin; kabul edilirse eşleşirsiniz.
-• Mesajlaşın, çevrimiçi bir oturum planlayın ya da yüz yüze buluşun.
+• Mesajlaşın, çevrimiçi bir oturum planlayıp uygulamanın içinden görüntülü görüşün ya da yüz yüze buluşun.
 • Takas bitince birbirinizi değerlendirin.
 
 ÖNE ÇIKANLAR
 • Kategorilere ayrılmış yetenek kataloğu; aradığınızı bulamazsanız yeni bir yetenek önerebilirsiniz.
 • Yeteneğe, kategoriye, şehre ve takas biçimine (çevrimiçi veya yüz yüze) göre arama.
 • Anlık mesajlaşma ve bildirimler.
+• Uygulama içinde görüntülü görüşme ve ekran paylaşımı; ses ve görüntü kaydedilmez.
 • Çevrimiçi oturumlardan önce hatırlatma.
 • Değerlendirmeler ve tamamlanan takas sayıları, kiminle eşleştiğinizi bilmenize yardım eder.
 • Rahatsız eden kullanıcıları engelleme ve şikâyet etme.
@@ -68,12 +69,12 @@ Yeniden çekmek için: yerelde boş bir veritabanı oluşturup API'yi ona bağla
 | Privacy policy | `https://exparter.app/gizlilik.html` |
 | Ads | Uygulamada reklam yok. |
 | App access | Tüm özellikler giriş gerektirir. İnceleme ekibi için canlı ortamda bir hesap açıp kullanıcı adı ve parolasını buraya yazın; hesabın profili dolu, en az bir sunulan yeteneği olsun. |
-| Content rating | IARC anketi. Kullanıcılar birbiriyle iletişim kurabiliyor mu: **evet** (mesajlaşma). Kullanıcılar konumlarını paylaşabiliyor mu: **hayır** (yalnızca şehir). Şiddet, cinsellik, kumar, uyuşturucu içeriği: **yok**. |
+| Content rating | IARC anketi. Kullanıcılar birbiriyle iletişim kurabiliyor mu: **evet** (mesajlaşma, görüntülü görüşme). Kullanıcılar konumlarını paylaşabiliyor mu: **hayır** (yalnızca şehir). Şiddet, cinsellik, kumar, uyuşturucu içeriği: **yok**. |
 | Target audience | Yalnızca **18 yaş ve üzeri**. |
 | News app | Hayır. |
 | Data safety | 5. bölüm. |
 | Government apps, financial features, health | Hayır. |
-| Account deletion | Uygulama içinden: Profil → Hesabımı sil. Web: `https://exparter.app/hesap-silme.html` |
+| Account deletion | Uygulama içinden: Profil → Ayarlar (çark simgesi) → Hesabımı sil. Web: `https://exparter.app/hesap-silme.html` |
 
 ## 5. Veri güvenliği (Data safety) formu
 
@@ -104,14 +105,14 @@ Yeniden çekmek için: yerelde boş bir veritabanı oluşturup API'yi ona bağla
 
 Hiçbir veri geçici olarak işlenmiyor; hepsi saklanıyor. Form bu yanıtlarla 2026-10-28'de dolduruldu.
 
-**Görüntülü görüşmeyle eklenecekler** (Faz 8 dilim 1, ADR 0015; görüşmeli sürüm yüklenmeden önce forma girilmeli):
+**Görüntülü görüşmeyle eklenenler** (Faz 8 dilim 1, ADR 0015; 1.0.0 (6) ile forma girildi, 2026-11-03):
 
 | Play'deki tür | Bizde karşılığı | Zorunlu mu | Amaç |
 |---|---|---|---|
 | Fotoğraflar ve videolar → Videolar | Görüşmede kameranın görüntüsü ve kullanıcı paylaşırsa ekranının görüntüsü | Zorunlu değil (kullanıcı görüşmeye katılırsa) | Uygulama işlevi; **geçici olarak işlenir** (yalnızca iletilir, saklanmaz) |
 | Ses → Ses kayıtları | Görüşmede mikrofonun sesi | Zorunlu değil (kullanıcı görüşmeye katılırsa) | Uygulama işlevi; **geçici olarak işlenir** |
 
-İzin beyanları: kamera ve mikrofon için ayrı beyan gerekmez; **ön plan servisi (Foreground service) beyanı** gerekir, iki tür için: `microphone`, gerekçe "Kullanıcı başlattığı bir görüntülü görüşmede uygulamadan çıkınca ses sürsün diye"; `mediaProjection`, gerekçe "Kullanıcı görüşmede ekranını paylaşmayı seçtiğinde, sistemin izin penceresinden sonra ve yalnızca paylaşım süresince". Play her tür için kısa bir video bağlantısı isteyebilir (görüşmeye katılma, uygulamadan çıkma, ekranı paylaşma). Content rating anketinde "Kullanıcılar birbiriyle iletişim kurabiliyor mu" zaten **evet**; görüntülü görüşme yanıtı değiştirmez.
+İzin beyanları: kamera ve mikrofon için ayrı beyan gerekmez; **ön plan servisi (Foreground service) beyanı** gerekir, iki tür için: `microphone`, gerekçe "Kullanıcı başlattığı bir görüntülü görüşmede uygulamadan çıkınca ses sürsün diye"; `mediaProjection`, gerekçe "Kullanıcı görüşmede ekranını paylaşmayı seçtiğinde, sistemin izin penceresinden sonra ve yalnızca paylaşım süresince". Beyanda seçilen görev türleri: `microphone` için "Arka planda ses girişi", `mediaProjection` için "Medya ve içerik projeksiyonu, yayın". Play her tür için bir video bağlantısı ister; iki tür için de aynı video kullanıldı (görüşmeye katılma, uygulamadan çıkınca "Görüşme sürüyor" bildirimi, ekranı paylaşma, başka uygulamaya geçme, paylaşımı durdurma). Video emülatörde, yerel ortamda kurgusal hesaplarla çekildi: `marketing/08-play-beyanlari/gorusme-ve-ekran-paylasimi.mp4` (repo dışında), YouTube'da liste dışı. Content rating anketinde "Kullanıcılar birbiriyle iletişim kurabiliyor mu" zaten **evet**; görüntülü görüşme yanıtı değiştirmez.
 
 Sıra (1.0.0 (6), 2026-11-03): önce Data safety formu güncellenir; sonra kapalı test kanalında yeni sürüm oluşturulup AAB yüklenir. Paket ön plan servisi türleri bildirdiği için Play, sürüm incelemeye gönderilmeden önce **App content → Foreground service permissions** beyanını ister. Beyan her tür için görevin ne olduğunu, ertelenirse veya kesilirse kullanıcının ne kaybedeceğini ve özelliği gösteren bir video bağlantısını (YouTube'da liste dışı) sorar.
 
@@ -143,5 +144,5 @@ Hukukçu görüşü alınmadı (kullanıcı kararı, 2026-10-27); konular benzer
 
 ## 8. Uygulamada kalan işler
 
-- **Uygulama içinde gizlilik bağlantısı:** Yapıldı (2026-10-27): kayıt ekranında kullanım koşulları ve aydınlatma metni, profilde üç metnin bağlantısı.
+- **Uygulama içinde gizlilik bağlantısı:** Yapıldı (2026-10-27): kayıt ekranında kullanım koşulları ve aydınlatma metni; üç metnin bağlantısı önce profilde, 1.0.0 (4)'ten beri Ayarlar ekranında.
 - **Ekran görüntüleri:** Yapıldı (2026-10-27, 3. bölüm).

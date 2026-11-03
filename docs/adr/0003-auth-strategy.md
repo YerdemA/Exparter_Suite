@@ -45,5 +45,5 @@
 
 - Access token iptal edilemez; askıya alınan bir kullanıcı en fazla 15 dakika daha erişebilir. Kabul edilen bir ödünleşimdir.
 - Rotasyon, istemcide eşzamanlı yenileme isteklerini sıraya koymayı gerektirir (mobilde tek bir yenileme interceptor'ı, Faz 4).
-- E-posta gönderimi için bir sağlayıcı gerekir. Lokalde yakalayıcı bir SMTP sunucusu kullanılır; gerçek sağlayıcı Faz 3'te ayrı bir ADR ile seçilir.
+- E-posta gönderimi için bir sağlayıcı gerekir: lokalde Mailpit, canlıda Brevo (ADR 0007).
 - Harici giriş eklendiğinde `User.PasswordHash` boş olabilir hale gelir ve ayrı bir harici kimlik tablosu eklenir; mevcut token modeli değişmez.

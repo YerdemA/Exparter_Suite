@@ -35,7 +35,7 @@ Kıdemli bir yazılım mimarı ve full-stack geliştirici gibi çalışacaksın.
 **Dil ve görsel stil:**
 
 - Arayüz dili **Türkçe**dir. Kod, değişken adları, commit mesajları ve kod yorumları **İngilizce** olacak.
-- Görsel stil enerjik ve renkli olacak. Palet pembe, mercan, amber, turkuaz ve mor tonlarından oluşur.
+- Görsel stil enerjik ve renkli olacak. Palet "İndigo ve turkuaz"dır (kullanıcı kararı, 2026-10-14; ilk taslak pembe, mercan, amber, turkuaz ve mordu). Değerler `docs/roadmap.md` Faz 6 dilim 1'de.
 - Tüm renk, tipografi ve boşluk değerleri merkezi bir tema/design token yapısından gelmeli. Bileşenlere sabit renk kodu yazma.
 
 **Geliştirme ortamı:** Windows 11 Pro. Terminal komutlarını PowerShell uyumlu ver. Altyapı servisleri Docker Desktop üzerinde çalışacak.
@@ -82,8 +82,11 @@ Kurulumdan önce her paketin **güncel kararlı sürümünü** kontrol et. Sür�
 | Kimlik doğrulama | JWT access token (kısa ömürlü) + rotasyonlu refresh token (veritabanında hash'lenmiş olarak saklanır) |
 | Gerçek zamanlı | SignalR |
 | Push bildirim | Firebase Cloud Messaging |
-| E-posta | Lokalde yakalayıcı bir SMTP sunucusu; gerçek sağlayıcı Faz 3'te ADR ile seçilecek |
-| Dosya depolama | S3 uyumlu object storage, istemciye presigned URL ile. Lokalde Garage; canlı ortam Faz 6'da seçilecek (ADR 0010). |
+| E-posta | SMTP; lokalde Mailpit, canlıda Brevo (ADR 0007) |
+| Dosya depolama | S3 uyumlu object storage, istemciye presigned URL ile. Lokalde Garage, canlıda Cloudflare R2 (ADR 0010, 0014). |
+| Görüntülü görüşme | Kendi sunucumuzda LiveKit; backend yalnızca görüşme anahtarı verir (ADR 0015, Faz 8) |
+| Hata izleme | Sentry, AB veri bölgesi (ADR 0013) |
+| Canlı ortam | Oracle Cloud'da Docker Compose, Caddy; `main`'den otomatik dağıtım (ADR 0014) |
 | Loglama | Serilog, yapılandırılmış log |
 | Test | xUnit, Testcontainers (gerçek PostgreSQL ile entegrasyon testi) |
 | API dokümanı | OpenAPI (sözleşmeyle uyumu CI'da kontrol edilir) |
@@ -113,12 +116,15 @@ Proje klasörü `Exparter_Suite` olarak mevcut. Yapı şöyle olacak:
 
 ```
 Exparter_Suite/
-├── AGENTS.md / CLAUDE.md      # Bu brief'in kısa özeti + çalışma kuralları
+├── CLAUDE.md                  # Bu brief'in kısa özeti + çalışma kuralları
 ├── docs/
 │   ├── PROJECT_BRIEF.md       # Bu belge
 │   ├── adr/                   # 0001-modular-monolith.md, 0002-postgresql.md ...
-│   ├── domain/                # Domain modeli, iş kuralları, sözlük
+│   ├── domain/                # Domain modeli, iş kuralları, sözlük, kararlar
 │   ├── erd/                   # ERD (Mermaid)
+│   ├── legal/                 # Hukuki uyum araştırması, sözleşme talepleri
+│   ├── store/                 # Play mağaza kaydı, görseller
+│   ├── api-conventions.md, realtime.md, deployment.md
 │   └── roadmap.md             # Faz durumu
 ├── contracts/
 │   └── openapi.yaml
@@ -135,10 +141,13 @@ Exparter_Suite/
 │       └── Exparter.Api.IntegrationTests/
 ├── mobile/                    # Flutter projesi
 ├── web/                       # Faz 7'ye kadar boş
-├── docker-compose.yml         # postgres, mailpit, garage
+├── deploy/                    # Canlı ortam: compose, Caddyfile, LiveKit, yedek, herkese açık sayfalar
+├── infra/                     # Lokal servislerin ayarları (Garage, LiveKit)
+├── scripts/                   # Admin betikleri, mağaza görüntüsü verisi
+├── docker-compose.yml         # postgres, mailpit, garage, livekit
 ├── .editorconfig
 ├── .gitignore
-└── .github/workflows/         # backend-ci.yml, mobile-ci.yml
+└── .github/workflows/         # backend-ci.yml, mobile-ci.yml, deploy.yml
 ```
 
 ---
@@ -203,7 +212,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 **Kapsam dışı (MVP sonrası):**
 - Web istemcisi
 - Admin paneli
-- Görüntülü görüşme
+- Görüntülü görüşme (MVP sonrası Faz 8 dilim 1'de yapıldı, 2026-11-03)
 - Ödeme
 - Gelişmiş öneri algoritması
 - Çoklu dil desteği
@@ -296,6 +305,11 @@ Her dilim için sıra şudur: sözleşme kontrolü, backend, testler, mobil ekra
 - Web teknolojisi için ADR yaz ve onayımı al.
 - Aynı API ve SignalR hub'ları üzerine web istemcisini geliştir.
 - Web için gerekirse cookie tabanlı BFF katmanı ekle.
+- Faz 8'den sonra ele alınır (kullanıcı kararı, 2026-11-03).
+
+### Faz 8 — MVP Sonrası Modüller
+- Kapalı test sürerken Bölüm 7'deki kapsam dışı modüller, her biri bir dilim olarak yapılır (kullanıcı kararı, 2026-11-03).
+- `main`'e merge edilen backend canlıya çıktığı için yalnızca eski uygulama sürümlerini bozmayan değişiklikler merge edilir.
 
 ---
 
