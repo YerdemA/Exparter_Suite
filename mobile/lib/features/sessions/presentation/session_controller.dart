@@ -21,6 +21,11 @@ Future<List<SwapSession>> matchSessions(Ref ref, String matchId) =>
 @Riverpod(retry: noRetry)
 Future<UserStats> userStats(Ref ref, String userId) => ref.watch(sessionRepositoryProvider).getUserStats(userId);
 
+/// The time, refreshed every half minute, so that a session's call button appears when
+/// its window opens without leaving the screen.
+@riverpod
+Stream<DateTime> callClock(Ref ref) => Stream.periodic(const Duration(seconds: 30), (_) => DateTime.now());
+
 /// Runs the session actions. Its state is the progress of the action in flight; each
 /// method reports whether it succeeded.
 @riverpod

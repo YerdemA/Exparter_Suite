@@ -68,4 +68,8 @@ class ApiSessionRepository implements SessionRepository {
 
   @override
   Future<UserStats> getUserStats(String userId) => guardApiCall(() => _api.profiles.getUserStats(userId: userId));
+
+  @override
+  Future<CallToken> createCallToken(String sessionId) =>
+      guardApiCall(() => _api.sessions.createSessionCallToken(sessionId: sessionId));
 }

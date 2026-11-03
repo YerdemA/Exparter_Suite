@@ -18,6 +18,10 @@ abstract final class AppRoutes {
   static const matchDetailSegment = ':$matchIdParameter';
   static const matchIdParameter = 'matchId';
   static const proposeSessionSegment = 'sessions/new';
+
+  /// Outside the tab shell, so that the call has the whole screen.
+  static const call = '/calls/:$sessionIdParameter';
+  static const sessionIdParameter = 'sessionId';
   static const messages = '/messages';
   static const conversationSegment = ':$conversationIdParameter';
   static const conversationIdParameter = 'conversationId';
@@ -43,6 +47,8 @@ abstract final class AppRoutes {
   static String matchDetail(String matchId) => '$matches/$matchId';
 
   static String proposeSession(String matchId) => '$matches/$matchId/$proposeSessionSegment';
+
+  static String callOf(String sessionId) => '/calls/$sessionId';
 
   static String conversation(String conversationId) => '$messages/$conversationId';
 

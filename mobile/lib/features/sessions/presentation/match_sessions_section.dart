@@ -9,6 +9,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../matches/presentation/match_labels.dart';
+import '../domain/call.dart';
 import 'session_controller.dart';
 
 /// The sessions of a match, with the ways to add one while the match is running.
@@ -188,6 +189,7 @@ class _SessionCard extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(session.note!, style: theme.textTheme.bodyMedium),
             ],
+            if (online) _CallEntry(session: session),
             ...switch (session.status) {
               SwapSessionStatus.proposed when proposedByMe => [
                   action(l10n.sessionCancel, () => _cancel(context, ref, title: l10n.sessionCancelTitle)),
@@ -256,6 +258,50 @@ class _SessionCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// The way into the session's video call while it is open, and when it opens before then.
+class _CallEntry extends ConsumerWidget {
+  const _CallEntry({required this.session});
+
+  final SwapSession session;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    // Only sessions that have a call keep the clock running.
+    if (callWindowAt(session, DateTime.now()) case CallWindow.none || CallWindow.closed) {
+      return const SizedBox.shrink();
+    }
+
+    final window = callWindowAt(session, ref.watch(callClockProvider).value ?? DateTime.now());
+    return switch (window) {
+      CallWindow.open => Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.push(AppRoutes.callOf(session.id)),
+                icon: const Icon(Icons.videocam),
+                label: Text(l10n.sessionJoinCall),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(l10n.sessionCallPermissionHint, style: theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+      CallWindow.upcoming => Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Text(
+            l10n.sessionCallOpensAt(TimeOfDay.fromDateTime(session.callOpensAt!.toLocal()).format(context)),
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      _ => const SizedBox.shrink(),
+    };
   }
 }
 
