@@ -9,6 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../messages/presentation/message_controller.dart';
 import '../../notifications/presentation/notification_controller.dart';
 import '../../notifications/presentation/push_controller.dart';
+import '../../update/presentation/app_update_controller.dart';
 
 Future<void> _explainPush(BuildContext context, WidgetRef ref) async {
   await ref.read(pushPromptStoreProvider).markShown();
@@ -63,6 +64,9 @@ class AppShell extends ConsumerWidget {
           unawaited(_explainPush(context, ref));
         }
       });
+
+    // Testers seldom open the store, so newer versions are offered here.
+    listenForAppUpdates(context, ref);
 
     return Scaffold(
       body: navigationShell,

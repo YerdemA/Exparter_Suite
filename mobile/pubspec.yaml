@@ -54,6 +54,7 @@ dependencies:
   livekit_client: 2.13.2
   flutter_foreground_task: 11.0.3
   wakelock_plus: 1.8.2
+  in_app_update: 5.0.0
 
 dev_dependencies:
   flutter_test:

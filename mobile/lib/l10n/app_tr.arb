@@ -450,6 +450,8 @@
   "callStopSharing": "Paylaşımı durdur",
   "callSharingScreen": "Ekranınızı paylaşıyorsunuz. Bildirimler de karşı tarafa görünür.",
   "callEnd": "Bitir",
+  "updateReady": "Uygulamanın yeni sürümü indirildi.",
+  "updateRestart": "Yeniden başlat",
   "callNotificationTitle": "Görüşme sürüyor",
   "callNotificationText": "Exparter'a dönmek için dokunun.",
   "errorCallNotOpenYet": "Görüşmeye en erken başlangıçtan 10 dakika önce katılabilirsiniz.",
