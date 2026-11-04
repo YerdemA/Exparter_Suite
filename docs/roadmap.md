@@ -14,7 +14,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
 | 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
-| 8 | MVP sonrası modüller | Sürüyor: dilim 1 (görüntülü görüşme) tamamlandı, sırada dilim 2 |
+| 8 | MVP sonrası modüller | Sürüyor: dilim 1 tamamlandı, dilim 2 (görüşmede uçtan uca şifreleme) sürüyor |
 
 ## Faz 0 — Kurulum
 
@@ -371,7 +371,7 @@ Plan ve sıra kullanıcı tarafından onaylandı (2026-11-04). Sıranın mantı�
 | Dilim | Konu | Kapsam | Durum |
 |---|---|---|---|
 | 1 | Görüntülü görüşme | LiveKit, ekran paylaşımı | Tamamlandı (2026-11-04): iki gerçek cihazla denendi; eşleşme bitince görüşme de kapanıyor |
-| 2 | Görüşmede uçtan uca şifreleme | LiveKit kare şifrelemesi; anahtar iki cihaz arasında üretilir, sunucu yalnızca şifreli paketleri iletir; karşılaştırılabilir güvenlik kodu; gizlilik metni. Mesajlaşmaya uçtan uca şifreleme eklenmez (kullanıcı kararı, 2026-11-04): şikâyet ve moderasyon, web istemcisi ve çoklu cihaz bunu zorlaştırır. | Başlamadı |
+| 2 | Görüşmede uçtan uca şifreleme | LiveKit kare şifrelemesi; anahtar iki cihaz arasında üretilir, sunucu yalnızca şifreli paketleri iletir; karşılaştırılabilir güvenlik kodu; gizlilik metni. Mesajlaşmaya uçtan uca şifreleme eklenmez (kullanıcı kararı, 2026-11-04): şikâyet ve moderasyon, web istemcisi ve çoklu cihaz bunu zorlaştırır. | Sürüyor |
 | 3 | Güven göstergesi ve rozetler | Var olan istatistiklerden (eşleşme, oturum, puan) profilde güven göstergesi ve rozetler | Başlamadı |
 | 4 | Mesajlarda dosya | Görsel ile not ve kaynak paylaşımı için PDF, Word gibi belgeler (kullanıcı kararı, 2026-11-04); tür ve boyut sınırları, şikâyet akışı | Başlamadı |
 | 5 | Kapsamlı yetenek kataloğu | Alt kategoriler, çok daha fazla yetenek, katalogda arama; mevcut kullanıcı yeteneklerinin taşınması | Başlamadı |
@@ -385,6 +385,15 @@ Faz 8'in dışında kalanlar:
 
 - **Üyelik ve ödeme** (Google Play Billing, yetenek sınırının plana bağlanması): genel yayından ve uygulama kitle kazandıktan sonra (kullanıcı kararı, 2026-11-04). O zamana kadar Exparter ücretsizdir.
 - **Reşit olmayan kullanıcılar:** Faz 8'e alınmadı (kullanıcı kararı, 2026-11-04); veli onayı ve yetişkinlerle iletişim ciddi hukuki risk taşır, ayrı bir kararla ele alınır.
+
+### Dilim 2 — Görüşmede uçtan uca şifreleme
+
+Plan kullanıcı tarafından onaylandı (2026-11-04; ADR 0016). Branch `phase-8/2-call-e2ee`.
+
+- Cihazlar X25519 ile anahtarı kendi aralarında üretir; açık anahtarlar LiveKit katılımcı özelliği olarak yayımlanır (veri kanalı, anahtar anlaşılmadan şifrelendiği için kullanılamadı), ortak anahtar sunucuya hiç gitmez. LiveKit kare şifrelemesi kamera, mikrofon ve ekran paylaşımını şifreler.
+- Kararlar (kullanıcı, 2026-11-04): görüşme ekranında iki tarafta aynı çıkan 6 haneli güvenlik kodu gösterilir; karşı taraf eski sürümdeyse görüşme şifresiz sürmez, güncellemesi gerektiği söylenir; şifreleme kurulamazsa görüşme açılmaz.
+- Adımlar: ADR 0016; backend (görüşme anahtarında kendi özelliklerini güncelleme izni); mobil (anahtar değişimi, güvenlik kodu, görüşme ekranı durumları, `cryptography` 2.9.0); testler; gizlilik metni; iki gerçek cihazla deneme ve 1.0.0+8.
+- Emülatörde doğrulandı (2026-11-04): yerel LiveKit'e karşı uygulamanın bağlantı sınıfı ile ikinci bir katılımcı aynı güvenlik kodunu buldu ve karşı taraf kamera görüntüsünü anlaşılan anahtarla çözdü. İlk denemede açık anahtarlar veri kanalından gidiyordu ve ulaşmadı (LiveKit veri mesajlarını da henüz anlaşılmamış anahtarla şifreliyor); anahtarlar katılımcı özelliğine taşındı. İki gerçek cihazla deneme bekliyor. Backend 561, mobil 273 test.
 
 ### Dilim 1 — Görüntülü görüşme
 

@@ -72,4 +72,7 @@ abstract final class AppSizes {
   static const callPreviewHeight = 160.0;
 
   static const callControlIcon = 28.0;
+
+  /// The lock beside the safety code of an encrypted call.
+  static const callBadgeIcon = 18.0;
 }

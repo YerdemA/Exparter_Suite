@@ -432,6 +432,22 @@
   "sessionCallPermissionHint": "Katıldığınızda kamera ve mikrofon izni istenir.",
   "callConnecting": "Bağlanılıyor…",
   "callWaiting": "Karşı tarafın katılması bekleniyor.",
+  "callSecuring": "Görüşme şifreleniyor…",
+  "callPeerOutdated": "Karşı tarafın uygulaması güncel değil. Görüşme için uygulamayı güncellemesi gerekiyor.",
+  "callEncryptionFailed": "Görüşme güvenli biçimde başlatılamadı. Uygulamayı güncelleyip yeniden deneyin.",
+  "callEncrypted": "Uçtan uca şifreli · {code}",
+  "@callEncrypted": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "callSafetyCodeTitle": "Güvenlik kodu: {code}",
+  "@callSafetyCodeTitle": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "callSafetyCodeBody": "Görüşmenin sesi, görüntüsü ve paylaşılan ekran yalnızca sizin ve karşı tarafın telefonunda çözülebilir; Exparter dahil kimse göremez.\n\nKarşı tarafın ekranında da aynı kod yazıyorsa aranıza kimse girmemiştir. Kodlar farklıysa görüşmeyi bitirin ve bize bildirin.",
   "callRemoteCameraOff": "Karşı tarafın kamerası kapalı.",
   "callReconnecting": "Bağlantı yeniden kuruluyor…",
   "callClosingSoon": "Görüşme 5 dakika içinde kapanacak.",

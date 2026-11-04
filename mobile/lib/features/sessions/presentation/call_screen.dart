@@ -8,6 +8,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/call.dart';
+import '../domain/call_encryption.dart';
 import 'call_controller.dart';
 
 /// The video call of an online session, full screen.
@@ -60,7 +61,11 @@ class _CallScreenState extends ConsumerState<CallScreen> {
           CallPhase.connecting => _Message(icon: null, text: l10n.callConnecting),
           CallPhase.failed => _Message(
               icon: Icons.videocam_off_outlined,
-              text: call.error is CallMediaException ? l10n.callMediaDenied : errorMessage(l10n, call.error ?? Object()),
+              text: switch (call.error) {
+                CallMediaException() => l10n.callMediaDenied,
+                CallEncryptionException() => l10n.callEncryptionFailed,
+                final error => errorMessage(l10n, error ?? Object()),
+              },
               action: (l10n.callBack, _back),
             ),
           CallPhase.ended => _Message(
@@ -95,16 +100,24 @@ class _InCall extends StatelessWidget {
       CallState(sharingScreen: true) => l10n.callSharingScreen,
       _ => null,
     };
+    final secured = call.encryption == CallEncryption.secured;
     // While the other user shares their screen, it fills the view and their camera takes
-    // the small corner instead of this user's own.
-    final corner = call.remoteScreen != null ? call.remoteVideo : (call.cameraOn ? call.localVideo : null);
+    // the small corner instead of this user's own. Their media cannot be decrypted before
+    // the key is agreed, so it is not shown until then.
+    final corner = secured && call.remoteScreen != null ? call.remoteVideo : (call.cameraOn ? call.localVideo : null);
 
     return Stack(
       children: [
         Positioned.fill(
           child: switch (call) {
-            CallState(remoteScreen: final VideoTrack screen) => VideoTrackRenderer(screen, fit: VideoViewFit.contain),
-            CallState(remoteVideo: final VideoTrack video) => VideoTrackRenderer(video, fit: VideoViewFit.cover),
+            CallState(phase: CallPhase.inCall, encryption: CallEncryption.pending) =>
+              _Message(icon: null, text: l10n.callSecuring),
+            CallState(phase: CallPhase.inCall, encryption: CallEncryption.peerOutdated) =>
+              _Message(icon: Icons.system_update_outlined, text: l10n.callPeerOutdated),
+            CallState(remoteScreen: final VideoTrack screen) when secured =>
+              VideoTrackRenderer(screen, fit: VideoViewFit.contain),
+            CallState(remoteVideo: final VideoTrack video) when secured =>
+              VideoTrackRenderer(video, fit: VideoViewFit.cover),
             CallState(phase: CallPhase.inCall) => _Message(icon: Icons.videocam_off_outlined, text: l10n.callRemoteCameraOff),
             _ => _Message(icon: Icons.hourglass_empty, text: l10n.callWaiting),
           },
@@ -133,6 +146,13 @@ class _InCall extends StatelessWidget {
                 child: Text(banner, style: const TextStyle(color: AppPalette.nightInk)),
               ),
             ),
+          ),
+        if (call.safetyCode case final String code)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: AppSpacing.lg + AppSizes.control + AppSpacing.sm + AppSpacing.md,
+            child: Center(child: _SafetyCode(code: code)),
           ),
         Positioned(
           left: 0,
@@ -171,6 +191,50 @@ class _InCall extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Says the call is end-to-end encrypted, with the code both users can compare.
+class _SafetyCode extends StatelessWidget {
+  const _SafetyCode({required this.code});
+
+  final String code;
+
+  Future<void> _explain(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.lock_outline),
+        title: Text(l10n.callSafetyCodeTitle(code)),
+        content: Text(l10n.callSafetyCodeBody),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionClose))],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      color: AppPalette.nightContainerHigh,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        onTap: () => _explain(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lock_outline, size: AppSizes.callBadgeIcon, color: AppPalette.nightInk),
+              const SizedBox(width: AppSpacing.sm),
+              Text(l10n.callEncrypted(code), style: const TextStyle(color: AppPalette.nightInk)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

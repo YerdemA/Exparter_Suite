@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../data/api_session_repository.dart';
 import '../data/livekit_call_connection.dart';
 import '../domain/call.dart';
+import '../domain/call_encryption.dart';
 
 part 'call_controller.g.dart';
 
@@ -33,6 +34,19 @@ enum CallEnd {
   lost,
 }
 
+/// Where the call's end-to-end encryption stands with the other user (ADR 0016).
+enum CallEncryption {
+  /// The other user is not there yet, or their public key has not come.
+  pending,
+
+  /// Both devices have the same key; [CallState.safetyCode] is set.
+  secured,
+
+  /// The other user is there but sent no public key: their app is too old for encrypted
+  /// calls. The call does not go on unencrypted.
+  peerOutdated,
+}
+
 @immutable
 class CallState {
   const CallState({
@@ -41,6 +55,8 @@ class CallState {
     this.cameraOn = true,
     this.closingSoon = false,
     this.sharingScreen = false,
+    this.encryption = CallEncryption.pending,
+    this.safetyCode,
     this.end,
     this.error,
     this.localVideo,
@@ -51,6 +67,10 @@ class CallState {
   /// How long before the call closes the users are told.
   static const closingWarning = Duration(minutes: 5);
 
+  /// How long the other user's public key may take before their app is taken to be too
+  /// old for encrypted calls. Key messages arrive within a second.
+  static const keyWait = Duration(seconds: 6);
+
   final CallPhase phase;
   final bool microphoneOn;
   final bool cameraOn;
@@ -60,6 +80,11 @@ class CallState {
 
   /// This user's screen is being sent.
   final bool sharingScreen;
+
+  final CallEncryption encryption;
+
+  /// The code both users can compare aloud; null until [CallEncryption.secured].
+  final String? safetyCode;
 
   final CallEnd? end;
   final Object? error;
@@ -86,6 +111,16 @@ class CallController extends _$CallController {
   bool _captureAllowed = false;
   bool _startingShare = false;
 
+  CallKeyAgreement? _agreement;
+  StreamSubscription<List<int>>? _keyMessages;
+  Timer? _keyTimer;
+
+  /// The other user's public key the current key was agreed with.
+  Uint8List? _otherKey;
+  bool _otherWasPresent = false;
+  CallEncryption _encryption = CallEncryption.pending;
+  String? _safetyCode;
+
   @override
   CallState build(String sessionId) {
     ref.onDispose(() => unawaited(_release()));
@@ -105,9 +140,26 @@ class CallController extends _$CallController {
         return;
       }
 
+      _agreement = await CallKeyAgreement.create();
+      if (!ref.mounted) {
+        return;
+      }
+
       final connection = _connection = ref.read(callConnectionFactoryProvider)();
       _changes = connection.changes.listen((_) => _sync());
+      _keyMessages = connection.keyMessages.listen((message) => unawaited(_onKeyMessage(message)));
       await connection.connect(token.url, token.token);
+      if (!ref.mounted) {
+        return;
+      }
+
+      // Stays in the room for the other user to find, whenever they come in.
+      try {
+        await connection.sendKeyMessage(_agreement!.message);
+      } on Object {
+        throw const CallEncryptionException();
+      }
+
       if (!ref.mounted) {
         return;
       }
@@ -227,6 +279,7 @@ class CallController extends _$CallController {
       return;
     }
 
+    _followPresence(connection);
     state = CallState(
       phase: connection.reconnecting
           ? CallPhase.reconnecting
@@ -235,10 +288,69 @@ class CallController extends _$CallController {
       cameraOn: state.cameraOn,
       closingSoon: state.closingSoon,
       sharingScreen: connection.sharingScreen,
+      encryption: _encryption,
+      safetyCode: _safetyCode,
       localVideo: connection.localVideo,
       remoteVideo: connection.remoteVideo,
       remoteScreen: connection.remoteScreen,
     );
+  }
+
+  /// Waits for the other user's key whenever they come into the call, and forgets the
+  /// agreed key when they leave: back, they bring a new key pair.
+  void _followPresence(CallConnection connection) {
+    final present = connection.otherPresent;
+    if (present == _otherWasPresent) {
+      return;
+    }
+
+    _otherWasPresent = present;
+    _keyTimer?.cancel();
+    if (present) {
+      _keyTimer = Timer(CallState.keyWait, () {
+        if (_encryption == CallEncryption.pending) {
+          _encryption = CallEncryption.peerOutdated;
+          _sync();
+        }
+      });
+    } else {
+      _otherKey = null;
+      _encryption = CallEncryption.pending;
+      _safetyCode = null;
+    }
+  }
+
+  Future<void> _onKeyMessage(List<int> message) async {
+    final agreement = _agreement;
+    final connection = _connection;
+    final otherKey = CallKeyAgreement.readMessage(message);
+    if (agreement == null ||
+        connection == null ||
+        otherKey == null ||
+        listEquals(otherKey, agreement.publicKey) ||
+        listEquals(otherKey, _otherKey)) {
+      return;
+    }
+
+    try {
+      final secret = await agreement.agree(otherKey, sessionId);
+      await connection.setEncryptionKey(secret.key);
+      if (!ref.mounted || _connection != connection) {
+        return;
+      }
+
+      _otherKey = otherKey;
+      _encryption = CallEncryption.secured;
+      _safetyCode = secret.safetyCode;
+      _keyTimer?.cancel();
+      _sync();
+    } on Object {
+      if (ref.mounted) {
+        state = const CallState(phase: CallPhase.failed, error: CallEncryptionException());
+      }
+
+      await _release();
+    }
   }
 
   void _update({bool? microphoneOn, bool? cameraOn, bool? closingSoon}) {
@@ -252,6 +364,8 @@ class CallController extends _$CallController {
       cameraOn: cameraOn ?? state.cameraOn,
       closingSoon: closingSoon ?? state.closingSoon,
       sharingScreen: state.sharingScreen,
+      encryption: state.encryption,
+      safetyCode: state.safetyCode,
       localVideo: _connection?.localVideo,
       remoteVideo: _connection?.remoteVideo,
       remoteScreen: _connection?.remoteScreen,
@@ -270,6 +384,13 @@ class CallController extends _$CallController {
   Future<void> _release() async {
     _warningTimer?.cancel();
     _closeTimer?.cancel();
+    _keyTimer?.cancel();
+    final keyMessages = _keyMessages;
+    _keyMessages = null;
+    _agreement = null;
+    _otherKey = null;
+    _otherWasPresent = false;
+    await keyMessages?.cancel();
     final changes = _changes;
     final connection = _connection;
     _changes = null;

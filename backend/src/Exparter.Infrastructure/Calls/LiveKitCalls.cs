@@ -41,8 +41,8 @@ internal sealed class LiveKitCalls(IOptions<LiveKitOptions> options, TimeProvide
 {
     /// <summary>
     /// What a participant may send. The shared screen goes without the device's sound, so
-    /// that notifications and other apps are not heard by the other user; data messages are
-    /// left out, since a session does not need them.
+    /// that notifications and other apps are not heard by the other user; data messages
+    /// are left out, since a session does not need them.
     /// </summary>
     private static readonly string[] PublishSources = ["camera", "microphone", "screen_share"];
 
@@ -65,6 +65,10 @@ internal sealed class LiveKitCalls(IOptions<LiveKitOptions> options, TimeProvide
                 ["canPublish"] = true,
                 ["canSubscribe"] = true,
                 ["canPublishData"] = false,
+
+                // Each device sets its public key as an attribute of its own, with which
+                // the two agree on the call's encryption key (ADR 0016).
+                ["canUpdateOwnMetadata"] = true,
                 ["canPublishSources"] = PublishSources,
             },
             expiresAt,

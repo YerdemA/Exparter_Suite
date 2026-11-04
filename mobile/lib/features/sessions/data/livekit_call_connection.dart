@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../domain/call.dart';
+import '../domain/call_encryption.dart';
 
 part 'livekit_call_connection.g.dart';
 
@@ -19,21 +22,20 @@ CallConnection Function() callConnectionFactory(Ref ref) => LiveKitCallConnectio
 CallKeepAlive callKeepAlive(Ref ref) => ForegroundCallKeepAlive();
 
 class LiveKitCallConnection implements CallConnection {
-  LiveKitCallConnection()
-      : _room = Room(
-          roomOptions: const RoomOptions(
-            // Sends and receives only the quality the other screen needs.
-            adaptiveStream: true,
-            dynacast: true,
-            defaultCameraCaptureOptions: CameraCaptureOptions(cameraPosition: CameraPosition.front),
-          ),
-        );
+  LiveKitCallConnection();
 
   /// Fires when the system ended the screen share by itself (MainActivity.kt).
   static const _captureStops = EventChannel('com.exparter.app/screen_capture');
 
-  final Room _room;
+  /// Made in [connect], since setting up encryption takes a moment.
+  Room? _roomOrNull;
+  BaseKeyProvider? _keyProvider;
   final _changes = StreamController<void>.broadcast();
+  final _keyMessages = StreamController<List<int>>.broadcast();
+
+  /// The other user's key attribute last passed on, so that an unrelated attribute
+  /// change does not pass it on again.
+  String? _otherKey;
   StreamSubscription<void>? _captureStopsSubscription;
   EventsListener<RoomEvent>? _listener;
   bool _reconnecting = false;
@@ -44,10 +46,15 @@ class LiveKitCallConnection implements CallConnection {
   Stream<void> get changes => _changes.stream;
 
   @override
-  bool get otherPresent => _room.remoteParticipants.isNotEmpty;
+  Stream<List<int>> get keyMessages => _keyMessages.stream;
+
+  Room get _room => _roomOrNull!;
 
   @override
-  VideoTrack? get localVideo => _videoOf(_room.localParticipant?.videoTrackPublications, TrackSource.camera);
+  bool get otherPresent => _roomOrNull?.remoteParticipants.isNotEmpty ?? false;
+
+  @override
+  VideoTrack? get localVideo => _videoOf(_roomOrNull?.localParticipant?.videoTrackPublications, TrackSource.camera);
 
   @override
   VideoTrack? get remoteVideo => _videoOf(_remoteVideoPublications, TrackSource.camera);
@@ -56,10 +63,10 @@ class LiveKitCallConnection implements CallConnection {
   VideoTrack? get remoteScreen => _videoOf(_remoteVideoPublications, TrackSource.screenShareVideo);
 
   @override
-  bool get sharingScreen => _room.localParticipant?.isScreenShareEnabled() ?? false;
+  bool get sharingScreen => _roomOrNull?.localParticipant?.isScreenShareEnabled() ?? false;
 
   List<TrackPublication>? get _remoteVideoPublications =>
-      _room.remoteParticipants.values.firstOrNull?.videoTrackPublications;
+      _roomOrNull?.remoteParticipants.values.firstOrNull?.videoTrackPublications;
 
   @override
   bool get reconnecting => _reconnecting;
@@ -75,6 +82,26 @@ class LiveKitCallConnection implements CallConnection {
 
   @override
   Future<void> connect(String url, String token) async {
+    try {
+      final keyProvider = _keyProvider = await BaseKeyProvider.create(
+        // Without a key the cryptor would pass frames on as they are.
+        discardFrameWhenCryptorNotReady: true,
+      );
+      final random = Random.secure();
+      await keyProvider.setRawKey(Uint8List.fromList(List.generate(32, (_) => random.nextInt(256))));
+      _roomOrNull = Room(
+        roomOptions: RoomOptions(
+          // Sends and receives only the quality the other screen needs.
+          adaptiveStream: true,
+          dynacast: true,
+          defaultCameraCaptureOptions: const CameraCaptureOptions(cameraPosition: CameraPosition.front),
+          encryption: E2EEOptions(keyProvider: keyProvider),
+        ),
+      );
+    } on Object {
+      throw const CallEncryptionException();
+    }
+
     _room.addListener(_notify);
     _listener = _room.createListener()
       ..on<RoomReconnectingEvent>((_) => _setReconnecting(true))
@@ -88,11 +115,16 @@ class LiveKitCallConnection implements CallConnection {
       ..on<TrackMutedEvent>((_) => _notify())
       ..on<TrackUnmutedEvent>((_) => _notify())
       ..on<LocalTrackPublishedEvent>((_) => _notify())
-      ..on<LocalTrackUnpublishedEvent>((_) => _notify());
+      ..on<LocalTrackUnpublishedEvent>((_) => _notify())
+      ..on<ParticipantConnectedEvent>((_) => _passOnOtherKey())
+      ..on<ParticipantAttributesChanged>((_) => _passOnOtherKey())
+      ..on<ParticipantDisconnectedEvent>((_) => _otherKey = null);
 
     // A video call is held at arm's length, not at the ear; a headset still takes over.
     await AudioManager.instance.setSpeakerOutputPreferred(true);
     await _room.connect(url, token);
+    // Someone already in the room set their key before this device came in.
+    _passOnOtherKey();
     try {
       await _room.localParticipant!.setMicrophoneEnabled(true);
       await _room.localParticipant!.setCameraEnabled(true);
@@ -100,6 +132,25 @@ class LiveKitCallConnection implements CallConnection {
       throw const CallMediaException();
     }
   }
+
+  /// The public key goes as a participant attribute, not as a data message: with
+  /// encryption on, data messages are encrypted with the very key that is not agreed yet.
+  /// Attributes travel with the signalling, and a user who comes in later finds the key
+  /// already there.
+  @override
+  Future<void> sendKeyMessage(List<int> message) async =>
+      _roomOrNull?.localParticipant?.setAttributes({callKeyTopic: utf8.decode(message)});
+
+  void _passOnOtherKey() {
+    final key = _roomOrNull?.remoteParticipants.values.firstOrNull?.attributes[callKeyTopic];
+    if (key != null && key != _otherKey && !_keyMessages.isClosed) {
+      _otherKey = key;
+      _keyMessages.add(utf8.encode(key));
+    }
+  }
+
+  @override
+  Future<void> setEncryptionKey(Uint8List key) async => _keyProvider?.setRawKey(key);
 
   @override
   Future<void> setMicrophone({required bool enabled}) async {
@@ -154,11 +205,16 @@ class LiveKitCallConnection implements CallConnection {
   Future<void> disconnect() async {
     _leaving = true;
     await _captureStopsSubscription?.cancel();
-    _room.removeListener(_notify);
     await _listener?.dispose();
-    await _room.disconnect();
-    await _room.dispose();
+    final room = _roomOrNull;
+    if (room != null) {
+      room.removeListener(_notify);
+      await room.disconnect();
+      await room.dispose();
+    }
+
     await _changes.close();
+    await _keyMessages.close();
   }
 
   void _setReconnecting(bool value) {
