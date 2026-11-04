@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Matching;
 using Mediator;
 
 namespace Exparter.Application.Sessions;
@@ -22,26 +23,45 @@ public interface ICallRooms
 
 public sealed record CreateCallTokenCommand(Guid UserId, Guid SessionId) : ICommand<CallTokenDto>;
 
-public sealed class CreateCallTokenCommandHandler(ISessionRepository sessions, ICallTokenIssuer issuer, TimeProvider timeProvider)
-    : ICommandHandler<CreateCallTokenCommand, CallTokenDto>
+public sealed class CreateCallTokenCommandHandler(
+    ISessionRepository sessions,
+    IMatchDirectory matches,
+    ICallTokenIssuer issuer,
+    TimeProvider timeProvider) : ICommandHandler<CreateCallTokenCommand, CallTokenDto>
 {
     public async ValueTask<CallTokenDto> Handle(CreateCallTokenCommand command, CancellationToken cancellationToken)
     {
         var session = await sessions.GetForParticipantAsync(command.SessionId, command.UserId, cancellationToken);
         session.EnsureCanJoinCall(command.UserId, timeProvider.GetUtcNow());
+
+        // Ending the match cancels only the sessions still ahead; one marked completed
+        // keeps its window, so the match is what closes its call.
+        if (!await MatchIsRunningAsync(matches, session.MatchId, cancellationToken))
+        {
+            throw AppException.Conflict(CallMatchEndedCode, "The match of this session has ended, so its call cannot be joined.");
+        }
+
         return issuer.Issue(session.Id.ToString(), command.UserId, session.CallClosesAt!.Value);
     }
+
+    public const string CallMatchEndedCode = "call_match_ended";
+
+    internal static async Task<bool> MatchIsRunningAsync(IMatchDirectory matches, Guid matchId, CancellationToken cancellationToken) =>
+        await matches.FindAsync(matchId, cancellationToken) is { IsEnded: false };
 }
 
 /// <summary>
-/// Closes the rooms whose call should no longer be going on: the window closed, or the
-/// session was cancelled (also because its match ended). The media server checks a
-/// token only when someone joins, so without this a call could go on past its window.
+/// Closes the rooms whose call should no longer be going on: the window closed, the
+/// session was cancelled, or its match ended. The media server checks a token only when
+/// someone joins, so without this a call could go on past its window.
 /// </summary>
 public sealed record CloseEndedCallsCommand : ICommand<int>;
 
-public sealed class CloseEndedCallsCommandHandler(ICallRooms rooms, ISessionRepository sessions, TimeProvider timeProvider)
-    : ICommandHandler<CloseEndedCallsCommand, int>
+public sealed class CloseEndedCallsCommandHandler(
+    ICallRooms rooms,
+    ISessionRepository sessions,
+    IMatchDirectory matches,
+    TimeProvider timeProvider) : ICommandHandler<CloseEndedCallsCommand, int>
 {
     /// <returns>How many rooms were closed.</returns>
     public async ValueTask<int> Handle(CloseEndedCallsCommand command, CancellationToken cancellationToken)
@@ -52,7 +72,8 @@ public sealed class CloseEndedCallsCommandHandler(ICallRooms rooms, ISessionRepo
         {
             if (Guid.TryParse(room, out var sessionId)
                 && await sessions.GetByIdAsync(sessionId, cancellationToken) is { } session
-                && session.IsCallOpenAt(now))
+                && session.IsCallOpenAt(now)
+                && await CreateCallTokenCommandHandler.MatchIsRunningAsync(matches, session.MatchId, cancellationToken))
             {
                 continue;
             }

@@ -104,6 +104,8 @@ public sealed record MatchInfo(Guid Id, Guid UserAId, Guid UserBId, bool IsActiv
 {
     public bool IsParticipant(Guid userId) => userId == UserAId || userId == UserBId;
 
+    public bool IsEnded => !IsActive && !HasPendingEndRequest;
+
     public Guid OtherThan(Guid userId) => userId == UserAId ? UserBId : UserAId;
 }
 

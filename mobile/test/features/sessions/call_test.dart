@@ -196,6 +196,11 @@ void main() {
       expect(callWindowAt(session(status: SwapSessionStatus.completed), now), CallWindow.open);
     });
 
+    test('a session of a match that ended has no call, even one marked completed', () {
+      expect(callWindowAt(session(status: SwapSessionStatus.completionPending), now, matchEnded: true), CallWindow.none);
+      expect(callWindowAt(session(status: SwapSessionStatus.completed), now, matchEnded: true), CallWindow.none);
+    });
+
     test('the call opens ten minutes before the start and closes fifteen minutes after the end', () {
       final scheduled = session(startsIn: const Duration(hours: 1));
       final start = scheduled.scheduledAt!;
@@ -368,14 +373,14 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    Match match() => Match(
+    Match match({MatchStatus status = MatchStatus.active}) => Match(
           id: 'match-1',
           swapRequestId: 'request-1',
           userA: const UserSummary(userId: 'user-deniz', isDeleted: false, username: 'deniz'),
           userB: UserSummary(userId: testAccount().id, isDeleted: false, username: 'ayse'),
           skillTaughtByA: const SkillRef(id: 's1', name: 'İspanyolca'),
           skillTaughtByB: const SkillRef(id: 's2', name: 'Gitar'),
-          status: MatchStatus.active,
+          status: status,
           createdAt: DateTime.utc(2026, 10, 13),
         );
 
@@ -389,6 +394,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('route:/calls/session-1'), findsOneWidget);
+    });
+
+    testWidgets('a session of a match that ended offers no call', (tester) async {
+      final marked = session(status: SwapSessionStatus.completionPending);
+      when(() => repository.listMatchSessions('match-1')).thenAnswer((_) async => [marked]);
+      await pump(
+        tester,
+        Scaffold(body: SingleChildScrollView(child: MatchSessionsSection(match: match(status: MatchStatus.ended)))),
+      );
+
+      expect(find.text(l10n.sessionJoinCall), findsNothing);
     });
 
     testWidgets('a later call says when it opens and cannot be joined yet', (tester) async {

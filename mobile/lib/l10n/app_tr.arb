@@ -454,6 +454,7 @@
   "callNotificationText": "Exparter'a dönmek için dokunun.",
   "errorCallNotOpenYet": "Görüşmeye en erken başlangıçtan 10 dakika önce katılabilirsiniz.",
   "errorCallWindowClosed": "Bu oturumun görüşme süresi doldu.",
+  "errorCallMatchEnded": "Eşleşme sona erdiği için bu görüşmeye katılamazsınız.",
   "sessionWaitingConfirmation": "Karşı tarafın onayı bekleniyor;",
   "sessionConfirmQuestionOnline": "Karşı taraf bu oturumu tamamlandı olarak işaretledi.",
   "sessionConfirmQuestionInPerson": "Karşı taraf yüz yüze buluştuğunuzu bildirdi.",
