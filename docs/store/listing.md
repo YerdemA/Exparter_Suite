@@ -29,7 +29,7 @@ NASIL ÇALIŞIR?
 • Sunabildiğiniz yetenekleri seviyesiyle, öğrenmek istediklerinizi de ekleyin.
 • Keşfet ekranında karşılıklı uyumlu kişiler öne çıkar: sizin sunduğunuzu isteyen ve sizin istediğinizi sunan kişiler.
 • Takas isteği gönderin; kabul edilirse eşleşirsiniz.
-• Mesajlaşın, çevrimiçi bir oturum planlayıp uygulamanın içinden görüntülü görüşün ya da yüz yüze buluşun.
+• Mesajlaşın, çevrimiçi bir oturum planlayıp uygulamanın içinden görüntülü görüşün.
 • Takas bitince birbirinizi değerlendirin.
 
 ÖNE ÇIKANLAR

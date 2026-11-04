@@ -403,7 +403,7 @@
   "sessionNoteLabel": "Not (isteğe bağlı)",
   "sessionNoteHelper": "Örneğin görüşme bağlantısı.",
   "sessionInPersonReport": "Yüz yüze buluştuk",
-  "sessionInPersonHint": "Yüz yüze buluşmaları sohbette kendiniz ayarlarsınız. Buluştuktan sonra buradan bildirin; karşı taraf onaylayınca tamamlanmış sayılır. Aynı kişiyle yüz yüze buluşma yalnızca bir kez bildirilebilir.",
+  "sessionInPersonHint": "Exparter yüz yüze buluşma düzenlemez; buluşup buluşmamak size kalmıştır. Buluştuysanız buradan bildirebilirsiniz; karşı taraf onaylayınca tamamlanmış sayılır. Aynı kişiyle yalnızca bir kez bildirilebilir.",
   "sessionInPersonConfirmTitle": "Yüz yüze buluştunuz mu?",
   "sessionInPersonConfirmBody": "Karşı taraftan bu buluşmayı onaylaması istenecek. 72 saat içinde cevap gelmezse buluşma tamamlanmış sayılır.",
   "sessionInPersonTitle": "Yüz yüze buluşma",

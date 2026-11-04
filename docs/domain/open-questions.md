@@ -97,6 +97,13 @@ Ayrıntıları ve gerekçeleri `docs/roadmap.md` ve ilgili ADR'lerdedir; burada 
 | Görüntülü görüşme ayrıntıları | Ekran paylaşımı var: iki taraf da paylaşabilir, paylaşırken kamera açık kalır, cihazın sesi gitmez (2026-11-03, ADR 0015). |
 | Oturum çakışması | Bir kullanıcı aynı anda iki oturumda olamaz, aynı veya farklı eşleşmelerde. Kabul edilmiş oturumlar ve kişinin kendi açık teklifleri zamanı tutar (2026-11-03, SS-20). |
 | Kullanıcı adında büyük harf | Sunucu kuralı aynı kalır (yalnızca küçük harf); uygulama yazılan büyük harfleri yazarken küçük harfe çevirir (2026-11-03). |
+| Faz 8 planı | Sıra: görüntülü görüşme, görüşmede uçtan uca şifreleme, güven göstergesi ve rozetler, mesajlarda dosya, kapsamlı katalog, gelişmiş öneri, yönetici paneli ve moderatörler, gönderi akışı, Google ile giriş, çoklu dil (2026-11-04, `docs/roadmap.md`). |
+| Uçtan uca şifreleme | Yalnızca görüntülü görüşmede; mesajlarda yok (2026-11-04). |
+| Yönetici paneli | Mobil uygulamanın içinde, yetkili rollere görünen ekranlar. Admin panelden moderatör rolü verir ve geri alır; moderatörün yetkileri daha dardır ve her işlemi denetim için kaydedilir (2026-11-04). |
+| Mesajlarda dosya | Görsel ile not ve kaynak paylaşımı için PDF, Word gibi belgeler gönderilebilecek (2026-11-04); ayrıntılar Faz 8 dilim 4'ün başında. |
+| Üyelik ve ödeme | Genel yayından ve uygulama kitle kazandıktan sonra; o zamana kadar Exparter ücretsiz (2026-11-04). |
+| Yüz yüze buluşma | Uygulama yüz yüze buluşmaya yönlendirmez; metinler buluşmayı düzenlemediğini ve kararın kullanıcıya ait olduğunu söyler. Bildirim özelliği kalır (2026-11-04). |
+| Bilgilerin doğruluğu | Kullanım koşullarında kullanıcılar, diğer kullanıcıların bilgilerinin gerçeği yansıtmayabileceğini ve puanların doğrulama olmadığını kabul eder (2026-11-04, `docs/legal/compliance-research.md`). |
 
 ## Onaylanan ayrıntılar (2026-10-07)
 
