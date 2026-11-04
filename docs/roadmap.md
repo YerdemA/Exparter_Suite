@@ -390,9 +390,10 @@ Faz 8'in dışında kalanlar:
 
 Plan kullanıcı tarafından onaylandı (2026-11-04; ADR 0016). Branch `phase-8/2-call-e2ee`.
 
-- Cihazlar X25519 ile anahtarı kendi aralarında üretir; açık anahtarlar LiveKit veri kanalından gider, ortak anahtar sunucuya hiç gitmez. LiveKit kare şifrelemesi kamera, mikrofon ve ekran paylaşımını şifreler.
+- Cihazlar X25519 ile anahtarı kendi aralarında üretir; açık anahtarlar LiveKit katılımcı özelliği olarak yayımlanır (veri kanalı, anahtar anlaşılmadan şifrelendiği için kullanılamadı), ortak anahtar sunucuya hiç gitmez. LiveKit kare şifrelemesi kamera, mikrofon ve ekran paylaşımını şifreler.
 - Kararlar (kullanıcı, 2026-11-04): görüşme ekranında iki tarafta aynı çıkan 6 haneli güvenlik kodu gösterilir; karşı taraf eski sürümdeyse görüşme şifresiz sürmez, güncellemesi gerektiği söylenir; şifreleme kurulamazsa görüşme açılmaz.
-- Adımlar: ADR 0016; backend (görüşme anahtarında veri kanalı izni); mobil (anahtar değişimi, güvenlik kodu, görüşme ekranı durumları, `cryptography` 2.9.0); testler; gizlilik metni; iki gerçek cihazla deneme ve 1.0.0+8.
+- Adımlar: ADR 0016; backend (görüşme anahtarında kendi özelliklerini güncelleme izni); mobil (anahtar değişimi, güvenlik kodu, görüşme ekranı durumları, `cryptography` 2.9.0); testler; gizlilik metni; iki gerçek cihazla deneme ve 1.0.0+8.
+- Emülatörde doğrulandı (2026-11-04): yerel LiveKit'e karşı uygulamanın bağlantı sınıfı ile ikinci bir katılımcı aynı güvenlik kodunu buldu ve karşı taraf kamera görüntüsünü anlaşılan anahtarla çözdü. İlk denemede açık anahtarlar veri kanalından gidiyordu ve ulaşmadı (LiveKit veri mesajlarını da henüz anlaşılmamış anahtarla şifreliyor); anahtarlar katılımcı özelliğine taşındı. İki gerçek cihazla deneme bekliyor. Backend 561, mobil 273 test.
 
 ### Dilim 1 — Görüntülü görüşme
 

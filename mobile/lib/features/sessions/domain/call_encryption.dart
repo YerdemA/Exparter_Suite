@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 
-/// The topic of the data messages that carry a device's public key, kept apart from any
-/// other data a room might carry later.
+/// The participant attribute that carries a device's public key in the room.
 const callKeyTopic = 'exparter.call-key';
 
 /// The call's encryption could not be set up; the call is not held without it (ADR 0016).
@@ -51,11 +50,11 @@ class CallKeyAgreement {
     }
   }
 
-  /// The data message that hands this device's public key to the other device.
+  /// The message that hands this device's public key to the other device.
   List<int> get message => utf8.encode(jsonEncode({'v': _version, 'publicKey': base64Encode(publicKey)}));
 
   /// The public key in a message from the other device, or null if the message is not
-  /// one: anyone in the room can send data, so whatever does not parse is ignored.
+  /// one: whatever does not parse is ignored.
   static Uint8List? readMessage(List<int> data) {
     try {
       final decoded = jsonDecode(utf8.decode(data));

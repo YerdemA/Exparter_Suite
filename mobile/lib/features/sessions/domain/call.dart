@@ -78,7 +78,7 @@ abstract interface class CallConnection {
   /// be opened, and CallEncryptionException if encryption cannot be set up.
   Future<void> connect(String url, String token);
 
-  /// The messages the other user sends with their public key (ADR 0016).
+  /// The other user's public key message, each time it is set or changes (ADR 0016).
   Stream<List<int>> get keyMessages;
 
   Future<void> sendKeyMessage(List<int> message);

@@ -153,6 +153,17 @@ class CallController extends _$CallController {
         return;
       }
 
+      // Stays in the room for the other user to find, whenever they come in.
+      try {
+        await connection.sendKeyMessage(_agreement!.message);
+      } on Object {
+        throw const CallEncryptionException();
+      }
+
+      if (!ref.mounted) {
+        return;
+      }
+
       final keepAlive = ref.read(callKeepAliveProvider);
       _keepAlive = keepAlive;
       await keepAlive.start(title: notificationTitle, text: notificationText);
@@ -285,8 +296,8 @@ class CallController extends _$CallController {
     );
   }
 
-  /// Hands over this device's public key whenever the other user comes into the call,
-  /// and forgets the agreed key when they leave: back, they bring a new key pair.
+  /// Waits for the other user's key whenever they come into the call, and forgets the
+  /// agreed key when they leave: back, they bring a new key pair.
   void _followPresence(CallConnection connection) {
     final present = connection.otherPresent;
     if (present == _otherWasPresent) {
@@ -296,7 +307,6 @@ class CallController extends _$CallController {
     _otherWasPresent = present;
     _keyTimer?.cancel();
     if (present) {
-      unawaited(_sendKey(connection));
       _keyTimer = Timer(CallState.keyWait, () {
         if (_encryption == CallEncryption.pending) {
           _encryption = CallEncryption.peerOutdated;
@@ -307,20 +317,6 @@ class CallController extends _$CallController {
       _otherKey = null;
       _encryption = CallEncryption.pending;
       _safetyCode = null;
-    }
-  }
-
-  Future<void> _sendKey(CallConnection connection) async {
-    final agreement = _agreement;
-    if (agreement == null) {
-      return;
-    }
-
-    try {
-      await connection.sendKeyMessage(agreement.message);
-    } on Object {
-      // A lost message is made up for: the other user sends their key on arriving, and
-      // each new key is answered with this one.
     }
   }
 
@@ -347,8 +343,6 @@ class CallController extends _$CallController {
       _encryption = CallEncryption.secured;
       _safetyCode = secret.safetyCode;
       _keyTimer?.cancel();
-      // The other user may have come in after this device's key went out, or lost it.
-      await _sendKey(connection);
       _sync();
     } on Object {
       if (ref.mounted) {

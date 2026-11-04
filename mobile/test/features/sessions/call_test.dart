@@ -77,8 +77,16 @@ class FakeCallConnection implements CallConnection {
   /// A data message from the other user, as if it came through the room.
   void receiveKey(List<int> message) => _keyMessages.add(message);
 
+  Object? sendKeyError;
+
   @override
-  Future<void> sendKeyMessage(List<int> message) async => sentKeys.add(message);
+  Future<void> sendKeyMessage(List<int> message) async {
+    if (sendKeyError case final error?) {
+      throw error;
+    }
+
+    sentKeys.add(message);
+  }
 
   @override
   Future<void> setEncryptionKey(Uint8List key) async => encryptionKey = key;
@@ -265,12 +273,12 @@ void main() {
 
     test('the two devices agree on a key when the other user comes in, and show its code', () async {
       await start();
-      expect(connection.sentKeys, isEmpty);
+      // Set once, for the other user to find whenever they come in.
+      final ownKey = CallKeyAgreement.readMessage(connection.sentKeys.single)!;
 
       connection.change(otherPresent: true);
       await pumpEventQueue();
       expect((state().phase, state().encryption, state().safetyCode), (CallPhase.inCall, CallEncryption.pending, null));
-      final ownKey = CallKeyAgreement.readMessage(connection.sentKeys.single)!;
 
       final other = await CallKeyAgreement.create();
       connection.receiveKey(other.message);
@@ -280,12 +288,16 @@ void main() {
       expect(state().encryption, CallEncryption.secured);
       expect(state().safetyCode, expected.safetyCode);
       expect(connection.encryptionKey, expected.key);
-      // Answered once, in case the other user missed the first message.
-      expect(connection.sentKeys, hasLength(2));
+      expect(connection.sentKeys, hasLength(1));
+    });
 
-      connection.receiveKey(other.message);
-      await pumpEventQueue();
-      expect(connection.sentKeys, hasLength(2));
+    test('a key that cannot be published ends the call instead of going on unencrypted', () async {
+      connection.sendKeyError = StateError('not allowed');
+
+      await start();
+
+      expect(state().phase, CallPhase.failed);
+      expect(state().error, isA<CallEncryptionException>());
     });
 
     test('messages other than the key of the other user are ignored', () async {

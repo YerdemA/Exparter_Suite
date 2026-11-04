@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -31,6 +32,10 @@ class LiveKitCallConnection implements CallConnection {
   BaseKeyProvider? _keyProvider;
   final _changes = StreamController<void>.broadcast();
   final _keyMessages = StreamController<List<int>>.broadcast();
+
+  /// The other user's key attribute last passed on, so that an unrelated attribute
+  /// change does not pass it on again.
+  String? _otherKey;
   StreamSubscription<void>? _captureStopsSubscription;
   EventsListener<RoomEvent>? _listener;
   bool _reconnecting = false;
@@ -111,15 +116,15 @@ class LiveKitCallConnection implements CallConnection {
       ..on<TrackUnmutedEvent>((_) => _notify())
       ..on<LocalTrackPublishedEvent>((_) => _notify())
       ..on<LocalTrackUnpublishedEvent>((_) => _notify())
-      ..on<DataReceivedEvent>((event) {
-        if (event.topic == callKeyTopic && event.participant != null && !_keyMessages.isClosed) {
-          _keyMessages.add(event.data);
-        }
-      });
+      ..on<ParticipantConnectedEvent>((_) => _passOnOtherKey())
+      ..on<ParticipantAttributesChanged>((_) => _passOnOtherKey())
+      ..on<ParticipantDisconnectedEvent>((_) => _otherKey = null);
 
     // A video call is held at arm's length, not at the ear; a headset still takes over.
     await AudioManager.instance.setSpeakerOutputPreferred(true);
     await _room.connect(url, token);
+    // Someone already in the room set their key before this device came in.
+    _passOnOtherKey();
     try {
       await _room.localParticipant!.setMicrophoneEnabled(true);
       await _room.localParticipant!.setCameraEnabled(true);
@@ -128,9 +133,21 @@ class LiveKitCallConnection implements CallConnection {
     }
   }
 
+  /// The public key goes as a participant attribute, not as a data message: with
+  /// encryption on, data messages are encrypted with the very key that is not agreed yet.
+  /// Attributes travel with the signalling, and a user who comes in later finds the key
+  /// already there.
   @override
   Future<void> sendKeyMessage(List<int> message) async =>
-      _roomOrNull?.localParticipant?.publishData(message, reliable: true, topic: callKeyTopic);
+      _roomOrNull?.localParticipant?.setAttributes({callKeyTopic: utf8.decode(message)});
+
+  void _passOnOtherKey() {
+    final key = _roomOrNull?.remoteParticipants.values.firstOrNull?.attributes[callKeyTopic];
+    if (key != null && key != _otherKey && !_keyMessages.isClosed) {
+      _otherKey = key;
+      _keyMessages.add(utf8.encode(key));
+    }
+  }
 
   @override
   Future<void> setEncryptionKey(Uint8List key) async => _keyProvider?.setRawKey(key);

@@ -1222,8 +1222,8 @@ paths:
         window is open: from `callOpensAt` until `callClosesAt`. The token is for the
         media server at `url` and is valid until the window closes. Audio and video are
         relayed, never recorded, and end-to-end encrypted: the two devices agree on the key
-        by exchanging public keys as data messages in the room (ADR 0016), so the server
-        cannot decrypt them. Once the match has ended there is no call, even for a
+        by setting their public keys as participant attributes in the room (ADR 0016), so
+        the server cannot decrypt them. Once the match has ended there is no call, even for a
         session marked completed whose window is still open (`call_match_ended`); a call
         in progress is closed within a minute.
       parameters:
