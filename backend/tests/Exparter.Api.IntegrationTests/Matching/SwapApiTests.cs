@@ -58,6 +58,36 @@ public class SwapApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task A_user_with_three_open_matches_takes_no_new_request_until_one_ends()
+    {
+        var ali = await TestSession.RegisterVisibleAsync(_client, fixture);
+        var guitar = await ali.FindSkillIdAsync("gitar");
+        var pending = new List<(TestSession Partner, Guid RequestId)>();
+        for (var i = 0; i < 4; i++)
+        {
+            var partner = await TestSession.RegisterVisibleAsync(_client, fixture);
+            pending.Add((partner, IdOf(await CreatedAsync(SendAsync(partner, ali, guitar, guitar)))));
+        }
+
+        var matchIds = new List<Guid>();
+        foreach (var (_, requestId) in pending.Take(3))
+        {
+            matchIds.Add(IdOf(await OkAsync(ali.SendAsync(HttpMethod.Post, $"/api/v1/swap-requests/{requestId}/accept"))));
+        }
+
+        var fourthRequest = pending[3].RequestId;
+        await ProblemAssert.IsAsync(
+            await ali.SendAsync(HttpMethod.Post, $"/api/v1/swap-requests/{fourthRequest}/accept"), HttpStatusCode.Conflict, "match_limit_reached");
+        var stranger = await TestSession.RegisterVisibleAsync(_client, fixture);
+        await ProblemAssert.IsAsync(await SendAsync(stranger, ali, guitar, guitar), HttpStatusCode.Conflict, "other_user_match_limit");
+
+        await OkAsync(ali.SendAsync(HttpMethod.Post, $"/api/v1/matches/{matchIds[0]}/end-request"));
+        await OkAsync(pending[0].Partner.SendAsync(HttpMethod.Post, $"/api/v1/matches/{matchIds[0]}/end-request/accept"));
+
+        await OkAsync(ali.SendAsync(HttpMethod.Post, $"/api/v1/swap-requests/{fourthRequest}/accept"));
+    }
+
+    [Fact]
     public async Task A_request_is_sent_listed_for_both_users_and_accepted_into_a_match()
     {
         var (ali, ayse, guitar, spanish) = await PairAsync();

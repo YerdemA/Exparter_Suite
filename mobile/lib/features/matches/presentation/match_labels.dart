@@ -15,6 +15,17 @@ String remainingLabel(AppLocalizations l10n, DateTime deadline, DateTime now) {
   return left.inHours >= 1 ? l10n.remainingHours(left.inHours) : l10n.remainingSoon;
 }
 
+/// How many matches that have not ended a user can have at once. The server enforces
+/// it; the app only shows how many places are taken.
+const maxOpenMatches = 3;
+
+/// The matches still going on, one waiting for an answer to its end request included,
+/// and those that ended, each in the order given.
+({List<Match> open, List<Match> ended}) splitMatches(List<Match> matches) => (
+      open: [for (final match in matches) if (match.status != MatchStatus.ended) match],
+      ended: [for (final match in matches) if (match.status == MatchStatus.ended) match],
+    );
+
 String matchStatusLabel(AppLocalizations l10n, MatchStatus status) => switch (status) {
       MatchStatus.active => l10n.matchStatusActive,
       MatchStatus.endRequested => l10n.matchStatusEndRequested,

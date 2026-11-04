@@ -21,6 +21,12 @@ public enum MatchEndReason
 /// </summary>
 public sealed class Match
 {
+    /// <summary>
+    /// How many matches that have not ended a user can have at once, a match waiting for
+    /// an answer to its end request included, so that each swap gets real attention.
+    /// </summary>
+    public const int MaxOpenPerUser = 3;
+
     /// <summary>How long the other user has to answer an end request before it takes effect.</summary>
     public static readonly TimeSpan EndRequestLifetime = TimeSpan.FromDays(7);
 

@@ -159,15 +159,16 @@ public class QueryCountTests(QueryCountingFixture fixture) : IClassFixture<Query
         await AddPartnerAsync(viewer, pending);
         var withOne = await CountAsync(viewer, pending);
 
-        for (var i = 0; i < 3; i++)
+        // Three is as many matches as a user can have at once.
+        for (var i = 0; i < 2; i++)
         {
             await AddPartnerAsync(viewer, pending);
         }
 
-        var withFour = await CountAsync(viewer, pending);
+        var withThree = await CountAsync(viewer, pending);
 
         // Compared as text, so that a failure names every list and its two counts.
         static string Describe(Dictionary<string, int> counts) => string.Join(", ", counts.Select(item => $"{item.Key}={item.Value}"));
-        Assert.True(Describe(withOne) == Describe(withFour), $"With one: {Describe(withOne)} · With four: {Describe(withFour)}");
+        Assert.True(Describe(withOne) == Describe(withThree), $"With one: {Describe(withOne)} · With three: {Describe(withThree)}");
     }
 }

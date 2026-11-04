@@ -90,6 +90,7 @@ Durum: **Onaylandı (2026-10-07).**
 | MT-07 | Sonlandırma isteği 7 gün içinde onaylanmaz, reddedilmez veya geri alınmazsa eşleşme kendiliğinden sonlanır. Sürenin bitmesine 24 saat kala karşı tarafa hatırlatma gider. | Domain |
 | MT-08 | Reddedilen sonlandırma isteğinin ardından yeniden istemek için bekleme süresi yoktur. | — |
 | MT-09 | Sonlandırma isteği beklerken yeni oturum planlanamaz; mevcut oturumlar etkilenmez. | Application |
+| MT-10 | Bir kullanıcının aynı anda en fazla 3 sona ermemiş eşleşmesi olabilir; sonlandırma isteği bekleyen eşleşme de sayılır. İstek gönderilirken ve kabul edilirken iki taraf için denetlenir: işlemi yapanın 3 eşleşmesi varsa `match_limit_reached`, karşı tarafın varsa `other_user_match_limit`. Reddedilen kabulde istek bekler. Sınırın üstünde kalan eski eşleşmeler sürer. Veritabanı kısıtı yoktur (kullanıcı kararı, 2026-11-04). | Application |
 
 ## Mesajlaşma
 

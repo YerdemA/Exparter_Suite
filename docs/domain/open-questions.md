@@ -104,6 +104,9 @@ Ayrıntıları ve gerekçeleri `docs/roadmap.md` ve ilgili ADR'lerdedir; burada 
 | Üyelik ve ödeme | Genel yayından ve uygulama kitle kazandıktan sonra; o zamana kadar Exparter ücretsiz (2026-11-04). |
 | Yüz yüze buluşma | Uygulama yüz yüze buluşmaya yönlendirmez; metinler buluşmayı düzenlemediğini ve kararın kullanıcıya ait olduğunu söyler. Bildirim özelliği kalır (2026-11-04). |
 | Bilgilerin doğruluğu | Kullanım koşullarında kullanıcılar, diğer kullanıcıların bilgilerinin gerçeği yansıtmayabileceğini ve puanların doğrulama olmadığını kabul eder (2026-11-04, `docs/legal/compliance-research.md`). |
+| Eşleşme sınırı | Aynı anda en fazla 3 sona ermemiş eşleşme (2026-11-04, MT-10). |
+| Eşleşmeler ekranı | Süren ve biten eşleşmeler ayrı gösterilir (2026-11-04). |
+| Test hesapları | Kapalı test bitince bütün test hesapları silinir; genel yayında herkes sıfırdan başlar (2026-11-04). |
 
 ## Onaylanan ayrıntılar (2026-10-07)
 

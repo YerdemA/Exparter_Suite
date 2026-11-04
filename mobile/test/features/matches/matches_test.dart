@@ -222,6 +222,33 @@ void main() {
       expect(find.text('route:/matches/match-1'), findsOneWidget);
     });
 
+    testWidgets('lists the matches still going on apart from those that ended', (tester) async {
+      when(() => repository.listMatches()).thenAnswer(
+        (_) async => [
+          testMatch(status: MatchStatus.ended),
+          testMatch(status: MatchStatus.endRequested, endRequestedBy: 'user-deniz'),
+        ],
+      );
+
+      await pump(tester, const MatchesScreen());
+
+      final open = tester.getTopLeft(find.text(l10n.matchesOpenTitle(1, 3))).dy;
+      final asked = tester.getTopLeft(find.text(l10n.matchStatusEndRequested)).dy;
+      final endedTitle = tester.getTopLeft(find.text(l10n.matchesEndedTitle)).dy;
+      final ended = tester.getTopLeft(find.text(l10n.matchStatusEnded)).dy;
+      expect([open < asked, asked < endedTitle, endedTitle < ended], [true, true, true]);
+    });
+
+    testWidgets('says so when no match is going on but some ended', (tester) async {
+      when(() => repository.listMatches()).thenAnswer((_) async => [testMatch(status: MatchStatus.ended)]);
+
+      await pump(tester, const MatchesScreen());
+
+      expect(find.text(l10n.matchesOpenTitle(0, 3)), findsOneWidget);
+      expect(find.text(l10n.matchesOpenEmpty), findsOneWidget);
+      expect(find.text(l10n.matchesEndedTitle), findsOneWidget);
+    });
+
     testWidgets('says so when there are no matches or requests', (tester) async {
       await pump(tester, const MatchesScreen());
       expect(find.text(l10n.matchesEmpty), findsOneWidget);

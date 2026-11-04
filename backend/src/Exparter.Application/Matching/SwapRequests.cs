@@ -64,6 +64,8 @@ public sealed class SendSwapRequestCommandHandler(
             {
                 throw MatchingAppErrors.MatchAlreadyExists();
             }
+
+            await matches.EnsureCanTakeMatchAsync(command.UserId, command.RecipientId, cancellationToken);
         }
 
         var lastRefused = await requests.FindLastRefusedAsync(command.UserId, command.RecipientId, cancellationToken);
@@ -170,6 +172,10 @@ public sealed class AcceptSwapRequestCommandHandler(
     {
         var request = await requests.GetForParticipantAsync(command.SwapRequestId, command.UserId, cancellationToken);
         await requirements.EnsureCanInteractAsync(command.UserId, cancellationToken);
+        if (request.StatusAt(timeProvider.GetUtcNow()) == SwapRequestStatus.Pending && request.RecipientId == command.UserId)
+        {
+            await matches.EnsureCanTakeMatchAsync(command.UserId, request.RequesterId, cancellationToken);
+        }
 
         var match = request.Accept(command.UserId, timeProvider.GetUtcNow());
         matches.Add(match);

@@ -395,6 +395,54 @@ public class MatchingHandlerTests
             _requests.Items.Select(request => request.Status));
     }
 
+    /// <summary>Gives the user matches that have not ended with as many other users.</summary>
+    private void GiveOpenMatches(Guid userId, int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            var request = SwapRequest.Send(userId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, null, _clock.GetUtcNow());
+            _matches.Add(request.Accept(request.RecipientId, _clock.GetUtcNow()));
+        }
+    }
+
+    [Fact]
+    public async Task Nobody_sends_a_request_with_three_open_matches_or_to_someone_who_has_them()
+    {
+        GiveOpenMatches(_ali, Match.MaxOpenPerUser);
+        Assert.Equal("match_limit_reached", await AppCodeOfAsync(() => SendAsync()));
+        Assert.Equal("other_user_match_limit", await AppCodeOfAsync(SendBackAsync));
+        Assert.Empty(_requests.Items);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_request_cannot_be_accepted_once_either_user_has_three_open_matches(bool recipientIsFull)
+    {
+        var request = await SendAsync();
+        GiveOpenMatches(recipientIsFull ? _ayse : _ali, Match.MaxOpenPerUser);
+
+        Assert.Equal(
+            recipientIsFull ? "match_limit_reached" : "other_user_match_limit",
+            await AppCodeOfAsync(() => AcceptAsync(request.Id)));
+        Assert.Equal(SwapRequestStatus.Pending, _requests.Items.Single(x => x.Id == request.Id).Status);
+    }
+
+    [Fact]
+    public async Task An_ended_match_frees_a_place()
+    {
+        GiveOpenMatches(_ali, Match.MaxOpenPerUser - 1);
+        var request = await SendAsync();
+        GiveOpenMatches(_ali, 1);
+        Assert.Equal("other_user_match_limit", await AppCodeOfAsync(() => AcceptAsync(request.Id)));
+
+        var last = _matches.Items[^1];
+        last.RequestEnd(last.UserAId, _clock.GetUtcNow());
+        last.AcceptEnd(last.UserBId, _clock.GetUtcNow());
+
+        Assert.Equal(MatchStatus.Active, (await AcceptAsync(request.Id)).Status);
+    }
+
     [Fact]
     public async Task Accept_creates_the_match_between_the_two_users()
     {
