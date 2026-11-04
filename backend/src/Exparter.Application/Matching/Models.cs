@@ -293,4 +293,29 @@ internal static class MatchingAppErrors
 
     public static AppException MatchAlreadyExists() =>
         AppException.Conflict("match_already_exists", "The two users already have a match that has not ended.");
+
+    public const string MatchLimitReachedCode = "match_limit_reached";
+    public const string OtherUserMatchLimitCode = "other_user_match_limit";
+
+    /// <summary>
+    /// Nobody can take part in more than <see cref="Match.MaxOpenPerUser"/> matches at
+    /// once. Checked when a request is sent, so that it does not wait in vain, and again
+    /// when it is accepted, since either user may have been matched in between.
+    /// </summary>
+    public static async Task EnsureCanTakeMatchAsync(
+        this IMatchRepository matches,
+        Guid actingUserId,
+        Guid otherUserId,
+        CancellationToken cancellationToken)
+    {
+        if ((await matches.ListOpenOfUserAsync(actingUserId, cancellationToken)).Count >= Match.MaxOpenPerUser)
+        {
+            throw AppException.Conflict(MatchLimitReachedCode, $"A user can have at most {Match.MaxOpenPerUser} matches that have not ended.");
+        }
+
+        if ((await matches.ListOpenOfUserAsync(otherUserId, cancellationToken)).Count >= Match.MaxOpenPerUser)
+        {
+            throw AppException.Conflict(OtherUserMatchLimitCode, $"The other user already has {Match.MaxOpenPerUser} matches that have not ended.");
+        }
+    }
 }

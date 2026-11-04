@@ -47,6 +47,8 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'call_not_open_yet' => l10n.errorCallNotOpenYet,
     'call_window_closed' => l10n.errorCallWindowClosed,
     'call_match_ended' => l10n.errorCallMatchEnded,
+    'match_limit_reached' => l10n.errorMatchLimitReached,
+    'other_user_match_limit' => l10n.errorOtherUserMatchLimit,
     'match_end_pending' => l10n.errorMatchEndPending,
     'review_already_exists' => l10n.errorReviewAlreadyExists,
     'session_not_completed' => l10n.errorSessionNotCompleted,

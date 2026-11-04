@@ -69,12 +69,16 @@ class _AsyncList<T> extends StatelessWidget {
     required this.emptyText,
     required this.onRefresh,
     required this.itemBuilder,
+    this.groups,
   });
 
   final AsyncValue<List<T>> value;
   final String emptyText;
   final Future<void> Function() onRefresh;
   final Widget Function(T item) itemBuilder;
+
+  /// Lays out a list that is not empty in titled parts instead of one run of items.
+  final List<Widget> Function(List<T> items)? groups;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +96,7 @@ class _AsyncList<T> extends StatelessWidget {
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Text(emptyText, textAlign: TextAlign.center),
                 ),
-              for (final item in items) itemBuilder(item),
+              if (items.isNotEmpty && groups != null) ...groups!(items) else for (final item in items) itemBuilder(item),
             ],
           ),
         ),
@@ -122,11 +126,35 @@ class _MatchList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final ownUserId = ref.watch(sessionControllerProvider).value?.id;
 
+    final theme = Theme.of(context);
+    Widget card(Match match) => _MatchCard(match: match, view: MatchView(match, ownUserId));
+    Widget title(String text) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: Text(text, style: theme.textTheme.titleMedium),
+        );
+
     return _AsyncList<Match>(
       value: ref.watch(matchesProvider),
       emptyText: l10n.matchesEmpty,
       onRefresh: () => ref.refresh(matchesProvider.future),
-      itemBuilder: (match) => _MatchCard(match: match, view: MatchView(match, ownUserId)),
+      itemBuilder: card,
+      groups: (matches) {
+        final (:open, :ended) = splitMatches(matches);
+        return [
+          title(l10n.matchesOpenTitle(open.length, maxOpenMatches)),
+          if (open.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: Text(l10n.matchesOpenEmpty, style: theme.textTheme.bodyMedium),
+            ),
+          for (final match in open) card(match),
+          if (ended.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            title(l10n.matchesEndedTitle),
+            for (final match in ended) card(match),
+          ],
+        ];
+      },
     );
   }
 }

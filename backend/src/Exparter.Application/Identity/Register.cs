@@ -14,7 +14,7 @@ public static class TermsOfUse
     /// The terms published at /kullanim-kosullari.html. Change it together with the text,
     /// so that each account records the version it accepted.
     /// </summary>
-    public const string CurrentVersion = "2026-10-27";
+    public const string CurrentVersion = "2026-11-04";
 }
 
 public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>

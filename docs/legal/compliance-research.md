@@ -72,6 +72,16 @@ Play şartı dışında, kullanıcılar arası buluşmanın (çevrimiçi veya y�
 
 Letgo'nun üyelik sözleşmesi ve topluluk kuralları da askıya alma, kalıcı kapatma ve şikâyet sürecini benzer biçimde düzenliyor.
 
+### Güncelleme (kullanıcı kararı, 2026-11-04): bilgilerin doğruluğu ve yüz yüze buluşma
+
+Kullanıcı iki şey istedi: kullanıcılar uygulamadaki bilgilerin gerçek olmayabileceğini kabul etsin, uygulama da kullanıcıları tanımadıkları kişilerle yüz yüze buluşmaya yönlendirmesin. Koşullara eklenen 2. bölüm ve değişen 7–8. bölümler şu ölçülere göre yazıldı:
+
+- **Beyan, doğrulama değil.** Benzer platformlar (tanışma, ikinci el ve beceri paylaşımı uygulamaları) kullanıcı bilgisini doğrulamadıklarını ve kimlik veya sicil kontrolü yapmadıklarını açıkça yazar. Exparter'de puan, değerlendirme ve sayaçlar da kullanıcı etkinliğinden oluştuğu için bunların bir doğrulama veya tavsiye olmadığı ayrıca belirtildi; ileride gelecek rozetler ve güven göstergesi için de geçerli olsun diye "profilde görünen sayılar" genel tutuldu.
+- **Mutlak sorumsuzluk yazılmaz.** Türk Borçlar Kanunu m. 115'e göre ağır kusurdan sorumsuzluk anlaşması kesin hükümsüzdür; 6502 sayılı Kanun m. 5'e göre tüketici aleyhine dengesizlik yaratan, müzakere edilmemiş şartlar haksız şart sayılır ve hükümsüzdür. Bu yüzden metin "doğrulamaz, garanti etmez" der ve 8. bölümdeki istisna (kasıt, ağır kusur, kanunun izin vermediği hâller, tüketici hakları) korunur.
+- **Yer sağlayıcı konumu.** 5651 sayılı Kanun m. 5'e göre yer sağlayıcı içeriği denetlemek veya araştırmakla yükümlü değildir, ama bildirilen hukuka aykırı içeriği kaldırır. Bu nedenle gerçeğe aykırı bilginin şikâyet edilebileceği ve şikâyetlerin inceleneceği yazıldı.
+- **Yüz yüze buluşma.** Uygulamada yalnızca çevrimiçi oturum planlanıyor; yüz yüze buluşma yalnızca sonradan bildiriliyor. Koşullar artık Exparter'in buluşma düzenlemediğini, önermediğini ve aracılık etmediğini, kararın kullanıcıya ait olduğunu söylüyor. Güvenlik önerileri kaldırılmadı: özen gösterildiğini belgeledikleri için platformlar bunları yayımlamayı sürdürüyor ve buluşmayı teşvik anlamına gelmiyorlar. Eşleşme ekranındaki "sohbette kendiniz ayarlarsınız" ifadesi ile sitedeki ve mağaza metnindeki "yüz yüze buluşun" çağrısı da kaldırıldı.
+- **Sürüm.** Değişiklik önemli sayıldığı için `TermsOfUse.CurrentVersion` 2026-11-04 oldu; yeni hesaplar bu sürümü kabul eder. Mevcut hesaplar 10. bölümdeki duyuruyla bilgilendirilir.
+
 ## 5. Yurt dışına aktarım
 
 **Kural (2024 değişikliğinden sonra, KVKK m. 9):**

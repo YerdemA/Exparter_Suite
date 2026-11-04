@@ -14,7 +14,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
 | 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
-| 8 | MVP sonrası modüller | Sürüyor: dilim 1 (görüntülü görüşme) canlıda, cihaz denemesi bekliyor |
+| 8 | MVP sonrası modüller | Sürüyor: dilim 1 (görüntülü görüşme) tamamlandı, sırada dilim 2 |
 
 ## Faz 0 — Kurulum
 
@@ -359,15 +359,32 @@ Kararlar (kullanıcı, 2026-10-14): sunucu Oracle Cloud Always Free (ARM, Frankf
 - Test geri bildirimi (2026-11-03, 1.0.0 (5)): kayıtta kullanıcı adındaki büyük harfler yazılırken küçük harfe dönüyor; keşfette sunulan ve istenen yetenekler ayrı çiplerde; bir kullanıcı aynı anda iki oturumda olamıyor. Kabul edilmiş oturumlar ve kişinin kendi açık teklifleri, aynı veya farklı eşleşmelerde, o zamanı tutuyor. Çakışan teklif veya kabul `session_time_taken` (kendi zamanı) ya da `other_user_busy` (karşı tarafın zamanı) ile reddediliyor. Eşzamanlı iki istek nadiren ikisi de geçebilir; veritabanı kısıtı eklenmedi. Eski uygulama sürümleri bu iki kod için genel hata mesajı gösterir. Backend 534 (178 domain, 238 uygulama, 118 entegrasyon), mobil 236 test.
 - Kapalı testteki sürüm (2026-11-03): 1.0.0 (6), görüntülü görüşmeyle birlikte Play incelemesinde (Faz 8 dilim 1).
 - Uygulama içi güncelleme (2026-11-03): test kullanıcılarının çoğu yeni sürümlerden habersiz ilk sürümde kaldığı için uygulama, giriş yapılmış ekranlar açılınca ve öne her gelince Google Play'e yeni sürüm sorar (`in_app_update` 5.0.0, esnek güncelleme). Play kendi penceresini gösterir; kullanıcı kabul ederse sürüm arka planda iner ve "Yeniden başlat" uyarısı çıkar. Reddedilirse aynı çalışmada yeniden sorulmaz. Yalnızca Play'den kurulan uygulamada çalışır ve bu kodu taşıyan ilk sürümden sonraki sürümler için etkilidir; eskileri için test kullanıcılarına ayrıca haber verilir.
+- Test geri bildirimi 3 (2026-11-04, 1.0.0 (7)): eşleşme bitince tamamlandı işaretli oturumun görüşmesi de kapanır; eşleşmeler ekranında süren ve biten eşleşmeler ayrı bölümlerde, süren eşleşme sayısı sınırla birlikte görünür; aynı anda en fazla 3 sona ermemiş eşleşme (MT-10); kullanım koşullarına bilgilerin doğruluğu bölümü, uygulama ve site metinleri yüz yüze buluşmaya yönlendirmez; uygulama içi güncelleme bu sürümle gelir. Kapalı test bitince bütün test hesapları silinir, genel yayında herkes sıfırdan başlar (kullanıcı kararı).
 - Kalan: e-posta bağlantılarının test cihazında doğrulanması, test kullanıcılarının 12 kişiye tamamlanması (14 gün), Android eşleme dosyalarının Sentry'ye yüklenmesi ve sürüm etiketleri, standart sözleşme taleplerinin yanıtları, genel yayından önce yer sağlayıcılık bildirimi.
 
 ## Faz 8 — MVP sonrası modüller
 
 Kapalı test sürerken MVP sonrasına bırakılan modüller geliştirilir (kullanıcı kararı, 2026-11-03). Her modül bir dilimdir, kendi branch'inde (`phase-8/<n>-<konu>`) yapılır ve onayla `main`'e merge edilir. `main`'e yapılan backend değişiklikleri otomatik olarak canlıya çıktığı için yalnızca eski uygulama sürümlerini bozmayan değişiklikler merge edilir; kapalı testten gelen düzeltmeler önceliklidir. Brief'te Faz 7 (web istemcisi) olarak duran iş bu fazdan sonra ele alınır.
 
-| Dilim | Konu | Durum |
-|---|---|---|
-| 1 | Görüntülü görüşme | Canlıda (2026-11-03); iki cihazla deneme bekliyor |
+Plan ve sıra kullanıcı tarafından onaylandı (2026-11-04). Sıranın mantığı: küçük ve az riskli işler önce; başka işin dayandığı iş (katalog → öneri, yönetici paneli → gönderi akışı) ondan önce; hukuki ve ticari yükü olan işler sonra. Her dilimin ayrıntıları (formüller, sınırlar, metinler) dilimin başında kullanıcıya sorulur.
+
+| Dilim | Konu | Kapsam | Durum |
+|---|---|---|---|
+| 1 | Görüntülü görüşme | LiveKit, ekran paylaşımı | Tamamlandı (2026-11-04): iki gerçek cihazla denendi; eşleşme bitince görüşme de kapanıyor |
+| 2 | Görüşmede uçtan uca şifreleme | LiveKit kare şifrelemesi; anahtar iki cihaz arasında üretilir, sunucu yalnızca şifreli paketleri iletir; karşılaştırılabilir güvenlik kodu; gizlilik metni. Mesajlaşmaya uçtan uca şifreleme eklenmez (kullanıcı kararı, 2026-11-04): şikâyet ve moderasyon, web istemcisi ve çoklu cihaz bunu zorlaştırır. | Başlamadı |
+| 3 | Güven göstergesi ve rozetler | Var olan istatistiklerden (eşleşme, oturum, puan) profilde güven göstergesi ve rozetler | Başlamadı |
+| 4 | Mesajlarda dosya | Görsel ile not ve kaynak paylaşımı için PDF, Word gibi belgeler (kullanıcı kararı, 2026-11-04); tür ve boyut sınırları, şikâyet akışı | Başlamadı |
+| 5 | Kapsamlı yetenek kataloğu | Alt kategoriler, çok daha fazla yetenek, katalogda arama; mevcut kullanıcı yeteneklerinin taşınması | Başlamadı |
+| 6 | Gelişmiş öneri | Keşfet sıralamasına benzer yetenekler, güven göstergesi, son etkinlik, şehir | Başlamadı |
+| 7 | Yönetici paneli ve moderatörler | Uygulamanın içinde, yalnızca yetkili rollere görünen ekranlar; PowerShell betiklerinin yerini alır (yetenek önerileri, şikâyetler, askıya alma, iptal sebepleri). Admin kullanıcılara panelden moderatör rolü verir ve geri alır; moderatörün yetkileri admininkinden dardır ve her moderatör işlemi kimin, neyi, ne zaman ve neden yaptığıyla kaydedilir, admin bu kaydı inceler (kullanıcı kararı, 2026-11-04). Web istemcisi aynı endpoint'leri kullanır. | Başlamadı |
+| 8 | Gönderi akışı | 8A metin + görsel, 8B video; beğeni, yorum, şikâyet | Başlamadı |
+| 9 | Google ile giriş | Brief soru 5; Apple girişi yalnızca iOS gelirse | Başlamadı |
+| 10 | Çoklu dil (İngilizce) | Uygulama metinleri, kullanıcının diline göre e-posta ve bildirimler, katalog çevirileri | Başlamadı |
+
+Faz 8'in dışında kalanlar:
+
+- **Üyelik ve ödeme** (Google Play Billing, yetenek sınırının plana bağlanması): genel yayından ve uygulama kitle kazandıktan sonra (kullanıcı kararı, 2026-11-04). O zamana kadar Exparter ücretsizdir.
+- **Reşit olmayan kullanıcılar:** Faz 8'e alınmadı (kullanıcı kararı, 2026-11-04); veli onayı ve yetişkinlerle iletişim ciddi hukuki risk taşır, ayrı bir kararla ele alınır.
 
 ### Dilim 1 — Görüntülü görüşme
 

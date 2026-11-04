@@ -117,6 +117,8 @@ Her yeni kod buraya eklenir. "Normalde doğrulama aşamasında 400 ile yakalanı
 | `swap_request_already_pending` | 409 | İki kullanıcı arasında bekleyen bir istek var. |
 | `swap_request_cooldown` | 409 | Alıcı, gönderenin önceki isteğini reddetti veya cevaplamadı; yeni istek için 7 gün beklenmeli. |
 | `match_already_exists` | 409 | İki kullanıcı arasında sona ermemiş bir eşleşme var. |
+| `match_limit_reached` | 409 | İşlemi yapanın sona ermemiş 3 eşleşmesi var. |
+| `other_user_match_limit` | 409 | Karşı tarafın sona ermemiş 3 eşleşmesi var. |
 | `user_blocked` | 409 | Taraflardan biri diğerini engellemiş. |
 | `invalid_state` | 409 | Kaynağın mevcut durumu bu geçişe izin vermiyor. |
 | `match_end_pending` | 409 | Bekleyen sonlandırma isteği varken yeni oturum planlanamaz. |

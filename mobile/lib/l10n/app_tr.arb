@@ -84,7 +84,7 @@
   "profileAcceptsOnline": "Çevrimiçi",
   "profileAcceptsInPerson": "Yüz yüze",
   "profileCityLabel": "Şehir",
-  "profileCityHelper": "Yüz yüze takaslar için gerekli. Yalnızca şehriniz görünür.",
+  "profileCityHelper": "Yalnızca şehriniz görünür.",
   "profileModeOnline": "Çevrimiçi takas",
   "profileModeInPerson": "Yüz yüze takas",
   "profileModeInPersonIn": "Yüz yüze takas · {city}",
@@ -403,7 +403,7 @@
   "sessionNoteLabel": "Not (isteğe bağlı)",
   "sessionNoteHelper": "Örneğin görüşme bağlantısı.",
   "sessionInPersonReport": "Yüz yüze buluştuk",
-  "sessionInPersonHint": "Yüz yüze buluşmaları sohbette kendiniz ayarlarsınız. Buluştuktan sonra buradan bildirin; karşı taraf onaylayınca tamamlanmış sayılır. Aynı kişiyle yüz yüze buluşma yalnızca bir kez bildirilebilir.",
+  "sessionInPersonHint": "Exparter yüz yüze buluşma düzenlemez; buluşup buluşmamak size kalmıştır. Buluştuysanız buradan bildirebilirsiniz; karşı taraf onaylayınca tamamlanmış sayılır. Aynı kişiyle yalnızca bir kez bildirilebilir.",
   "sessionInPersonConfirmTitle": "Yüz yüze buluştunuz mu?",
   "sessionInPersonConfirmBody": "Karşı taraftan bu buluşmayı onaylaması istenecek. 72 saat içinde cevap gelmezse buluşma tamamlanmış sayılır.",
   "sessionInPersonTitle": "Yüz yüze buluşma",
@@ -456,6 +456,8 @@
   "callNotificationText": "Exparter'a dönmek için dokunun.",
   "errorCallNotOpenYet": "Görüşmeye en erken başlangıçtan 10 dakika önce katılabilirsiniz.",
   "errorCallWindowClosed": "Bu oturumun görüşme süresi doldu.",
+  "errorMatchLimitReached": "Aynı anda en fazla 3 eşleşmeniz olabilir. Yeni bir eşleşme için süren eşleşmelerinizden birinin bitmesi gerekir.",
+  "errorOtherUserMatchLimit": "Bu kullanıcının şu anda yeni eşleşmeye yeri yok. Daha sonra yeniden deneyin.",
   "errorCallMatchEnded": "Eşleşme sona erdiği için bu görüşmeye katılamazsınız.",
   "sessionWaitingConfirmation": "Karşı tarafın onayı bekleniyor;",
   "sessionConfirmQuestionOnline": "Karşı taraf bu oturumu tamamlandı olarak işaretledi.",
@@ -519,6 +521,15 @@
   "matchesTabMatches": "Eşleşmeler",
   "matchesTabIncoming": "Gelen",
   "matchesTabOutgoing": "Gönderilen",
+  "matchesOpenTitle": "Süren eşleşmeler ({count}/{max})",
+  "@matchesOpenTitle": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "max": {"type": "int"}
+    }
+  },
+  "matchesOpenEmpty": "Şu anda süren bir eşleşmeniz yok.",
+  "matchesEndedTitle": "Biten eşleşmeler",
   "matchesEmpty": "Henüz bir eşleşmeniz yok. Keşfet sekmesinden takas isteği gönderebilirsiniz.",
   "requestsIncomingEmpty": "Cevap bekleyen gelen isteğiniz yok.",
   "requestsOutgoingEmpty": "Cevap bekleyen gönderilmiş isteğiniz yok.",

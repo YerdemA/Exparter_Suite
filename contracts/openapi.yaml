@@ -671,7 +671,10 @@ paths:
         skills. Rejected with 409 if the two users already have a pending request or an
         unfinished match, if either has blocked the other, or if the recipient declined or
         did not answer the sender's previous request less than 7 days ago
-        (`swap_request_cooldown`).
+        (`swap_request_cooldown`). A user can have at most 3 matches that have not ended,
+        one waiting for an answer to its end request included: the sender with 3 gets
+        `match_limit_reached`, a sender asking a recipient with 3 gets
+        `other_user_match_limit`.
       requestBody:
         required: true
         content:
@@ -710,7 +713,11 @@ paths:
       tags: [SwapRequests]
       operationId: acceptSwapRequest
       summary: Accept a received swap request
-      description: Only the recipient can accept, and must meet the interaction requirements. Creates a match.
+      description: |
+        Only the recipient can accept, and must meet the interaction requirements. Creates
+        a match. Refused while the recipient (`match_limit_reached`) or the requester
+        (`other_user_match_limit`) has 3 matches that have not ended; the request stays
+        pending until it is answered or expires.
       parameters:
         - $ref: '#/components/parameters/SwapRequestId'
       responses:

@@ -90,6 +90,7 @@ Durum: **Onaylandı (2026-10-07).**
 | MT-07 | Sonlandırma isteği 7 gün içinde onaylanmaz, reddedilmez veya geri alınmazsa eşleşme kendiliğinden sonlanır. Sürenin bitmesine 24 saat kala karşı tarafa hatırlatma gider. | Domain |
 | MT-08 | Reddedilen sonlandırma isteğinin ardından yeniden istemek için bekleme süresi yoktur. | — |
 | MT-09 | Sonlandırma isteği beklerken yeni oturum planlanamaz; mevcut oturumlar etkilenmez. | Application |
+| MT-10 | Bir kullanıcının aynı anda en fazla 3 sona ermemiş eşleşmesi olabilir; sonlandırma isteği bekleyen eşleşme de sayılır. İstek gönderilirken ve kabul edilirken iki taraf için denetlenir: işlemi yapanın 3 eşleşmesi varsa `match_limit_reached`, karşı tarafın varsa `other_user_match_limit`. Reddedilen kabulde istek bekler. Sınırın üstünde kalan eski eşleşmeler sürer. Veritabanı kısıtı yoktur (kullanıcı kararı, 2026-11-04). | Application |
 
 ## Mesajlaşma
 
@@ -131,7 +132,7 @@ Durum: **Onaylandı (2026-10-07).**
 | SS-18 | Süresi geçen öneri ve onay, arka plan işi kaydetmeden önce de her okumada ve işlemde sonuçlanmış sayılır. | Domain |
 | SS-19 | Bir kullanıcı çifti, bütün eşleşmeleri boyunca yalnızca bir yüz yüze buluşma bildirebilir (sahte bildirimle istatistik şişirmeye karşı). İptal edilmiş bildirim sayılmaz; onay bekleyen veya tamamlanmış bildirim varken yenisi `in_person_already_reported` ile reddedilir. | Application + veritabanı |
 | SS-20 | Bir kullanıcı aynı anda iki oturumda olamaz; aynı eşleşmede de farklı eşleşmelerde de. Kullanıcının zamanını kabul edilmiş ve iptal edilmemiş çevrimiçi oturumları ile kendi yaptığı, süresi geçmemiş teklifleri tutar. Teklif ve kabul anında denetlenir: işlemi yapanın zamanı doluysa `session_time_taken`, karşı tarafınki doluysa `other_user_busy`. Biri biterken diğeri başlayan oturumlar çakışmaz. Veritabanı kısıtı yoktur; aynı anda gelen iki istek nadiren ikisi de geçebilir (kullanıcı kararı, 2026-11-03). | Domain, Application |
-| SS-21 | Kabul edilmiş ve iptal edilmemiş çevrimiçi oturumun görüntülü görüşmesi vardır. Görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir; süre bittikten 15 dakika sonra görüşme kapanır ve oda sunucuda kapatılır. Daha önce `call_not_open_yet`, sonra `call_window_closed`. Tamamlandı işareti görüşmeyi bitirmez (ADR 0015). | Domain |
+| SS-21 | Kabul edilmiş ve iptal edilmemiş çevrimiçi oturumun görüntülü görüşmesi vardır. Görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir; süre bittikten 15 dakika sonra görüşme kapanır ve oda sunucuda kapatılır. Daha önce `call_not_open_yet`, sonra `call_window_closed`. Tamamlandı işareti görüşmeyi bitirmez; eşleşmenin sona ermesi bitirir (`call_match_ended`, açık oda bir dakika içinde kapatılır). Sonlandırma isteği beklerken görüşme sürer (kullanıcı kararı, 2026-11-04; ADR 0015). | Domain, Application |
 | SS-22 | Görüşmenin sesi, görüntüsü ve paylaşılan ekran kaydedilmez; kimin ne zaman katıldığı tutulmaz. Paylaşılan ekranla cihazın sesi gitmez. | — |
 
 ### Kullanıcı istatistikleri
