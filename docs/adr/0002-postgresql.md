@@ -14,7 +14,7 @@ Tek veritabanı olarak PostgreSQL, erişim için EF Core (Npgsql sağlayıcısı
 Seçimi belirleyen özellikler:
 
 - **Kısmi ve ifade tabanlı benzersiz index'ler:** "Yalnızca `Pending` satırlarda, sırasız kullanıcı çifti benzersiz" gibi kuralları doğrudan ifade eder.
-- **`jsonb`:** Bildirim içeriği gibi türe göre değişen veriler için ayrı tablo gerektirmez.
+- **`jsonb`:** Türe göre değişen veriler için ayrı tablo gerektirmez. (Uygulamada gerekmedi: bildirimler türlü sütunlarla saklanıyor, 2026-11-03.)
 - **Metin arama:** Yetenek ve kullanıcı araması için ayrı bir arama motoru gerektirmeden yeterlidir.
 - Açık kaynak, lisans maliyeti yok, yönetilen servis olarak her bulutta var.
 

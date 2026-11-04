@@ -69,7 +69,7 @@ Sunucu kötüye kullanıma karşı istek sayısını ve boyutunu sınırlar. Aş
 
 ## Hata kodları
 
-Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya eklenir.
+Her yeni kod buraya eklenir. "Normalde doğrulama aşamasında 400 ile yakalanır" denen kodlar domain katmanının son savunmasıdır: istek doğrulamayı geçip kuralı yine de bozarsa 409 döner.
 
 | Kod | Durum | Açıklama |
 |---|---|---|
@@ -96,7 +96,15 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `username_reserved` | 409 | Kullanıcı adı ayrılmış bir ad (ör. `admin`). |
 | `username_change_too_soon` | 409 | Kullanıcı adı son 7 gün içinde değiştirilmiş. |
 | `invalid_username` | 409 | Kullanıcı adı biçim kurallarına uymuyor. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
-| `email_recently_deleted` | 409 | Bu e-postaya ait hesap yakın zamanda silindi; bekleme süresi dolmadı. |
+| `terms_not_accepted` | 409 | Kayıtta kullanım koşulları kabul edilmemiş. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `invalid_display_name` | 409 | Görünen ad 2–50 karakter olmalı. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `swap_mode_required` | 409 | Çevrimiçi ve yüz yüze tercihlerinden en az biri seçilmeli. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `city_required` | 409 | Yüz yüze takas seçiliyse şehir zorunlu. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `invalid_city` | 409 | Şehir kodu 81 ilden biri değil. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `invalid_skill_name` | 409 | Yetenek adı 2–60 karakter olmalı ve harf veya rakam içermeli. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `invalid_message` | 409 | Mesaj boş veya 2000 karakterden uzun. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `invalid_session` | 409 | Oturumun süresi, notu veya iptal sebebi kurallara uymuyor. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
+| `invalid_review` | 409 | Puan veya yorum kurallara uymuyor. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `email_already_verified` | 409 | E-posta zaten doğrulanmış. |
 | `skill_already_exists` | 409 | Aynı ada sahip yetenek katalogda veya öneriler arasında var. |
 | `skill_not_approved` | 409 | Yetenek henüz onaylanmamış. |
@@ -116,6 +124,8 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `conversation_has_active_match` | 409 | Aktif eşleşme varken sohbet kapatılamaz. |
 | `session_not_started` | 409 | Oturum, başlangıç zamanından önce tamamlandı işaretlenemez. |
 | `session_in_past` | 409 | Oturum tarihi gelecekte olmalı. |
+| `session_time_taken` | 409 | İşlemi yapan kullanıcının o saatte kabul edilmiş bir oturumu veya kendi yaptığı açık bir teklifi var. |
+| `other_user_busy` | 409 | Karşı tarafın o saatte kabul edilmiş bir oturumu veya kendi yaptığı açık bir teklifi var. |
 | `call_not_open_yet` | 409 | Görüşmeye en erken başlangıçtan 10 dakika önce katılınabilir. |
 | `call_window_closed` | 409 | Görüşme penceresi kapandı (süre bittikten 15 dakika sonra). |
 | `call_match_ended` | 409 | Oturumun eşleşmesi sona erdi; tamamlandı işaretli oturumun penceresi açık olsa da görüşmeye katılınamaz. |

@@ -8,7 +8,11 @@ Uygulama ──HTTPS──▶ Caddy ──▶ API ──▶ PostgreSQL        (O
                       │        ├──▶ Brevo SMTP           (e-posta)
                       │        ├──▶ Firebase             (telefon bildirimi)
                       │        └──▶ Sentry               (hatalar)
+                      ├──▶ LiveKit                       (görüntülü görüşmenin sinyalleşmesi, rtc.<alan-adı>)
                       └──▶ deploy/site/                  (herkese açık sayfalar)
+
+Görüşmenin sesi ve görüntüsü Caddy'den geçmez: uygulama LiveKit'e doğrudan UDP 7882'den
+(engelliyse TCP 7881'den) bağlanır.
 ```
 
 Aşağıda `<alan-adı>` sizin alan adınız (ör. `exparter.app`), `<ip>` sunucunun genel IP adresidir. Bilgisayarınızdaki komutlar PowerShell'de, sunucudakiler SSH oturumunda çalışır.
@@ -32,7 +36,7 @@ Aşağıda `<alan-adı>` sizin alan adınız (ör. `exparter.app`), `<ip>` sunuc
    - SSH keys: kendi genel anahtarınızı yükleyin (`~/.ssh/id_ed25519.pub`; yoksa `ssh-keygen -t ed25519`).
    - "Out of capacity" hatası alırsanız başka bir availability domain seçin veya birkaç saat sonra yeniden deneyin.
 2. **Ağ:** Instance → Subnet → Security List → Ingress Rules: `0.0.0.0/0` kaynaktan TCP 80, TCP 443 ve UDP 443; görüntülü görüşmenin medyası için TCP 7881 ve UDP 7882 (ADR 0015).
-3. **Sunucunun güvenlik duvarı:** Oracle'ın Ubuntu imajı 22 dışındaki portları kendi iptables kurallarıyla kapatır. Bağlanıp açın:
+3. **Sunucunun güvenlik duvarı:** Oracle'ın Ubuntu imajı 22 dışındaki portları kendi iptables kurallarıyla kapatır. Bağlanıp açın (görüşme portlarını, 7881 ve 7882, her dağıtımda `prepare-server.sh` de denetler ve eksikse açar):
 
    ```sh
    ssh ubuntu@<ip>
@@ -136,13 +140,16 @@ GitHub'da repo → **Settings → Secrets and variables → Actions**:
 | Variable | `DEPLOY_USER` | `ubuntu` |
 | Variable | `DEPLOY_KNOWN_HOSTS` | `ssh-keyscan` çıktısı |
 
-Sonra **Actions → Deploy → Run workflow** (main). İş akışı dosyaları kopyalar, migration'ı çalıştırır ve servisleri başlatır. İlk açılışta Caddy sertifikaları birkaç saniye içinde alır.
+Sonra **Actions → Deploy → Run workflow** (main). İş akışı dosyaları kopyalar, `prepare-server.sh` ile sunucuyu hazırlar, migration'ı çalıştırır ve servisleri başlatır. İlk açılışta Caddy sertifikaları birkaç saniye içinde alır.
+
+`prepare-server.sh` her dağıtımda yeni sürümden önce çalışır ve hazır sunucuda hiçbir şey değiştirmez. `.env`'de eksikse görüşme ayarlarını ekler (`RTC_HOST`, `LIVEKIT_API_KEY`, sunucuda üretilen `LIVEKIT_API_SECRET`, sunucunun genel IP'si olarak `LIVEKIT_NODE_IP`) ve 7881/7882 portlarını sunucunun güvenlik duvarında açar. Böylece sonraki sürümlerin istediği ayarlar sunucuya SSH ile bağlanmadan da gelir; betik hata verirse dağıtım durur ve eski sürüm çalışmaya devam eder.
 
 **Doğrulama:**
 
 ```powershell
 curl https://api.<alan-adı>/health
 curl -I https://<alan-adı>/gizlilik.html
+curl https://rtc.<alan-adı>/          # LiveKit "OK" yanıtı verir
 ```
 
 Bundan sonra `main`'e birleşen her backend değişikliği kendiliğinden dağıtılır.
@@ -188,6 +195,7 @@ Yükleme anahtarı `D:\Yazilim\secrets\exparter-upload.jks`, şifresi `mobile/an
 |---|---|
 | Durum | `docker compose ps` |
 | API kayıtları | `docker compose logs -f --tail 200 api` |
+| Görüşme sunucusu kayıtları | `docker compose logs -f --tail 200 livekit` |
 | Bir hatanın kayıtları | `docker compose logs api \| grep <traceId>` (hata yanıtındaki `traceId`) |
 | Yeniden başlatma | `docker compose restart api` |
 | Elle dağıtım | GitHub → Actions → Deploy → Run workflow |

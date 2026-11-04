@@ -46,7 +46,7 @@ Yusuf Erdem Aykaç
 
 Sağlayıcıya göre `<WHAT GOES TO THIS PROVIDER>`:
 
-- **Oracle:** the application database and server (account data, profiles, messages, traffic logs), hosted in Frankfurt.
+- **Oracle:** the application database and server (account data, profiles, messages, traffic logs), hosted in Frankfurt. Since 2026-11-03 the server also relays the audio, video and shared screen of in-app calls, without recording them.
 - **Cloudflare:** profile photos and database backups in an R2 bucket under EU jurisdiction.
 - **Brevo:** e-mail addresses of users, for verification and password reset e-mails.
 - **Sentry:** error reports with a random user ID, device model and app version; no IP addresses.

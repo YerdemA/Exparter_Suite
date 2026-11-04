@@ -86,10 +86,10 @@ Letgo'nun üyelik sözleşmesi ve topluluk kuralları da askıya alma, kalıcı 
 
 | Sağlayıcı | Yer | Giden veri |
 |---|---|---|
-| Oracle Cloud | Frankfurt | Tüm veritabanı |
+| Oracle Cloud | Frankfurt | Tüm veritabanı; görüntülü görüşmenin sesi, görüntüsü ve paylaşılan ekran (yalnızca aktarılır, kaydedilmez; 2026-11-03, ADR 0015) |
 | Cloudflare R2 | AB | Avatarlar, veritabanı yedekleri |
 | Brevo | AB | E-posta adresi, doğrulama ve sıfırlama bağlantısı |
-| Google Firebase (FCM) | ABD ve diğer | Cihaz token'ı, bildirim metni (gönderenin adı, mesajın başı) |
+| Google Firebase (FCM) | ABD ve diğer | Cihaz token'ı, kimseyi adlandırmayan bildirim metni (9. bölümdeki karardan sonra; önce gönderenin adı ve mesajın başı gidiyordu) |
 | Sentry | Frankfurt | Kullanıcı kimliği (UUID), cihaz modeli, hata ayrıntısı |
 
 **Uygulamadaki durum:** Google, AWS, Microsoft veya Cloudflare'in Türk standart sözleşmesini müşterileriyle imzaladığına dair resmi bir belge bulunamadı. Bu şirketlerin yayımladığı veri işleme ekleri AB standart sözleşmeleridir ve KVKK açısından standart sözleşme sayılmaz. Sağlayıcı imzalamıyorsa sistematik aktarım için başka bir yol kalmıyor. Kaynakların önerisi, bunu belgelenmiş bir risk kararı olarak almak ve aktarılan veriyi en aza indirmek. Türk şirketlerinin aydınlatma metinleri (Getir, Letgo) dayandıkları güvenceyi belirtmiyor.
@@ -139,13 +139,14 @@ Letgo'nun üyelik sözleşmesi ve topluluk kuralları da askıya alma, kalıcı 
 | Uygulama kayıtları (IP'siz) | Boyut sınırıyla birkaç gün | ADR 0013 |
 | Hata raporları | 30 gün | Sentry ücretsiz plan |
 | Veritabanı yedekleri | 30 gün | ADR 0014 |
+| Görüntülü görüşmenin sesi, görüntüsü ve paylaşılan ekran; kimin ne zaman katıldığı | Saklanmaz | ADR 0015 (2026-11-03'te eklendi) |
 
 Askıya alma ayrı bir kayıt değil, hesabın durumudur; askı kalkınca geride kayıt kalmaz. Şikâyetlerin temizlenmesi MD-12 ile eklendi.
 
 ## 8. Diğer
 
 - **İYS:** Doğrulama ve parola sıfırlama gibi işlemsel e-postalar ticari elektronik ileti değil, İYS kaydı gerekmiyor. Bu e-postalara tanıtım içeriği eklenmemeli. Pazarlama e-postası göndermek, ayrı onay ve İYS kaydı gerektirir.
-- **Veri ihlali:** Bir sızıntı fark edilirse Kurul'a 72 saat içinde bildirim yapılır, etkilenen kullanıcılar bilgilendirilir. `docs/deployment.md` içine adım olarak eklenmeli.
+- **Veri ihlali:** Bir sızıntı fark edilirse Kurul'a 72 saat içinde bildirim yapılır, etkilenen kullanıcılar bilgilendirilir. Adımlar `docs/deployment.md` 11. bölümde.
 - **Veri sorumlusu:** Şirket yoksa veri sorumlusu gerçek kişidir; adı ve bir iletişim adresi metinlerde yer almalı. Kişisel Gmail adresi yerine Cloudflare Email Routing ile `destek@exparter.app` gibi bir adres Gmail'e yönlendirilebilir; ücretsiz ve Brevo ile çakışmaz. KEP adresi zorunlu değil; başvuru kayıtlı e-postadan kabul edilir.
 - **Başvuru süresi:** Talepler en geç 30 gün içinde ücretsiz yanıtlanır (Getir, Letgo ve KVKK m. 13 ile aynı).
 
@@ -159,6 +160,8 @@ Askıya alma ayrı bir kayıt değil, hesabın durumudur; askı kalkınca geride
 - Veri sorumlusu Yusuf Erdem Aykaç; iletişim `destek@exparter.app`.
 
 ## 10. Yapılacaklar (karar öncesi liste)
+
+Kararlardan sonra hepsi yapıldı (2026-10-27; ayrıntı `docs/roadmap.md` Faz 6 dilim 6). Liste kayıt için duruyor.
 
 Kullanıcı kararı gerektirenler:
 

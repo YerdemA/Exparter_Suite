@@ -24,4 +24,4 @@ Modüller birbirinin tablolarına erişmez (ADR 0006). Bu kuralı keşfette harf
 - Konuma dayalı cursor, sayfalar arasında liste değişirse (yeni kullanıcı, güncellenen profil) bir kaydı yineleyebilir veya atlayabilir. Keşfet bir öneri listesi olduğu için MVP'de kabul edilebilir; istemci yinelenen kullanıcıyı eler.
 - 10 000 kullanıcıda süzgeçsiz keşfet tek başına yaklaşık 145 ms sürer (2026-10-14, dilim 6/4). PostgreSQL bu sorgunun maliyetini yüksek tahmin ettiği için JIT derlemesini tetikliyordu; API bağlantılarında JIT kapalıdır. Kullanıcı sayısı onlarca bine çıktığında sıralama önceden hesaplanmalıdır.
 - Görünen ad araması dizin kullanmaz. Kullanıcı sayısı büyüdüğünde `pg_trgm` dizini veya ayrı bir arama sütunu eklenir.
-- Engelleme (`Moderation`) ve puan (`Reviews`) geldiğinde aynı sorguya eklenir.
+- Puan (`Reviews`, dilim 7) ve engelleme (`Moderation`, Faz 6 dilim 2) aynı sorguya eklendi.

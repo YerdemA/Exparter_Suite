@@ -39,8 +39,8 @@ Karar ve gerekçe: ADR 0012.
 
 - Bir bildirim oluştuğunda `NotificationReceived` her zaman gönderilir; kullanıcının açık hub bağlantısı yoksa kayıtlı cihazlarına ayrıca FCM ile push gider.
 - Uygulama arka plana geçince hub bağlantısını kapatır, öne gelince yeniden açar ve listeleri yeniler. Böylece "açık bağlantı yok" ile "uygulama ekranda değil" aynı anlama gelir.
-- Yeni mesajlar bildirim listesine yazılmaz (sohbet listesindeki okunmamış sayısı bu işi görür), ama alıcının açık bağlantısı yoksa push gönderilir: başlık gönderenin adı, gövde mesajın ilk 100 karakteri.
-- Push'un metnini sunucu üretir (Türkçe başlık ve gövde); telefon uygulama kapalıyken bile gösterir.
+- Yeni mesajlar bildirim listesine yazılmaz (sohbet listesindeki okunmamış sayısı bu işi görür), ama alıcının açık bağlantısı yoksa push gönderilir: başlık "Exparter", gövde "Yeni bir mesajınız var."
+- Push'un metnini sunucu üretir (Türkçe başlık ve gövde); telefon uygulama kapalıyken bile gösterir. Metin yurt dışındaki FCM'den geçtiği için kimseyi adlandırmaz ve kullanıcının yazdığı hiçbir şeyi içermez (NT-11, 2026-10-27).
 - Push'un `data` alanı, dokununca açılacak ekran içindir. Tüm değerler metindir:
 
 | Anahtar | Ne zaman | Açıklama |

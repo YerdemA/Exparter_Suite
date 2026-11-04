@@ -21,7 +21,7 @@ Domain event'leri süreç içinde (in-process) yayınlanır. Kalıcı mesaj kuyr
 ## Sonuçlar
 
 - Tek transaction, tek deploy, tek veritabanı: geliştirme ve işletme basit kalır.
-- Modül sınırları derleyici tarafından değil, kural ve gözden geçirmeyle korunur. Sınır ihlalini yakalayan bir mimari testi Faz 3'te değerlendirilecek.
+- Modül sınırları derleyici tarafından değil, kural ve gözden geçirmeyle korunur. Sınır ihlalini yakalayan mimari testleri var: katman bağımlılıkları Faz 3'ten, modüller arası sınır Faz 5 dilim 1'den beri denetlenir.
 - Süreç içi event'ler, dinleyici hata verirse kaybolabilir. Bildirim gibi kaybı tolere edilebilir yan etkiler için kabul edilebilir; kritik bir akışta sorun çıkarsa outbox ayrı bir ADR ile eklenir.
 - Bir modül ileride ayrı servise çıkarılmak istenirse, tablo sahipliği ve kimlik referansları bunu mümkün kılar.
 

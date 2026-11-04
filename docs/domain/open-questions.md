@@ -83,6 +83,21 @@
 | Görünürlük | Etkileşim koşulunu sağlamayan kullanıcı gezebilir ve başkalarına bakabilir. Kendisi keşfette öneri olarak çıkmaz, ama ad veya kullanıcı adıyla aranınca bulunur ve profili açılabilir. Koşul yalnızca başkalarını etkileyen işlemlerde aranır. |
 | Keşfet sıralaması | Karşılıklı uyum, tek yönlü uyum, tercih uyumu, puan, yenilik. Seviyesi yetmeyen yetenek uyum sayılmaz. Uyumsuz kullanıcılar listenin sonunda gösterilir. |
 
+## Verilen kararlar (2026-10-14 ve sonrası)
+
+Ayrıntıları ve gerekçeleri `docs/roadmap.md` ve ilgili ADR'lerdedir; burada yalnızca karar kaydı tutulur.
+
+| Konu | Karar |
+|---|---|
+| Renk paleti | "İndigo ve turkuaz"; tema telefonun ayarını izler, Sistem / Açık / Koyu seçilebilir (2026-10-14). |
+| Canlı ortam | Oracle Cloud Always Free (Frankfurt), DNS ve nesne depolama Cloudflare (R2), e-posta Brevo, kişisel Play Console hesabı (2026-10-14, ADR 0014). |
+| Hata izleme | Sentry, AB veri bölgesi; kullanıcıdan yalnızca kimlik gider (2026-10-14, ADR 0013). |
+| Hukuki uyum | Hukukçu görüşü yerine araştırma raporu; kayıtta kullanım koşulları kabul edilir, bildirim metinleri kimseyi adlandırmaz, trafik kayıtları 1 yıl tutulur, kapanan şikâyetler 2 yıl sonra silinir (2026-10-27, `docs/legal/compliance-research.md`). |
+| MVP sonrası sıra | Kapalı test sürerken MVP sonrası modüller Faz 8'de dilim dilim yapılır; web istemcisi (Faz 7) bundan sonra ele alınır (2026-11-03). |
+| Görüntülü görüşme ayrıntıları | Ekran paylaşımı var: iki taraf da paylaşabilir, paylaşırken kamera açık kalır, cihazın sesi gitmez (2026-11-03, ADR 0015). |
+| Oturum çakışması | Bir kullanıcı aynı anda iki oturumda olamaz, aynı veya farklı eşleşmelerde. Kabul edilmiş oturumlar ve kişinin kendi açık teklifleri zamanı tutar (2026-11-03, SS-20). |
+| Kullanıcı adında büyük harf | Sunucu kuralı aynı kalır (yalnızca küçük harf); uygulama yazılan büyük harfleri yazarken küçük harfe çevirir (2026-11-03). |
+
 ## Onaylanan ayrıntılar (2026-10-07)
 
 ### Ö1 — Eşleşmenin 7 gün sonunda kendiliğinden sonlanması
@@ -115,7 +130,7 @@
 6. `User` satırı `Status = Deleted` olarak kalır; e-posta ve parola hash'i silinir. Aynı e-postayla yeniden kayıt, kalıcı silmeden sonraki 3 ay boyunca engellenir; bunun için e-postanın yalnızca hash'i saklanır ve 3 ay sonunda o da silinir.
 7. Kullanıcı hakkındaki açık şikâyetler sonuçlanana kadar saklanır.
 
-Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir konudur. Bu öneri teknik bir varsayılandır; yayından önce bir hukukçuyla doğrulanmalıdır.
+Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir konudur. Hukukçu görüşü alınmadı; süreler 2026-10-27'de bir araştırmayla netleştirildi ve kullanıcı tarafından onaylandı (`docs/legal/compliance-research.md`, 7. bölüm).
 
 ### Ö4 — Eşleşme sonrası sohbet
 
@@ -127,13 +142,12 @@ Not: Hangi verinin ne kadar süre saklanabileceği KVKK açısından hukuki bir 
 
 ## Sonraki fazlarda netleşecekler
 
-- Keşfet skorunun formülü ve seviye uyumunun (öğretici seviyesi istenenin altındaysa) etkisi: Faz 5.3.
-- Modül başına ayrı `DbContext` ve PostgreSQL şeması kullanımı: Faz 3 (bkz. ADR 0001).
-- Metin alanlarının uzunluk sınırları: Faz 2 (sözleşme).
-- E-posta sağlayıcısı: Faz 3 (ADR).
+Çözülenler: keşfet sıralaması ve seviye uyumu (dilim 3 ve 7, ADR 0011); tek `DbContext` ve modül başına şema (ADR 0006); metin alanlarının sınırları (sözleşme); e-posta sağlayıcısı (Brevo, ADR 0007); kullanıcı istatistiklerinin profilde gösterimi (dilim 6); renk paleti (2026-10-14).
+
+Hâlâ açık olanlar:
+
 - Gönderi akışı: MVP sonrası, takas akışı (Faz 5 dilim 2–8) bittikten sonra ayrı bir dilim olarak. Kullanıcı sunduğu yeteneklerden birini seçer ve o yetenekle ilgili paylaşım yapar. Paylaşım metin, görsel veya video olabilir; metin + görsel ve metin + video birlikte de olabilir. Akış, Keşfet'ten bağımsız ayrı bir ekrandır. Beğeni ve yorum etkileşim sayılır; tamamlanmış profil ve doğrulanmış e-posta gerektirir. Ayrıntılar (video sınırları, moderasyon, sıralama) o dilimin başında netleştirilecek.
-- Kullanıcı istatistiklerinin profilde gösterimi, güven puanı ve rozet/başarım modülü: hangi sayıların hangi dilimde görünür olacağı dilim 4'ün planında önerilecek; rozetler MVP sonrası.
-- Renk paleti: kullanıcı mevcut pembe ağırlıklı paleti beğenmedi (2026-10-13); palet büyük olasılıkla değişecek. Yeni palet kararlaştırılınca yalnızca `mobile/lib/core/theme/` altındaki token'lar değişir; ekranlar renkleri oradan aldığı için başka dosyaya dokunmak gerekmez.
+- Güven puanı ve rozet/başarım modülü: MVP sonrası (istatistikler profilde dilim 6'dan beri görünüyor).
 - Kapsamlı yetenek kataloğu (alt kategoriler, çok daha fazla yetenek) ve yetenek sınırının ödeme planlarına bağlanması: MVP sonrası.
 - Reşit olmayan (13–17 yaş) kullanıcılar: MVP sonrası. Yetişkinlerle eşleşme, özel mesajlaşma ve yüz yüze oturum için koruma kuralları, yaş bilgisinin toplanması ve veli onayı o zaman kararlaştırılacak.
 
