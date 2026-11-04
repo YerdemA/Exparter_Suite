@@ -82,7 +82,13 @@ class MatchSessionsSection extends ConsumerWidget {
           AsyncValue(:final value?) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final session in value) _SessionCard(session: session, ownUserId: ownUserId, busy: busy),
+                for (final session in value)
+                  _SessionCard(
+                    session: session,
+                    ownUserId: ownUserId,
+                    busy: busy,
+                    matchEnded: match.status == MatchStatus.ended,
+                  ),
               ],
             ),
           AsyncError(:final error) => Column(
@@ -127,11 +133,12 @@ String sessionStatusLabel(AppLocalizations l10n, SwapSessionStatus status) => sw
     };
 
 class _SessionCard extends ConsumerWidget {
-  const _SessionCard({required this.session, required this.ownUserId, required this.busy});
+  const _SessionCard({required this.session, required this.ownUserId, required this.busy, required this.matchEnded});
 
   final SwapSession session;
   final String? ownUserId;
   final bool busy;
+  final bool matchEnded;
 
   /// Asks for the reason a cancellation needs. Returns null if the user backs out.
   Future<void> _cancel(BuildContext context, WidgetRef ref, {required String title}) async {
@@ -189,7 +196,7 @@ class _SessionCard extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(session.note!, style: theme.textTheme.bodyMedium),
             ],
-            if (online) _CallEntry(session: session),
+            if (online) _CallEntry(session: session, matchEnded: matchEnded),
             ...switch (session.status) {
               SwapSessionStatus.proposed when proposedByMe => [
                   action(l10n.sessionCancel, () => _cancel(context, ref, title: l10n.sessionCancelTitle)),
@@ -263,20 +270,21 @@ class _SessionCard extends ConsumerWidget {
 
 /// The way into the session's video call while it is open, and when it opens before then.
 class _CallEntry extends ConsumerWidget {
-  const _CallEntry({required this.session});
+  const _CallEntry({required this.session, required this.matchEnded});
 
   final SwapSession session;
+  final bool matchEnded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     // Only sessions that have a call keep the clock running.
-    if (callWindowAt(session, DateTime.now()) case CallWindow.none || CallWindow.closed) {
+    if (callWindowAt(session, DateTime.now(), matchEnded: matchEnded) case CallWindow.none || CallWindow.closed) {
       return const SizedBox.shrink();
     }
 
-    final window = callWindowAt(session, ref.watch(callClockProvider).value ?? DateTime.now());
+    final window = callWindowAt(session, ref.watch(callClockProvider).value ?? DateTime.now(), matchEnded: matchEnded);
     return switch (window) {
       CallWindow.open => Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),

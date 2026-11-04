@@ -166,6 +166,23 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task A_session_marked_completed_has_no_call_once_its_match_ended()
+    {
+        var (ali, ayse, matchPath) = await MatchedPairAsync();
+        var proposed = await OkAsync(ProposeAsync(ali, matchPath, duration: 60), HttpStatusCode.Created);
+        var path = PathOf(proposed);
+        await OkAsync(PostAsync(ayse, $"{path}/accept"));
+        await ExecuteSqlAsync(
+            $"UPDATE sessions.swap_sessions SET scheduled_at = now() - interval '30 minutes' WHERE id = {proposed.GetProperty("id").GetGuid()}");
+        await OkAsync(PostAsync(ali, $"{path}/completion"));
+        await OkAsync(PostAsync(ali, $"{path}/call-token"));
+
+        await EndMatchAsync(ali, ayse, matchPath);
+
+        await ProblemAssert.IsAsync(await PostAsync(ayse, $"{path}/call-token"), HttpStatusCode.Conflict, "call_match_ended");
+    }
+
+    [Fact]
     public async Task The_room_of_a_call_is_closed_once_the_session_is_cancelled()
     {
         var (ali, ayse, matchPath) = await MatchedPairAsync();

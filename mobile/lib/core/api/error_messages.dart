@@ -46,6 +46,7 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'other_user_busy' => l10n.errorOtherUserBusy,
     'call_not_open_yet' => l10n.errorCallNotOpenYet,
     'call_window_closed' => l10n.errorCallWindowClosed,
+    'call_match_ended' => l10n.errorCallMatchEnded,
     'match_end_pending' => l10n.errorMatchEndPending,
     'review_already_exists' => l10n.errorReviewAlreadyExists,
     'session_not_completed' => l10n.errorSessionNotCompleted,

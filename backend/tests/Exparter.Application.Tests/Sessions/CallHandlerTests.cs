@@ -1,4 +1,5 @@
 using Exparter.Application.Common;
+using Exparter.Application.Matching;
 using Exparter.Application.Sessions;
 using Exparter.Application.Tests.Identity;
 using Exparter.Domain.Common;
@@ -33,24 +34,41 @@ public class CallHandlerTests
     private readonly Guid _ali = Guid.NewGuid();
     private readonly Guid _ayse = Guid.NewGuid();
     private readonly InMemorySessions _sessions = new();
+    private readonly FakeMatches _matches = new();
     private readonly FakeCalls _calls = new();
     private readonly TestClock _clock = new();
 
-    /// <summary>An accepted online session of an hour that starts in a day.</summary>
+    /// <summary>An accepted online session of an hour that starts in a day, in a match of its own.</summary>
     private SwapSession Scheduled()
     {
-        var session = SwapSession.ProposeOnline(Guid.NewGuid(), _ali, _ayse, _clock.GetUtcNow().AddDays(1), 60, null, _clock.GetUtcNow());
+        var matchId = Guid.NewGuid();
+        SetMatch(matchId, isActive: true);
+        var session = SwapSession.ProposeOnline(matchId, _ali, _ayse, _clock.GetUtcNow().AddDays(1), 60, null, _clock.GetUtcNow());
         session.Accept(_ayse, _clock.GetUtcNow());
         _sessions.Add(session);
         return session;
     }
 
+    private void SetMatch(Guid matchId, bool isActive, bool hasPendingEndRequest = false) =>
+        _matches.Items[matchId] = new MatchInfo(matchId, _ali, _ayse, isActive, hasPendingEndRequest);
+
+    /// <summary>The session marked completed during its call, and then the match ended.</summary>
+    private SwapSession CompletedInEndedMatch()
+    {
+        var session = Scheduled();
+        _clock.Advance(TimeSpan.FromDays(1) + TimeSpan.FromMinutes(30));
+        session.MarkCompleted(_ali, _clock.GetUtcNow());
+        session.CancelBecauseMatchEnded(_clock.GetUtcNow());
+        SetMatch(session.MatchId, isActive: false);
+        return session;
+    }
+
     private Task<CallTokenDto> JoinAsync(Guid sessionId, Guid userId) =>
-        new CreateCallTokenCommandHandler(_sessions, _calls, _clock)
+        new CreateCallTokenCommandHandler(_sessions, _matches, _calls, _clock)
             .Handle(new CreateCallTokenCommand(userId, sessionId), CancellationToken.None).AsTask();
 
     private Task<int> CloseEndedAsync() =>
-        new CloseEndedCallsCommandHandler(_calls, _sessions, _clock)
+        new CloseEndedCallsCommandHandler(_calls, _sessions, _matches, _clock)
             .Handle(new CloseEndedCallsCommand(), CancellationToken.None).AsTask();
 
     [Fact]
@@ -98,6 +116,40 @@ public class CallHandlerTests
         Assert.Equal([open.Id.ToString()], _calls.Rooms);
 
         _clock.Advance(TimeSpan.FromMinutes(75));
+        Assert.Equal(1, await CloseEndedAsync());
+        Assert.Empty(_calls.Rooms);
+    }
+
+    [Fact]
+    public async Task A_session_marked_completed_has_no_call_once_its_match_ended()
+    {
+        var session = CompletedInEndedMatch();
+
+        var error = await Assert.ThrowsAsync<AppException>(() => JoinAsync(session.Id, _ali));
+
+        Assert.Equal(CreateCallTokenCommandHandler.CallMatchEndedCode, error.Code);
+        Assert.Empty(_calls.Issued);
+    }
+
+    [Fact]
+    public async Task The_call_goes_on_while_a_request_to_end_the_match_is_pending()
+    {
+        var session = Scheduled();
+        _clock.Advance(TimeSpan.FromDays(1));
+        SetMatch(session.MatchId, isActive: false, hasPendingEndRequest: true);
+        _calls.Rooms.Add(session.Id.ToString());
+
+        await JoinAsync(session.Id, _ali);
+
+        Assert.Equal(0, await CloseEndedAsync());
+    }
+
+    [Fact]
+    public async Task The_room_of_a_session_whose_match_ended_is_closed_within_its_window()
+    {
+        var session = CompletedInEndedMatch();
+        _calls.Rooms.Add(session.Id.ToString());
+
         Assert.Equal(1, await CloseEndedAsync());
         Assert.Empty(_calls.Rooms);
     }

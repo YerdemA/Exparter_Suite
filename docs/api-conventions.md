@@ -118,6 +118,7 @@ Liste Faz 3 ve Faz 5'te uygulama sırasında genişler; her yeni kod buraya ekle
 | `session_in_past` | 409 | Oturum tarihi gelecekte olmalı. |
 | `call_not_open_yet` | 409 | Görüşmeye en erken başlangıçtan 10 dakika önce katılınabilir. |
 | `call_window_closed` | 409 | Görüşme penceresi kapandı (süre bittikten 15 dakika sonra). |
+| `call_match_ended` | 409 | Oturumun eşleşmesi sona erdi; tamamlandı işaretli oturumun penceresi açık olsa da görüşmeye katılınamaz. |
 | `in_person_already_reported` | 409 | İki kullanıcı arasında iptal edilmemiş bir yüz yüze buluşma bildirimi zaten var. |
 | `review_already_exists` | 409 | Bu kullanıcı daha önce değerlendirilmiş. |
 | `session_not_completed` | 409 | Değerlendirme için tamamlanmış oturum gerekir. |

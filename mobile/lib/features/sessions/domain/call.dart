@@ -5,7 +5,8 @@ import '../../../core/api/generated/export.dart';
 /// Where a session's video call stands. The server decides; this only says which button
 /// to show, so a clock that is a little off costs at most a refused tap.
 enum CallWindow {
-  /// In-person meetings, and sessions that were never accepted or were cancelled.
+  /// In-person meetings, sessions that were never accepted or were cancelled, and
+  /// sessions of a match that ended.
   none,
 
   /// Accepted, but the call opens later (10 minutes before the start).
@@ -16,14 +17,16 @@ enum CallWindow {
   closed,
 }
 
-CallWindow callWindowAt(SwapSession session, DateTime now) {
+/// A session marked completed keeps its call, but not once its match has ended: the
+/// server then refuses to let anyone in.
+CallWindow callWindowAt(SwapSession session, DateTime now, {bool matchEnded = false}) {
   final opensAt = session.callOpensAt;
   final closesAt = session.callClosesAt;
   final accepted = switch (session.status) {
     SwapSessionStatus.scheduled || SwapSessionStatus.completionPending || SwapSessionStatus.completed => true,
     _ => false,
   };
-  if (session.mode != SessionMode.online || !accepted || opensAt == null || closesAt == null) {
+  if (matchEnded || session.mode != SessionMode.online || !accepted || opensAt == null || closesAt == null) {
     return CallWindow.none;
   }
 

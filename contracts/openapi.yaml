@@ -1214,7 +1214,9 @@ paths:
         Either user of a scheduled online session can join its video call while the call
         window is open: from `callOpensAt` until `callClosesAt`. The token is for the
         media server at `url` and is valid until the window closes. Audio and video are
-        relayed, never recorded.
+        relayed, never recorded. Once the match has ended there is no call, even for a
+        session marked completed whose window is still open (`call_match_ended`); a call
+        in progress is closed within a minute.
       parameters:
         - $ref: '#/components/parameters/SessionId'
       responses:
