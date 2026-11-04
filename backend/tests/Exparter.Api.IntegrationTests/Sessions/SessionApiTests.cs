@@ -157,6 +157,8 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
             Assert.Equal(sessionId.ToString(), video.GetProperty("room").GetString());
             Assert.True(video.GetProperty("roomJoin").GetBoolean());
             Assert.False(video.TryGetProperty("roomAdmin", out _));
+            // The devices exchange their public keys as data messages (ADR 0016).
+            Assert.True(video.GetProperty("canPublishData").GetBoolean());
         }
 
         await ProblemAssert.IsAsync(await PostAsync(stranger, $"{path}/call-token"), HttpStatusCode.NotFound, "not_found");

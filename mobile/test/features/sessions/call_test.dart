@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:exparter/core/api/api_exception.dart';
 import 'package:exparter/core/api/api_providers.dart';
@@ -8,6 +10,7 @@ import 'package:exparter/features/reviews/data/api_review_repository.dart';
 import 'package:exparter/features/sessions/data/api_session_repository.dart';
 import 'package:exparter/features/sessions/data/livekit_call_connection.dart';
 import 'package:exparter/features/sessions/domain/call.dart';
+import 'package:exparter/features/sessions/domain/call_encryption.dart';
 import 'package:exparter/features/sessions/presentation/call_controller.dart';
 import 'package:exparter/features/sessions/presentation/call_screen.dart';
 import 'package:exparter/features/sessions/presentation/match_sessions_section.dart';
@@ -28,7 +31,12 @@ class FakeCallConnection implements CallConnection {
 
   final List<String> log;
   final _changes = StreamController<void>.broadcast();
+  final _keyMessages = StreamController<List<int>>.broadcast();
   bool captureAllowed = true;
+
+  /// The key messages this device sent, and the key it encrypts with.
+  final List<List<int>> sentKeys = [];
+  Uint8List? encryptionKey;
   Object? screenError;
 
   Object? connectError;
@@ -62,6 +70,18 @@ class FakeCallConnection implements CallConnection {
 
   @override
   Stream<void> get changes => _changes.stream;
+
+  @override
+  Stream<List<int>> get keyMessages => _keyMessages.stream;
+
+  /// A data message from the other user, as if it came through the room.
+  void receiveKey(List<int> message) => _keyMessages.add(message);
+
+  @override
+  Future<void> sendKeyMessage(List<int> message) async => sentKeys.add(message);
+
+  @override
+  Future<void> setEncryptionKey(Uint8List key) async => encryptionKey = key;
 
   void change({bool? otherPresent, bool? reconnecting, bool? lost, bool? sharingScreen}) {
     this.otherPresent = otherPresent ?? this.otherPresent;
@@ -241,6 +261,77 @@ void main() {
       connection.change(reconnecting: true);
       await pumpEventQueue();
       expect(state().phase, CallPhase.reconnecting);
+    });
+
+    test('the two devices agree on a key when the other user comes in, and show its code', () async {
+      await start();
+      expect(connection.sentKeys, isEmpty);
+
+      connection.change(otherPresent: true);
+      await pumpEventQueue();
+      expect((state().phase, state().encryption, state().safetyCode), (CallPhase.inCall, CallEncryption.pending, null));
+      final ownKey = CallKeyAgreement.readMessage(connection.sentKeys.single)!;
+
+      final other = await CallKeyAgreement.create();
+      connection.receiveKey(other.message);
+      await pumpEventQueue();
+
+      final expected = await other.agree(ownKey, 'session-1');
+      expect(state().encryption, CallEncryption.secured);
+      expect(state().safetyCode, expected.safetyCode);
+      expect(connection.encryptionKey, expected.key);
+      // Answered once, in case the other user missed the first message.
+      expect(connection.sentKeys, hasLength(2));
+
+      connection.receiveKey(other.message);
+      await pumpEventQueue();
+      expect(connection.sentKeys, hasLength(2));
+    });
+
+    test('messages other than the key of the other user are ignored', () async {
+      await start();
+      connection.change(otherPresent: true);
+      await pumpEventQueue();
+
+      connection.receiveKey(utf8.encode('hello'));
+      connection.receiveKey(connection.sentKeys.single);
+      await pumpEventQueue();
+
+      expect((state().phase, state().encryption, connection.encryptionKey), (CallPhase.inCall, CallEncryption.pending, null));
+    });
+
+    test('a user who comes back brings a new key, and the two devices agree again', () async {
+      await start();
+      connection.change(otherPresent: true);
+      final first = await CallKeyAgreement.create();
+      connection.receiveKey(first.message);
+      await pumpEventQueue();
+      final firstCode = state().safetyCode;
+
+      connection.change(otherPresent: false);
+      await pumpEventQueue();
+      expect((state().encryption, state().safetyCode), (CallEncryption.pending, null));
+
+      connection.change(otherPresent: true);
+      final second = await CallKeyAgreement.create();
+      connection.receiveKey(second.message);
+      await pumpEventQueue();
+
+      expect(state().encryption, CallEncryption.secured);
+      expect(state().safetyCode, isNot(firstCode));
+      expect(connection.encryptionKey, (await second.agree(CallKeyAgreement.readMessage(connection.sentKeys.first)!, 'session-1')).key);
+    });
+
+    test('a key that cannot be agreed on ends the call instead of going on unencrypted', () async {
+      await start();
+      connection.change(otherPresent: true);
+
+      connection.receiveKey(utf8.encode(jsonEncode({'v': 1, 'publicKey': base64Encode(Uint8List(32))})));
+      await pumpEventQueue();
+
+      expect(state().phase, CallPhase.failed);
+      expect(state().error, isA<CallEncryptionException>());
+      expect(connection.disconnected, isTrue);
     });
 
     test('hanging up disconnects and lets the app sleep again', () async {
@@ -423,8 +514,21 @@ void main() {
       expect(keepAlive.started, '${l10n.callNotificationTitle} / ${l10n.callNotificationText}');
 
       connection.change(otherPresent: true);
+      // Not settled: the spinner would keep it going until the wait for the key is over.
+      await tester.pump();
+      await tester.pump();
+      expect(find.text(l10n.callSecuring), findsOneWidget);
+
+      final other = await CallKeyAgreement.create();
+      connection.receiveKey(other.message);
       await tester.pumpAndSettle();
       expect(find.text(l10n.callRemoteCameraOff), findsOneWidget);
+      final code = (await other.agree(CallKeyAgreement.readMessage(connection.sentKeys.first)!, 'session-1')).safetyCode;
+      await tester.tap(find.text(l10n.callEncrypted(code)));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.callSafetyCodeTitle(code)), findsOneWidget);
+      await tester.tap(find.text(l10n.actionClose));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.byTooltip(l10n.callShareScreen));
       await tester.pumpAndSettle();
@@ -435,6 +539,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(l10n.callEndedLeft), findsOneWidget);
       expect(find.text(l10n.callBack), findsOneWidget);
+    });
+
+    testWidgets('an other user whose app sends no key is told to update', (tester) async {
+      await pump(tester, const CallScreen(sessionId: 'session-1'));
+
+      connection.change(otherPresent: true);
+      await tester.pump(CallState.keyWait);
+
+      expect(find.text(l10n.callPeerOutdated), findsOneWidget);
+    });
+
+    testWidgets('a call whose encryption cannot be set up is not held', (tester) async {
+      connection.connectError = const CallEncryptionException();
+      await pump(tester, const CallScreen(sessionId: 'session-1'));
+
+      expect(find.text(l10n.callEncryptionFailed), findsOneWidget);
     });
 
     testWidgets('a refused permission is explained instead of shown raw', (tester) async {

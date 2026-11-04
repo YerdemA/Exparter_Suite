@@ -95,13 +95,14 @@ public sealed class LiveKitCallsTests : IAsyncLifetime
     }
 
     [Fact]
-    public void A_participant_may_share_the_screen_but_not_the_device_sound()
+    public void A_participant_may_share_the_screen_but_not_the_device_sound_and_send_its_public_key()
     {
         var call = _calls.Issue("room-1", Guid.NewGuid(), DateTimeOffset.UtcNow.AddMinutes(30));
 
         var video = new JsonWebToken(call.Token).GetPayloadValue<JsonElement>("video");
         var sources = video.GetProperty("canPublishSources").EnumerateArray().Select(source => source.GetString());
         Assert.Equal(["camera", "microphone", "screen_share"], sources);
-        Assert.False(video.GetProperty("canPublishData").GetBoolean());
+        // Data messages carry the public keys of the call's encryption (ADR 0016).
+        Assert.True(video.GetProperty("canPublishData").GetBoolean());
     }
 }

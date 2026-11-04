@@ -3,6 +3,8 @@
 - **Durum:** Kabul edildi
 - **Tarih:** 2026-11-03
 
+> **Güncelleme (2026-11-04):** Görüşmeler artık uçtan uca şifreleniyor; sunucu yalnızca şifreli kareleri iletir (ADR 0016).
+
 ## Bağlam
 
 Çevrimiçi oturumlar şimdiye kadar yalnızca bir saat ve süreden ibaretti; kullanıcılar başka bir uygulamada buluşuyordu. Kullanıcı kararı (2026-10-13): görüşme uygulamaya gömülü olacak ve yalnızca planlanan oturum saatinde yapılabilecek. İstemci tipinden bağımsız olmalı (mobil şimdi, web Faz 7'de), maliyet sıfıra yakın kalmalı ve kişisel veri yeni bir yurt dışı sağlayıcıya gitmemeli (`docs/legal/compliance-research.md`).

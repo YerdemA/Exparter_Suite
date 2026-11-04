@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:livekit_client/livekit_client.dart' show VideoTrack;
 
 import '../../../core/api/generated/export.dart';
@@ -70,9 +72,19 @@ abstract interface class CallConnection {
   /// the room when the call window ended or the session was cancelled.
   bool get lost;
 
-  /// Joins with the microphone and camera on. Throws [CallMediaException] if they
-  /// cannot be opened.
+  /// Joins with the microphone and camera on and the media encrypted. Until
+  /// [setEncryptionKey], the key is a random one nobody else has, so nothing leaves the
+  /// device unencrypted. Throws [CallMediaException] if the microphone or camera cannot
+  /// be opened, and CallEncryptionException if encryption cannot be set up.
   Future<void> connect(String url, String token);
+
+  /// The messages the other user sends with their public key (ADR 0016).
+  Stream<List<int>> get keyMessages;
+
+  Future<void> sendKeyMessage(List<int> message);
+
+  /// The key both users agreed on; media is encrypted and decrypted with it from now on.
+  Future<void> setEncryptionKey(Uint8List key);
 
   Future<void> setMicrophone({required bool enabled});
 
