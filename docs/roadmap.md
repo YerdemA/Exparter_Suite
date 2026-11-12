@@ -14,7 +14,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
 | 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
-| 8 | MVP sonrası modüller | Sürüyor: dilim 1 ve 2 tamamlandı; dilim 11 (yüz yüze buluşmanın kaldırılması) onay bekliyor, sırada dilim 12 |
+| 8 | MVP sonrası modüller | Sürüyor: dilim 1 ve 2 tamamlandı; dilim 11'in ilk adımı `main`'de; sırada dilim 12 (plan onaylı, başlanmadı) |
 
 ## Faz 0 — Kurulum
 
@@ -380,8 +380,8 @@ Plan ve sıra kullanıcı tarafından onaylandı (2026-11-04). Sıranın mantı�
 | 8 | Gönderi akışı | 8A metin + görsel, 8B video; beğeni, yorum, şikâyet | Başlamadı |
 | 9 | Google ile giriş | Brief soru 5; Apple girişi yalnızca iOS gelirse | Başlamadı |
 | 10 | Çoklu dil (İngilizce) | Uygulama metinleri, kullanıcının diline göre e-posta ve bildirimler, katalog çevirileri | Başlamadı |
-| 11 | Yüz yüze buluşmanın kaldırılması | Yüz yüze buluşma bildirimi, profildeki yüz yüze takas tercihi, keşfetteki mod süzgeci ve tercih uyumu; sözleşme, backend, mobil, belgeler ve brief | İlk adım bitti, onay bekliyor |
-| 12 | Vibe etiketleri | Kullanıcı 20–25 etiketlik sabit listeden (Meraklı, Sıcakkanlı, Zeki, Eğlenceli, Miskin…) kendine uyan en fazla 3 etiketi profiline ekler; etiketler keşfetteki eşleşme uygunluğunu etkiler | Başlamadı |
+| 11 | Yüz yüze buluşmanın kaldırılması | Yüz yüze buluşma bildirimi, profildeki yüz yüze takas tercihi, keşfetteki mod süzgeci ve tercih uyumu; sözleşme, backend, mobil, belgeler ve brief | İlk adım `main`'de (2026-11-12); ikinci adım eski sürümler çekilince |
+| 12 | Vibe etiketleri | Kullanıcı 20–25 etiketlik sabit listeden (Meraklı, Sıcakkanlı, Zeki, Eğlenceli, Miskin…) kendine uyan en fazla 3 etiketi profiline ekler; etiketler keşfetteki eşleşme uygunluğunu etkiler | Plan onaylandı (2026-11-12), başlanmadı |
 
 Dilim 11 ve 12 sonradan eklendi ve sıradaki dilimlerden (3–10) önce yapılır (kullanıcı kararı, 2026-11-12). Uygulama yalnızca çevrimiçi takas içindir; yüz yüze buluşmayla ilgili hiçbir şey kalmaz.
 
@@ -405,7 +405,19 @@ Kararlar: iki adımda yapılır (aşağıda); kayıtlı yüz yüze buluşmalar v
 - Testler (2026-11-12): backend 551 (183 domain, 244 uygulama, 124 entegrasyon), mobil 271. Yüz yüze bildirimini kısayol olarak kullanan testler gerçek bir çevrimiçi oturumu tamamlar. Uçtan uca test yeniden yazıldı (bir dakika sonra başlayan oturum kabul edilir, karşı taraf tamamlandı işaretler, uygulamadan onaylanır) ama emülatörde çalıştırılmadı.
 - Belgeler: iş kuralları (PR-03, PR-04, SS-15, SS-19 kaldırıldı; PR-05, SS-14, SS-16 ve keşfet sıralaması güncellendi), sözlük, domain modeli, ERD, hata kodları, brief Bölüm 6 ve 7.
 - Sürüm 1.0.0 (9) olarak işaretlendi.
-- Kalan: `main`'e merge onayı; 1.0.0 (9) derlemesi ve yüklenmesi; mağaza ekran görüntüleri (`docs/store/screenshots`, Play kaydı) ve sitedeki ekran görselleri (`deploy/site/img`) hâlâ "Yüz yüze" süzgecini ve buluşma kartını gösteriyor, yeniden çekilmeli (`scripts/seed-store-screenshots.py` güncellendi, çalıştırılmadı); ikinci adım.
+- `main`'e merge edildi (kullanıcı onayı, 2026-11-12). Kullanım koşullarındaki "Exparter yüz yüze buluşma düzenlemez" bölümü kalır (kullanıcı kararı); ekran görüntüleri acil değil, sonraya bırakıldı.
+- Kalan: uçtan uca testin emülatörde çalıştırılması; 1.0.0 (9) derlemesi ve yüklenmesi; mağaza ekran görüntüleri (`docs/store/screenshots`, Play kaydı) ve sitedeki ekran görselleri (`deploy/site/img`) hâlâ "Yüz yüze" süzgecini ve buluşma kartını gösteriyor, yeniden çekilmeli (`scripts/seed-store-screenshots.py` güncellendi, çalıştırılmadı); ikinci adım.
+
+### Dilim 12 — Vibe etiketleri (plan)
+
+Plan ve kararlar kullanıcı tarafından onaylandı (2026-11-12); geliştirmeye başlanmadı.
+
+- Etiketler (24): Meraklı, Sıcakkanlı, Zeki, Eğlenceli, Miskin, Sabırlı, Enerjik, Sakin, Yaratıcı, Disiplinli, Konuşkan, İyi dinleyici, Esprili, Titiz, Maceracı, Kararlı, Rahat, Planlı, Hevesli, Samimi, Azimli, Hayalperest, Pratik, Destekleyici.
+- Kurallar: isteğe bağlı, en fazla 3, etkileşim koşuluna girmez. Keşfet sırası: yetenek uyumu, ortak vibe sayısı, puan, yenilik. Ortak etiketler keşfet kartında ve profilde görünür.
+- Sözleşme: etiket listesini veren `GET /api/v1/vibes`; profil güncellemesinde ve profil yanıtlarında `vibes`; keşfet sonucunda kullanıcının etiketleri.
+- Backend: liste şehirler gibi kodda sabit; etiketler İngilizce kodla saklanır, Türkçe adı uygulama metinlerinden gelir. Eski sürüm `vibes` göndermezse mevcut etiketler silinmez.
+- Mobil: profil formunda çiplerle seçim (üçüncüden sonra diğerleri kapanır); profillerde ve keşfet kartında etiketler, ortak olanlar vurgulu.
+- Testler ve belgeler: iş kuralı, sözlük, domain modeli, ERD.
 
 ### Dilim 2 — Görüşmede uçtan uca şifreleme
 
