@@ -18,8 +18,6 @@ abstract interface class ProfileRepository {
     required String displayName,
     required String? bio,
     required String? city,
-    required bool acceptsOnline,
-    required bool acceptsInPerson,
   });
 
   /// Uploads [image] straight to object storage and makes it the avatar.

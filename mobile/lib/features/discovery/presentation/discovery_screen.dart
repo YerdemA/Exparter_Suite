@@ -17,7 +17,6 @@ import '../../skills/presentation/skill_controller.dart';
 import '../../skills/presentation/skill_labels.dart';
 import '../domain/discovery_repository.dart';
 import 'discovery_controller.dart';
-import 'discovery_labels.dart';
 
 /// Other users, best fit first, with search and filters.
 class DiscoveryScreen extends ConsumerStatefulWidget {
@@ -64,7 +63,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   void _onSearchChanged(String value) {
     // Waiting for a pause in typing avoids one request per keystroke.
     _debounce?.cancel();
-    _debounce = Timer(_searchDelay, () => _setFilters((query: value.trim(), skillId: _filters.skillId, categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode)));
+    _debounce = Timer(_searchDelay, () => _setFilters((query: value.trim(), skillId: _filters.skillId, categoryId: _filters.categoryId, city: _filters.city)));
   }
 
   void _setFilters(DiscoveryFilters filters) {
@@ -88,7 +87,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
       ),
     );
     if (code != null) {
-      _setFilters((query: _filters.query, skillId: _filters.skillId, categoryId: _filters.categoryId, city: code.isEmpty ? null : code, mode: _filters.mode));
+      _setFilters((query: _filters.query, skillId: _filters.skillId, categoryId: _filters.categoryId, city: code.isEmpty ? null : code));
     }
   }
 
@@ -100,14 +99,10 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
     if (choice != null) {
       _skill = choice.skill;
       _setFilters(
-        (query: _filters.query, skillId: choice.skill?.id, categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode),
+        (query: _filters.query, skillId: choice.skill?.id, categoryId: _filters.categoryId, city: _filters.city),
       );
     }
   }
-
-  void _toggleMode(SessionMode mode) => _setFilters(
-        (query: _filters.query, skillId: _filters.skillId, categoryId: _filters.categoryId, city: _filters.city, mode: _filters.mode == mode ? null : mode),
-      );
 
   @override
   Widget build(BuildContext context) {
@@ -152,25 +147,13 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                     label: Text(_skill?.name ?? l10n.discoverAllSkills),
                     onPressed: _pickSkill,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  ChoiceChip(
-                    label: Text(l10n.profileModeOnline),
-                    selected: _filters.mode == SessionMode.online,
-                    onSelected: (_) => _toggleMode(SessionMode.online),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  ChoiceChip(
-                    label: Text(l10n.profileModeInPerson),
-                    selected: _filters.mode == SessionMode.inPerson,
-                    onSelected: (_) => _toggleMode(SessionMode.inPerson),
-                  ),
                   for (final category in categories) ...[
                     const SizedBox(width: AppSpacing.sm),
                     ChoiceChip(
                       label: Text(category.name),
                       selected: category.id == _filters.categoryId,
                       onSelected: (selected) => _setFilters(
-                        (query: _filters.query, skillId: _filters.skillId, categoryId: selected ? category.id : null, city: _filters.city, mode: _filters.mode),
+                        (query: _filters.query, skillId: _filters.skillId, categoryId: selected ? category.id : null, city: _filters.city),
                       ),
                     ),
                   ],
@@ -366,12 +349,6 @@ class _UserCard extends StatelessWidget {
     final muted = theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final user = item.user;
     final username = user.username == null ? null : '@${user.username}';
-    final modes = swapModesLabel(
-      l10n,
-      acceptsOnline: item.acceptsOnline,
-      acceptsInPerson: item.acceptsInPerson,
-      cityName: cityName,
-    );
     final badge = switch (item.compatibility) {
       Compatibility.mutual => l10n.discoverMutual,
       Compatibility.oneWay => l10n.discoverOneWay,
@@ -398,7 +375,7 @@ class _UserCard extends StatelessWidget {
                       children: [
                         Text(user.displayName ?? username ?? '', style: theme.textTheme.titleMedium),
                         if (user.displayName != null && username != null) Text(username, style: muted),
-                        if (modes != null) Text(modes, style: muted),
+                        if (cityName != null) Text(cityName!, style: muted),
                         if (item.rating.reviewCount > 0) RatingLabel(rating: item.rating),
                       ],
                     ),

@@ -52,7 +52,6 @@ String errorMessage(AppLocalizations l10n, Object error) {
     'match_end_pending' => l10n.errorMatchEndPending,
     'review_already_exists' => l10n.errorReviewAlreadyExists,
     'session_not_completed' => l10n.errorSessionNotCompleted,
-    'in_person_already_reported' => l10n.errorInPersonAlreadyReported,
     'user_blocked' => l10n.errorUserBlocked,
     'rate_limited' => l10n.errorRateLimited,
     'payload_too_large' => l10n.errorPayloadTooLarge,

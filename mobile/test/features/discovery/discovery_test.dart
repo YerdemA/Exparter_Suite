@@ -4,7 +4,6 @@ import 'package:exparter/features/matches/data/api_match_repository.dart';
 import 'package:exparter/features/discovery/data/api_discovery_repository.dart';
 import 'package:exparter/features/discovery/domain/discovery_repository.dart';
 import 'package:exparter/features/discovery/presentation/discovery_controller.dart';
-import 'package:exparter/features/discovery/presentation/discovery_labels.dart';
 import 'package:exparter/features/discovery/presentation/discovery_screen.dart';
 import 'package:exparter/features/discovery/presentation/user_profile_screen.dart';
 import 'package:exparter/features/profile/data/api_profile_repository.dart';
@@ -50,20 +49,6 @@ void main() {
           .thenAnswer((_) async => DiscoveryUserCursorPage(items: items, nextCursor: nextCursor));
 
   const notFound = ApiException(statusCode: 404, code: 'not_found');
-
-  group('labels', () {
-    test('modes name the city only for in-person swaps', () {
-      expect(
-        swapModesLabel(l10n, acceptsOnline: true, acceptsInPerson: true, cityName: 'İzmir'),
-        '${l10n.profileModeOnline} · ${l10n.profileModeInPersonIn('İzmir')}',
-      );
-      expect(
-        swapModesLabel(l10n, acceptsOnline: true, acceptsInPerson: false, cityName: null),
-        l10n.profileModeOnline,
-      );
-      expect(swapModesLabel(l10n, acceptsOnline: false, acceptsInPerson: false, cityName: null), isNull);
-    });
-  });
 
   group('DiscoveryFeed', () {
     late ProviderContainer container;
@@ -175,7 +160,7 @@ void main() {
       await pump(tester);
       when(
         () => repository.discover(
-          filters: (query: 'zeynep', skillId: null, categoryId: null, city: null, mode: null),
+          filters: (query: 'zeynep', skillId: null, categoryId: null, city: null),
           cursor: any(named: 'cursor'),
         ),
       ).thenAnswer((_) async => const DiscoveryUserCursorPage(items: []));
@@ -188,12 +173,10 @@ void main() {
       expect(find.text('Deniz Kaya'), findsNothing);
     });
 
-    testWidgets('filters by mode and category', (tester) async {
+    testWidgets('filters by category', (tester) async {
       stubPage([]);
       await pump(tester);
 
-      await tester.tap(find.widgetWithText(ChoiceChip, l10n.profileModeOnline));
-      await tester.pumpAndSettle();
       // The categories follow the other filters in a row that scrolls sideways.
       await tester.dragUntilVisible(
         find.widgetWithText(ChoiceChip, 'Müzik'),
@@ -206,7 +189,7 @@ void main() {
 
       verify(
         () => repository.discover(
-          filters: (query: '', skillId: null, categoryId: 'category-music', city: null, mode: SessionMode.online),
+          filters: (query: '', skillId: null, categoryId: 'category-music', city: null),
           cursor: any(named: 'cursor'),
         ),
       ).called(1);
@@ -224,7 +207,7 @@ void main() {
       expect(find.widgetWithText(ActionChip, 'Gitar'), findsOneWidget);
       verify(
         () => repository.discover(
-          filters: (query: '', skillId: 'skill-gitar', categoryId: null, city: null, mode: null),
+          filters: (query: '', skillId: 'skill-gitar', categoryId: null, city: null),
           cursor: any(named: 'cursor'),
         ),
       ).called(1);
@@ -249,7 +232,7 @@ void main() {
       expect(find.widgetWithText(ActionChip, 'Ankara'), findsOneWidget);
       verify(
         () => repository.discover(
-          filters: (query: '', skillId: null, categoryId: null, city: '06', mode: null),
+          filters: (query: '', skillId: null, categoryId: null, city: '06'),
           cursor: any(named: 'cursor'),
         ),
       ).called(1);
@@ -276,8 +259,6 @@ void main() {
       displayName: 'Deniz Kaya',
       bio: 'Gitar çalıyorum.',
       city: '34',
-      acceptsOnline: false,
-      acceptsInPerson: true,
       rating: RatingSummary(reviewCount: 0),
     );
 
@@ -299,7 +280,7 @@ void main() {
       expect(find.text('Deniz Kaya'), findsOneWidget);
       expect(find.text('@deniz'), findsOneWidget);
       expect(find.text('Gitar çalıyorum.'), findsOneWidget);
-      expect(find.widgetWithText(Chip, l10n.profileModeInPersonIn('İstanbul')), findsOneWidget);
+      expect(find.widgetWithText(Chip, 'İstanbul'), findsOneWidget);
       expect(find.text('Gitar · ${l10n.skillLevelAdvanced}'), findsOneWidget);
       // Nothing wanted yet.
       expect(find.text(l10n.userSkillsEmpty), findsOneWidget);
@@ -310,8 +291,6 @@ void main() {
         (_) async => const PublicProfile(
           userId: 'user-deniz',
           username: 'deniz',
-          acceptsOnline: false,
-          acceptsInPerson: false,
           rating: RatingSummary(reviewCount: 0),
         ),
       );

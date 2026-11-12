@@ -63,8 +63,6 @@ void main() {
         userId: denizId,
         username: 'deniz',
         displayName: 'Deniz Kaya',
-        acceptsOnline: true,
-        acceptsInPerson: false,
         rating: RatingSummary(reviewCount: 0),
       ),
     );

@@ -194,7 +194,7 @@ void main() {
     );
     await api.put<void>(
       '/api/v1/me/profile',
-      data: {'displayName': 'Keşif Arkadaşı', 'acceptsOnline': true, 'acceptsInPerson': false},
+      data: {'displayName': 'Keşif Arkadaşı'},
       options: Options(headers: {'Authorization': 'Bearer ${registered.data!['accessToken']}'}),
     );
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navDiscover)));
@@ -206,7 +206,6 @@ void main() {
     await tester.tap(find.text('Keşif Arkadaşı'));
     await pumpUntilFound(tester, find.text(l10n.userOfferedTitle));
     expect(find.text('@$peer'), findsOneWidget);
-    expect(find.text(l10n.profileModeOnline), findsOneWidget);
 
     // The session, the saved profile and the skills survive a restart.
     await launchApp(tester);
@@ -214,18 +213,17 @@ void main() {
     expect(find.text('Uçtan Uca'), findsOneWidget);
     await pumpUntilFound(tester, find.text('Gitar · ${l10n.skillLevelAdvanced}'));
 
-    // Edit the profile: add a bio and in-person swaps in a city.
+    // Edit the profile: add a bio and a city.
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileEdit));
     await pumpUntilFound(tester, find.text(l10n.profileEditTitle));
     await tester.enterText(field(l10n.profileBioLabel), 'Gitar çalıyorum.');
-    await tapVisible(tester, find.widgetWithText(SwitchListTile, l10n.profileAcceptsInPerson));
-    await pumpUntilFound(tester, find.byType(DropdownButtonFormField<String>));
-    await tapVisible(tester, find.byType(DropdownButtonFormField<String>));
+    await pumpUntilFound(tester, find.byType(DropdownButtonFormField<String?>));
+    await tapVisible(tester, find.byType(DropdownButtonFormField<String?>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ankara').last);
     await tester.pumpAndSettle();
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.profileSave));
-    await pumpUntilFound(tester, find.text(l10n.profileModeInPersonIn('Ankara')));
+    await pumpUntilFound(tester, find.widgetWithText(Chip, 'Ankara'));
     expect(find.text('Gitar çalıyorum.'), findsOneWidget);
 
     // Upload a photo to object storage, then remove it.
@@ -378,27 +376,41 @@ void main() {
 
     await pumpUntilFound(tester, find.text(l10n.matchEndRequest));
 
-    // Sessions: report an in-person meeting, which the peer confirms, and propose an
-    // online session for tomorrow evening.
-    await tapVisible(tester, find.text(l10n.sessionInPersonReport));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, l10n.sessionInPersonReport));
-    await pumpUntilFound(tester, find.textContaining(l10n.sessionWaitingConfirmation));
+    // Sessions: the peer proposes one that starts in a minute. It is accepted here; once
+    // it has started the peer marks it as completed, which is confirmed here. Then a
+    // session is proposed for tomorrow evening.
     final matchId = accepted.data!['id'] as String;
-    final sessions = await api.get<Map<String, dynamic>>('/api/v1/matches/$matchId/sessions', options: peerAuth);
-    await api.post<void>(
-      '/api/v1/sessions/${(sessions.data!['items'] as List<dynamic>).first['id']}/completion/confirm',
+    final startsAt = DateTime.now().toUtc().add(const Duration(seconds: 60));
+    final soon = await api.post<Map<String, dynamic>>(
+      '/api/v1/matches/$matchId/sessions',
+      data: {'scheduledAt': startsAt.toIso8601String(), 'durationMinutes': 30},
       options: peerAuth,
     );
+    // Nothing on this screen asks the server again: the proposal and, later, the mark
+    // arrive with their notifications.
+    await pumpUntilFound(tester, find.text(l10n.requestAccept));
+    await tapVisible(tester, find.text(l10n.requestAccept));
+    await pumpUntilFound(tester, find.text(l10n.sessionStatusScheduled));
+    // A session can be called completed only after its start; the margin covers a
+    // small difference between this device's clock and the server's.
+    while (DateTime.now().toUtc().isBefore(startsAt.add(const Duration(seconds: 3)))) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    await api.post<void>('/api/v1/sessions/${soon.data!['id']}/completion', options: peerAuth);
+    await pumpUntilFound(tester, find.text(l10n.sessionConfirmQuestion));
+    await waitForNotices(tester);
+    await tapVisible(tester, find.text(l10n.sessionConfirm));
+    await pumpUntilFound(tester, find.text(l10n.sessionStatusCompleted));
     await tapVisible(tester, find.text(l10n.sessionProposeOnline));
     await pumpUntilFound(tester, find.text(l10n.sessionProposeTitle));
     await tapVisible(tester, find.widgetWithText(FilledButton, l10n.sessionProposeSubmit));
-    // Back on the match: the reloaded list has the new proposal and the confirmed meeting.
+    // Back on the match: the reloaded list has the new proposal and the completed session.
     await pumpUntilFound(tester, find.text(l10n.sessionStatusProposed));
     expect(find.text(l10n.sessionStatusCompleted), findsOneWidget);
     await waitForNotices(tester);
 
-    // The completed meeting lets both sides review each other: write one from the
+    // The completed session lets both sides review each other: write one from the
     // match, which lands on the peer's profile with the new average.
     await tapVisible(tester, find.text(l10n.reviewWrite));
     await pumpUntilFound(tester, find.text(l10n.reviewRatingLabel));
@@ -417,7 +429,7 @@ void main() {
     final accountId = sides.firstWhere((id) => id != peerId);
     await api.post<void>(
       '/api/v1/reviews',
-      data: {'revieweeId': accountId, 'rating': 7, 'comment': 'Güzel bir buluşmaydı.'},
+      data: {'revieweeId': accountId, 'rating': 7, 'comment': 'Güzel bir oturumdu.'},
       options: peerAuth,
     );
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(l10n.navMatches)));
@@ -429,11 +441,11 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, l10n.matchEndRequest));
     await pumpUntilFound(tester, find.text(l10n.matchEndWaitingOther));
 
-    // The profile counts the match and the meeting that was completed in it.
+    // The profile counts the match and the session that was completed in it.
     await openProfileTab(tester);
     await pumpUntilFound(tester, find.text(l10n.statsCompletedSessions(1)));
     expect(find.text(l10n.statsTotalMatches), findsOneWidget);
-    await pumpUntilFound(tester, find.text('Güzel bir buluşmaydı.'));
+    await pumpUntilFound(tester, find.text('Güzel bir oturumdu.'));
     expect(find.text(l10n.ratingSummary(7, 1)), findsOneWidget);
 
     // Sign out, and stay signed out after another restart.

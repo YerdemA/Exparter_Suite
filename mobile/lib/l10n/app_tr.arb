@@ -80,19 +80,9 @@
   "profileDisplayNameHelper": "Diğer kullanıcılar sizi bu adla görür.",
   "profileBioLabel": "Hakkında",
   "profileBioHint": "Neler biliyorsunuz, neler öğrenmek istiyorsunuz?",
-  "profileModesTitle": "Takasları nasıl yapmak istersiniz?",
-  "profileAcceptsOnline": "Çevrimiçi",
-  "profileAcceptsInPerson": "Yüz yüze",
   "profileCityLabel": "Şehir",
-  "profileCityHelper": "Yalnızca şehriniz görünür.",
-  "profileModeOnline": "Çevrimiçi takas",
-  "profileModeInPerson": "Yüz yüze takas",
-  "profileModeInPersonIn": "Yüz yüze takas · {city}",
-  "@profileModeInPersonIn": {
-    "placeholders": {
-      "city": { "type": "String" }
-    }
-  },
+  "profileCityHelper": "İsteğe bağlı. Yalnızca şehriniz görünür.",
+  "profileCityNone": "Belirtmek istemiyorum",
 
   "skillsOfferedTitle": "Sunduğunuz yetenekler",
   "skillsOfferedEmpty": "Henüz öğretebileceğiniz bir yetenek eklemediniz.",
@@ -153,8 +143,6 @@
   "avatarRemove": "Fotoğrafı kaldır",
 
   "validationDisplayName": "Görünen ad en az 2 karakter olmalı.",
-  "validationSwapMode": "Çevrimiçi veya yüz yüze seçeneklerinden en az birini seçin.",
-  "validationCity": "Yüz yüze takas için şehir seçmelisiniz.",
   "homeLogout": "Çıkış yap",
 
   "errorNetwork": "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.",
@@ -384,7 +372,6 @@
   "errorSessionTimeTaken": "Bu saatte başka bir oturumunuz ya da yanıt bekleyen bir teklifiniz var. Başka bir saat seçin.",
   "errorOtherUserBusy": "Karşı tarafın bu saatte başka bir oturumu ya da yanıt bekleyen bir teklifi var. Başka bir saat seçin.",
   "errorMatchEndPending": "Eşleşme için sonlandırma isteği beklerken yeni oturum eklenemez.",
-  "errorInPersonAlreadyReported": "Bu kullanıcıyla yüz yüze buluşmanızı daha önce bildirdiniz. Yüz yüze buluşma yalnızca bir kez bildirilebilir.",
   "sessionsTitle": "Oturumlar",
   "sessionsEmpty": "Henüz bir oturum yok.",
   "sessionProposeOnline": "Çevrimiçi oturum öner",
@@ -402,13 +389,8 @@
   },
   "sessionNoteLabel": "Not (isteğe bağlı)",
   "sessionNoteHelper": "Örneğin görüşme bağlantısı.",
-  "sessionInPersonReport": "Yüz yüze buluştuk",
-  "sessionInPersonHint": "Exparter yüz yüze buluşma düzenlemez; buluşup buluşmamak size kalmıştır. Buluştuysanız buradan bildirebilirsiniz; karşı taraf onaylayınca tamamlanmış sayılır. Aynı kişiyle yalnızca bir kez bildirilebilir.",
-  "sessionInPersonConfirmTitle": "Yüz yüze buluştunuz mu?",
-  "sessionInPersonConfirmBody": "Karşı taraftan bu buluşmayı onaylaması istenecek. 72 saat içinde cevap gelmezse buluşma tamamlanmış sayılır.",
-  "sessionInPersonTitle": "Yüz yüze buluşma",
-  "sessionOnlineTitle": "{date} {time} · {minutes} dk",
-  "@sessionOnlineTitle": {
+  "sessionTime": "{date} {time} · {minutes} dk",
+  "@sessionTime": {
     "placeholders": {
       "date": { "type": "String" },
       "time": { "type": "String" },
@@ -476,8 +458,7 @@
   "errorOtherUserMatchLimit": "Bu kullanıcının şu anda yeni eşleşmeye yeri yok. Daha sonra yeniden deneyin.",
   "errorCallMatchEnded": "Eşleşme sona erdiği için bu görüşmeye katılamazsınız.",
   "sessionWaitingConfirmation": "Karşı tarafın onayı bekleniyor;",
-  "sessionConfirmQuestionOnline": "Karşı taraf bu oturumu tamamlandı olarak işaretledi.",
-  "sessionConfirmQuestionInPerson": "Karşı taraf yüz yüze buluştuğunuzu bildirdi.",
+  "sessionConfirmQuestion": "Karşı taraf bu oturumu tamamlandı olarak işaretledi.",
   "sessionConfirm": "Onayla",
   "sessionDispute": "İtiraz et",
   "sessionDisputeTitle": "İtirazınızın sebebi",

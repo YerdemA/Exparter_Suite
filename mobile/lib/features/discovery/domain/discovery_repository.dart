@@ -2,9 +2,9 @@ import '../../../core/api/generated/export.dart';
 
 /// What the discovery list is narrowed by. An empty [query] lists suggestions; any
 /// other value searches by name or username.
-typedef DiscoveryFilters = ({String query, String? skillId, String? categoryId, String? city, SessionMode? mode});
+typedef DiscoveryFilters = ({String query, String? skillId, String? categoryId, String? city});
 
-const noDiscoveryFilters = (query: '', skillId: null, categoryId: null, city: null, mode: null);
+const noDiscoveryFilters = (query: '', skillId: null, categoryId: null, city: null);
 
 /// Finding and looking at other users. Failures are thrown as `ApiException`.
 abstract interface class DiscoveryRepository {

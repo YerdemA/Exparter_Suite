@@ -39,7 +39,6 @@ void main() {
 
   SwapSession session({
     String id = 'session-1',
-    SessionMode mode = SessionMode.online,
     SwapSessionStatus status = SwapSessionStatus.proposed,
     bool proposedByMe = false,
     bool? markedByMe,
@@ -48,17 +47,19 @@ void main() {
     String? cancelReason,
     String? cancelledBy,
     bool completedAutomatically = false,
-  }) =>
-      SwapSession(
+  }) {
+    final start = DateTime.now().add(startsIn);
+    return SwapSession(
         id: id,
         matchId: 'match-1',
         proposedByUserId: proposedByMe ? myId : otherId,
-        mode: mode,
         status: status,
         completedAutomatically: completedAutomatically,
         createdAt: DateTime.now(),
-        scheduledAt: mode == SessionMode.online ? DateTime.now().add(startsIn) : null,
-        durationMinutes: mode == SessionMode.online ? 60 : null,
+        scheduledAt: start,
+        durationMinutes: 60,
+        callOpensAt: start.subtract(const Duration(minutes: 10)),
+        callClosesAt: start.add(const Duration(minutes: 75)),
         note: note,
         completionMarkedByUserId: markedByMe == null ? null : (markedByMe ? myId : otherId),
         completionConfirmDeadline:
@@ -66,6 +67,7 @@ void main() {
         cancelReason: cancelReason,
         cancelledByUserId: cancelledBy,
       );
+  }
 
   void stubSessions(List<SwapSession> Function() sessions) =>
       when(() => repository.listMatchSessions('match-1')).thenAnswer((_) async => sessions());
@@ -148,11 +150,10 @@ void main() {
   });
 
   group('MatchSessionsSection', () {
-    testWidgets('an active match offers both ways to add a session and says when there is none', (tester) async {
+    testWidgets('an active match offers to propose a session and says when there is none', (tester) async {
       await pump(tester, MatchSessionsSection(match: match()));
 
       expect(find.text(l10n.sessionsEmpty), findsOneWidget);
-      expect(find.text(l10n.sessionInPersonHint), findsOneWidget);
 
       await tapText(tester, l10n.sessionProposeOnline);
       expect(find.text('route:/matches/match-1/sessions/new'), findsOneWidget);
@@ -162,38 +163,7 @@ void main() {
       await pump(tester, MatchSessionsSection(match: match(status: MatchStatus.endRequested)));
 
       expect(find.text(l10n.sessionProposeOnline), findsNothing);
-      expect(find.text(l10n.sessionInPersonReport), findsNothing);
       expect(find.text(l10n.sessionsEmpty), findsOneWidget);
-    });
-
-    testWidgets('an in-person meeting is reported after confirming', (tester) async {
-      var sessions = <SwapSession>[];
-      stubSessions(() => sessions);
-      when(() => repository.reportInPerson('match-1')).thenAnswer((_) async {
-        sessions = [session(mode: SessionMode.inPerson, status: SwapSessionStatus.completionPending, markedByMe: true)];
-        return sessions.single;
-      });
-      await pump(tester, MatchSessionsSection(match: match()));
-
-      await tapText(tester, l10n.sessionInPersonReport);
-      expect(find.text(l10n.sessionInPersonConfirmBody), findsOneWidget);
-      verifyNever(() => repository.reportInPerson(any()));
-
-      await tester.tap(find.widgetWithText(FilledButton, l10n.sessionInPersonReport));
-      await tester.pumpAndSettle();
-
-      verify(() => repository.reportInPerson('match-1')).called(1);
-      expect(find.text(l10n.sessionInPersonTitle), findsOneWidget);
-      expect(find.textContaining(l10n.sessionWaitingConfirmation), findsOneWidget);
-      expect(find.textContaining(l10n.remainingDays(2)), findsOneWidget);
-    });
-
-    testWidgets('a pair that has met in person cannot report another meeting', (tester) async {
-      stubSessions(() => [session(mode: SessionMode.inPerson, status: SwapSessionStatus.completed)]);
-      await pump(tester, MatchSessionsSection(match: match()));
-
-      expect(find.text(l10n.sessionProposeOnline), findsOneWidget);
-      expect(find.text(l10n.sessionInPersonReport), findsNothing);
     });
 
     testWidgets('a proposal from the other user can be accepted or declined', (tester) async {
@@ -256,7 +226,13 @@ void main() {
 
     testWidgets('the other user’s completion mark can be confirmed or disputed with a reason', (tester) async {
       stubSessions(
-        () => [session(mode: SessionMode.inPerson, status: SwapSessionStatus.completionPending, markedByMe: false)],
+        () => [
+          session(
+            status: SwapSessionStatus.completionPending,
+            markedByMe: false,
+            startsIn: const Duration(hours: -2),
+          ),
+        ],
       );
       when(() => repository.confirmCompleted('session-1'))
           .thenAnswer((_) async => session(status: SwapSessionStatus.completed));
@@ -264,18 +240,18 @@ void main() {
           .thenAnswer((_) async => session(status: SwapSessionStatus.cancelled));
       await pump(tester, MatchSessionsSection(match: match()));
 
-      expect(find.text(l10n.sessionConfirmQuestionInPerson), findsOneWidget);
+      expect(find.text(l10n.sessionConfirmQuestion), findsOneWidget);
       expect(find.text(l10n.remainingDays(2)), findsOneWidget);
 
       await tapText(tester, l10n.sessionDispute);
       expect(find.text(l10n.sessionDisputeTitle), findsOneWidget);
-      await tester.enterText(find.byType(TextField), 'Böyle bir buluşma olmadı.');
+      await tester.enterText(find.byType(TextField), 'Böyle bir oturum olmadı.');
       await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, l10n.sessionReasonSubmit));
       await tester.pumpAndSettle();
       await tapText(tester, l10n.sessionConfirm);
 
-      verify(() => repository.cancel('session-1', reason: 'Böyle bir buluşma olmadı.')).called(1);
+      verify(() => repository.cancel('session-1', reason: 'Böyle bir oturum olmadı.')).called(1);
       verify(() => repository.confirmCompleted('session-1')).called(1);
     });
 

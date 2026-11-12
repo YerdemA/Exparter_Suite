@@ -505,8 +505,6 @@ void main() {
       userId: 'user-deniz',
       username: 'deniz',
       displayName: 'Deniz Kaya',
-      acceptsOnline: true,
-      acceptsInPerson: false,
       rating: RatingSummary(reviewCount: 0),
     );
 

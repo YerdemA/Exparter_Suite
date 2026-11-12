@@ -25,7 +25,6 @@ class ApiDiscoveryRepository implements DiscoveryRepository {
           skillId: filters.skillId,
           categoryId: filters.categoryId,
           city: filters.city,
-          mode: filters.mode,
           cursor: cursor,
         ),
       );

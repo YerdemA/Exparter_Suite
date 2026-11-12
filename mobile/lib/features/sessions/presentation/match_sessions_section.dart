@@ -18,26 +18,6 @@ class MatchSessionsSection extends ConsumerWidget {
 
   final Match match;
 
-  Future<void> _reportInPerson(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        final l10n = AppLocalizations.of(dialogContext);
-        return AlertDialog(
-          title: Text(l10n.sessionInPersonConfirmTitle),
-          content: Text(l10n.sessionInPersonConfirmBody),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(l10n.actionCancel)),
-            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(l10n.sessionInPersonReport)),
-          ],
-        );
-      },
-    );
-    if (confirmed == true && context.mounted) {
-      await runSessionAction(context, ref, (actions) => actions.reportInPerson(match.id));
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -45,12 +25,6 @@ class MatchSessionsSection extends ConsumerWidget {
     final sessions = ref.watch(matchSessionsProvider(match.id));
     final busy = ref.watch(sessionActionsProvider).isLoading;
     final ownUserId = ref.watch(sessionControllerProvider).value?.id;
-    // A pair reports an in-person meeting only once. An earlier match of the same two
-    // users is not visible here; the server refuses the report in that case.
-    final metInPerson = sessions.value?.any(
-          (session) => session.mode == SessionMode.inPerson && session.status != SwapSessionStatus.cancelled,
-        ) ??
-        false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -64,16 +38,6 @@ class MatchSessionsSection extends ConsumerWidget {
             icon: const Icon(Icons.videocam_outlined),
             label: Text(l10n.sessionProposeOnline),
           ),
-          if (!metInPerson) ...[
-            const SizedBox(height: AppSpacing.sm),
-            OutlinedButton.icon(
-              onPressed: busy ? null : () => _reportInPerson(context, ref),
-              icon: const Icon(Icons.handshake_outlined),
-              label: Text(l10n.sessionInPersonReport),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(l10n.sessionInPersonHint, style: theme.textTheme.bodySmall),
-          ],
           const SizedBox(height: AppSpacing.md),
         ],
         if (busy) const LinearProgressIndicator(),
@@ -153,20 +117,15 @@ class _SessionCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
-    final online = session.mode == SessionMode.online;
-    final scheduledAt = session.scheduledAt?.toLocal();
+    final scheduledAt = session.scheduledAt.toLocal();
     final proposedByMe = session.proposedByUserId == ownUserId;
     final markedByMe = session.completionMarkedByUserId == ownUserId;
     final deadline = session.completionConfirmDeadline;
 
     String when() {
-      if (scheduledAt == null) {
-        return l10n.sessionInPersonTitle;
-      }
-
       final date = MaterialLocalizations.of(context).formatMediumDate(scheduledAt);
       final time = TimeOfDay.fromDateTime(scheduledAt).format(context);
-      return l10n.sessionOnlineTitle(date, time, session.durationMinutes ?? 0);
+      return l10n.sessionTime(date, time, session.durationMinutes);
     }
 
     Widget action(String label, VoidCallback onPressed, {bool primary = false}) => Padding(
@@ -185,7 +144,7 @@ class _SessionCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(online ? Icons.videocam_outlined : Icons.handshake_outlined),
+                const Icon(Icons.videocam_outlined),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(child: Text(when(), style: theme.textTheme.titleSmall)),
               ],
@@ -196,7 +155,7 @@ class _SessionCard extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(session.note!, style: theme.textTheme.bodyMedium),
             ],
-            if (online) _CallEntry(session: session, matchEnded: matchEnded),
+            _CallEntry(session: session, matchEnded: matchEnded),
             ...switch (session.status) {
               SwapSessionStatus.proposed when proposedByMe => [
                   action(l10n.sessionCancel, () => _cancel(context, ref, title: l10n.sessionCancelTitle)),
@@ -214,7 +173,7 @@ class _SessionCard extends ConsumerWidget {
                 ],
               SwapSessionStatus.scheduled => [
                   // Before its start a session cannot have taken place yet.
-                  if (scheduledAt != null && !DateTime.now().isBefore(scheduledAt))
+                  if (!DateTime.now().isBefore(scheduledAt))
                     action(
                       l10n.sessionMarkCompleted,
                       () => runSessionAction(context, ref, (actions) => actions.markCompleted(session.id)),
@@ -235,7 +194,7 @@ class _SessionCard extends ConsumerWidget {
               SwapSessionStatus.completionPending => [
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    online ? l10n.sessionConfirmQuestionOnline : l10n.sessionConfirmQuestionInPerson,
+                    l10n.sessionConfirmQuestion,
                     style: theme.textTheme.bodyMedium,
                   ),
                   if (deadline != null) Text(remainingLabel(l10n, deadline, DateTime.now()), style: muted),
@@ -304,7 +263,7 @@ class _CallEntry extends ConsumerWidget {
       CallWindow.upcoming => Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: Text(
-            l10n.sessionCallOpensAt(TimeOfDay.fromDateTime(session.callOpensAt!.toLocal()).format(context)),
+            l10n.sessionCallOpensAt(TimeOfDay.fromDateTime(session.callOpensAt.toLocal()).format(context)),
             style: theme.textTheme.bodyMedium,
           ),
         ),

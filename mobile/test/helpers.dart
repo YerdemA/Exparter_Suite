@@ -133,8 +133,6 @@ Profile testProfile({bool complete = true, String? avatarUrl}) => Profile(
       displayName: complete ? 'Ayşe Yılmaz' : null,
       bio: complete ? 'Gitar çalıyorum.' : null,
       city: complete ? '34' : null,
-      acceptsOnline: complete,
-      acceptsInPerson: complete,
       avatarUrl: avatarUrl,
       isComplete: complete,
       rating: const RatingSummary(reviewCount: 0),
@@ -192,8 +190,6 @@ DiscoveryUser testDiscoveryUser(
 }) =>
     DiscoveryUser(
       user: UserSummary(userId: 'user-$username', isDeleted: false, username: username, displayName: displayName),
-      acceptsOnline: true,
-      acceptsInPerson: true,
       city: '34',
       compatibility: compatibility,
       rating: const RatingSummary(reviewCount: 0),

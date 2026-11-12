@@ -14,9 +14,6 @@ abstract interface class SessionRepository {
     required String? note,
   });
 
-  /// Records that the two users met in person; the other user is asked to confirm.
-  Future<SwapSession> reportInPerson(String matchId);
-
   Future<SwapSession> accept(String sessionId);
 
   Future<SwapSession> decline(String sessionId);

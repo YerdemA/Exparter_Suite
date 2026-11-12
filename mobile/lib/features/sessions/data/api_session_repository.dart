@@ -43,10 +43,6 @@ class ApiSessionRepository implements SessionRepository {
       );
 
   @override
-  Future<SwapSession> reportInPerson(String matchId) =>
-      guardApiCall(() => _api.sessions.reportInPersonSession(matchId: matchId));
-
-  @override
   Future<SwapSession> accept(String sessionId) => guardApiCall(() => _api.sessions.acceptSession(sessionId: sessionId));
 
   @override

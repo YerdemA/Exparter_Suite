@@ -13,7 +13,7 @@ import '../../matches/presentation/match_controller.dart';
 import '../../moderation/presentation/moderation_menu.dart';
 import '../../profile/data/api_profile_repository.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
-import '../../profile/presentation/widgets/swap_mode_chips.dart';
+import '../../profile/presentation/widgets/city_chip.dart';
 import '../../reviews/presentation/user_reviews_section.dart';
 import '../../sessions/presentation/user_stats_card.dart';
 import '../../skills/presentation/skill_labels.dart';
@@ -117,13 +117,9 @@ class _Content extends ConsumerWidget {
               if (profile.displayName != null)
                 Text(profile.displayName!, textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
               Text('@${profile.username}', textAlign: TextAlign.center, style: muted),
-              if (profile.acceptsOnline || profile.acceptsInPerson) ...[
+              if (cityName != null) ...[
                 const SizedBox(height: AppSpacing.md),
-                SwapModeChips(
-                  acceptsOnline: profile.acceptsOnline,
-                  acceptsInPerson: profile.acceptsInPerson,
-                  cityName: cityName,
-                ),
+                CityChip(cityName: cityName),
               ],
               if (profile.displayName == null) ...[
                 const SizedBox(height: AppSpacing.lg),

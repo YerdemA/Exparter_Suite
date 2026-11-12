@@ -36,18 +36,12 @@ class ProfileActions extends _$ProfileActions {
     required String displayName,
     required String bio,
     required String? city,
-    required bool acceptsOnline,
-    required bool acceptsInPerson,
   }) =>
       _run(
         (repository) => repository.updateOwnProfile(
           displayName: displayName.trim(),
           bio: bio.trim().isEmpty ? null : bio.trim(),
-          // A city left over from before in-person was switched off would be saved
-          // silently; the profile should say only what the form shows.
-          city: acceptsInPerson ? city : null,
-          acceptsOnline: acceptsOnline,
-          acceptsInPerson: acceptsInPerson,
+          city: city,
         ),
       );
 
