@@ -37,9 +37,9 @@ Durum: **Onaylandı (2026-10-07).**
 |---|---|---|
 | PR-01 | Her kullanıcının tam olarak bir profili vardır. | DB |
 | PR-02 | Konum olarak yalnızca şehir tutulur; koordinat veya adres tutulmaz. | — |
-| PR-03 | Çevrimiçi ve yüz yüze tercihlerinden en az biri seçili olmalıdır. | Domain |
-| PR-04 | Yüz yüze tercihi seçiliyse şehir zorunludur. | Domain |
-| PR-05 | Profil, eşleşme için gereken bilgiler girildiğinde tamamlanmış sayılır: görünen ad, en az bir takas tercihi (yüz yüze ise şehirle birlikte) ve en az bir sunulan yetenek. | Application |
+| PR-03 | Kaldırıldı (2026-11-12): takas tercihi yok, bütün takaslar çevrimiçidir. | — |
+| PR-04 | Kaldırıldı (2026-11-12): şehir isteğe bağlıdır. | — |
+| PR-05 | Profil, eşleşme için gereken bilgiler girildiğinde tamamlanmış sayılır: görünen ad ve en az bir sunulan yetenek. Şehir isteğe bağlıdır. | Application |
 | PR-06 | Etkileşim koşullarını sağlamayan kullanıcı keşfette öneri olarak gösterilmez. Ama gizli değildir: kullanıcı adı veya görünen adla aranınca bulunur ve profili açılabilir. Askıya alınmış ve silinmekte olan hesaplar hiçbir yerde görünmez. | Application |
 | PR-07 | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir (keşfet dahil), başka kullanıcıların profillerine ve yeteneklerine bakabilir, ama başkalarıyla etkileşime giremez (bkz. ID-04). Koşul yalnızca başka kullanıcıları etkileyen işlemlerde aranır: istek, eşleşme, mesaj, oturum, değerlendirme ve ileride beğeni ile yorum. Etkileşim denemesinde "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." uyarısı gösterilir. | Application |
 | PR-08 | Avatar JPEG, PNG veya WebP olabilir ve en fazla 5 MB'tır. Dosya doğrudan depolamaya yüklenir; sınırlar yüklenen dosya üzerinde denetlenir. | Application |
@@ -125,14 +125,14 @@ Durum: **Onaylandı (2026-10-07).**
 | SS-11 | Tamamlandı işaretine itirazı olan taraf oturumu sebep yazarak iptal eder. | Domain |
 | SS-12 | Kendiliğinden tamamlanan oturum da değerlendirme hakkı doğurur. | Application |
 | SS-13 | Karşı taraf kabul etmeden başlangıç zamanı geçen oturum önerisi kendiliğinden `Declined` olur. | Domain |
-| SS-14 | Uygulamada yalnızca çevrimiçi oturum planlanır (süre: 30, 45, 60, 90 veya 120 dakika). Yüz yüze buluşmalar kullanıcıların inisiyatifindedir: sohbette ayarlanır, tarih ve yer uygulamada tutulmaz. | Domain |
-| SS-15 | Yüz yüze buluşma sonradan bildirilir: taraflardan biri "buluştuk" der, oturum doğrudan `CompletionPending` durumunda oluşur ve SS-05, SS-10 ile SS-11 aynen uygulanır. | Domain |
-| SS-16 | Bekleyen sonlandırma isteği olan veya sona ermiş eşleşmeye oturum eklenemez (planlama da bildirim de). | Application |
+| SS-14 | Bütün oturumlar çevrimiçidir ve uygulamada planlanır (süre: 30, 45, 60, 90 veya 120 dakika). Uygulama dışında yapılan buluşmalar kaydedilmez, bildirilmez ve hiçbir istatistiğe girmez (2026-11-12). | Domain |
+| SS-15 | Kaldırıldı (2026-11-12): yüz yüze buluşma bildirimi yok. | — |
+| SS-16 | Bekleyen sonlandırma isteği olan veya sona ermiş eşleşmeye oturum eklenemez. | Application |
 | SS-17 | SS-09'daki iptal yalnızca henüz gerçekleşmemiş (önerilmiş veya planlanmış) oturumları kapsar; onay bekleyen tamamlandı işareti eşleşme bittikten sonra da onaylanabilir. | Domain |
 | SS-18 | Süresi geçen öneri ve onay, arka plan işi kaydetmeden önce de her okumada ve işlemde sonuçlanmış sayılır. | Domain |
-| SS-19 | Bir kullanıcı çifti, bütün eşleşmeleri boyunca yalnızca bir yüz yüze buluşma bildirebilir (sahte bildirimle istatistik şişirmeye karşı). İptal edilmiş bildirim sayılmaz; onay bekleyen veya tamamlanmış bildirim varken yenisi `in_person_already_reported` ile reddedilir. | Application + veritabanı |
-| SS-20 | Bir kullanıcı aynı anda iki oturumda olamaz; aynı eşleşmede de farklı eşleşmelerde de. Kullanıcının zamanını kabul edilmiş ve iptal edilmemiş çevrimiçi oturumları ile kendi yaptığı, süresi geçmemiş teklifleri tutar. Teklif ve kabul anında denetlenir: işlemi yapanın zamanı doluysa `session_time_taken`, karşı tarafınki doluysa `other_user_busy`. Biri biterken diğeri başlayan oturumlar çakışmaz. Veritabanı kısıtı yoktur; aynı anda gelen iki istek nadiren ikisi de geçebilir (kullanıcı kararı, 2026-11-03). | Domain, Application |
-| SS-21 | Kabul edilmiş ve iptal edilmemiş çevrimiçi oturumun görüntülü görüşmesi vardır. Görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir; süre bittikten 15 dakika sonra görüşme kapanır ve oda sunucuda kapatılır. Daha önce `call_not_open_yet`, sonra `call_window_closed`. Tamamlandı işareti görüşmeyi bitirmez; eşleşmenin sona ermesi bitirir (`call_match_ended`, açık oda bir dakika içinde kapatılır). Sonlandırma isteği beklerken görüşme sürer (kullanıcı kararı, 2026-11-04; ADR 0015). | Domain, Application |
+| SS-19 | Kaldırıldı (2026-11-12): yüz yüze buluşma bildirimi yok. | — |
+| SS-20 | Bir kullanıcı aynı anda iki oturumda olamaz; aynı eşleşmede de farklı eşleşmelerde de. Kullanıcının zamanını kabul edilmiş ve iptal edilmemiş oturumları ile kendi yaptığı, süresi geçmemiş teklifleri tutar. Teklif ve kabul anında denetlenir: işlemi yapanın zamanı doluysa `session_time_taken`, karşı tarafınki doluysa `other_user_busy`. Biri biterken diğeri başlayan oturumlar çakışmaz. Veritabanı kısıtı yoktur; aynı anda gelen iki istek nadiren ikisi de geçebilir (kullanıcı kararı, 2026-11-03). | Domain, Application |
+| SS-21 | Kabul edilmiş ve iptal edilmemiş oturumun görüntülü görüşmesi vardır. Görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir; süre bittikten 15 dakika sonra görüşme kapanır ve oda sunucuda kapatılır. Daha önce `call_not_open_yet`, sonra `call_window_closed`. Tamamlandı işareti görüşmeyi bitirmez; eşleşmenin sona ermesi bitirir (`call_match_ended`, açık oda bir dakika içinde kapatılır). Sonlandırma isteği beklerken görüşme sürer (kullanıcı kararı, 2026-11-04; ADR 0015). | Domain, Application |
 | SS-22 | Görüşmenin sesi, görüntüsü ve paylaşılan ekran kaydedilmez; kimin ne zaman katıldığı tutulmaz. Paylaşılan ekranla cihazın sesi gitmez. | — |
 
 ### Kullanıcı istatistikleri
@@ -202,9 +202,8 @@ Formül tek bir SQL sorgusudur (ADR 0011). Sıralama önceliği:
 
 1. **Karşılıklı uyum:** Benim sunduğum onun istediği **ve** onun sunduğu benim istediğim.
 2. **Tek yönlü uyum:** Onun sunduğu benim istediğim.
-3. **Tercih uyumu:** Yüz yüze için aynı şehir veya iki tarafın da çevrimiçi tercihi.
-4. **Puan:** Ortalama değerlendirme puanı yüksek olan önce; hiç değerlendirmesi olmayan, değerlendirilmiş olanlardan sonra. Değerlendirme sayısı sıralamayı etkilemez.
-5. **Yenilik:** Profili daha yeni güncellenen önce.
+3. **Puan:** Ortalama değerlendirme puanı yüksek olan önce; hiç değerlendirmesi olmayan, değerlendirilmiş olanlardan sonra. Değerlendirme sayısı sıralamayı etkilemez.
+4. **Yenilik:** Profili daha yeni güncellenen önce.
 
 Seviye uyumu: Bir yetenek, sunulan seviye istenen en düşük seviyeye eşit veya ondan yüksekse uyum sayılır. Seviyesi yetmeyen kullanıcı listeden çıkmaz, yalnızca uyumlu sayılmaz.
 

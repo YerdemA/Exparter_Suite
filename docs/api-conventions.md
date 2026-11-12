@@ -98,8 +98,6 @@ Her yeni kod buraya eklenir. "Normalde doğrulama aşamasında 400 ile yakalanı
 | `invalid_username` | 409 | Kullanıcı adı biçim kurallarına uymuyor. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `terms_not_accepted` | 409 | Kayıtta kullanım koşulları kabul edilmemiş. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `invalid_display_name` | 409 | Görünen ad 2–50 karakter olmalı. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
-| `swap_mode_required` | 409 | Çevrimiçi ve yüz yüze tercihlerinden en az biri seçilmeli. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
-| `city_required` | 409 | Yüz yüze takas seçiliyse şehir zorunlu. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `invalid_city` | 409 | Şehir kodu 81 ilden biri değil. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `invalid_skill_name` | 409 | Yetenek adı 2–60 karakter olmalı ve harf veya rakam içermeli. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
 | `invalid_message` | 409 | Mesaj boş veya 2000 karakterden uzun. (Normalde doğrulama aşamasında 400 ile yakalanır.) |
@@ -131,7 +129,6 @@ Her yeni kod buraya eklenir. "Normalde doğrulama aşamasında 400 ile yakalanı
 | `call_not_open_yet` | 409 | Görüşmeye en erken başlangıçtan 10 dakika önce katılınabilir. |
 | `call_window_closed` | 409 | Görüşme penceresi kapandı (süre bittikten 15 dakika sonra). |
 | `call_match_ended` | 409 | Oturumun eşleşmesi sona erdi; tamamlandı işaretli oturumun penceresi açık olsa da görüşmeye katılınamaz. |
-| `in_person_already_reported` | 409 | İki kullanıcı arasında iptal edilmemiş bir yüz yüze buluşma bildirimi zaten var. |
 | `review_already_exists` | 409 | Bu kullanıcı daha önce değerlendirilmiş. |
 | `session_not_completed` | 409 | Değerlendirme için tamamlanmış oturum gerekir. |
 | `review_of_self` | 409 | Kullanıcı kendini değerlendiremez. |

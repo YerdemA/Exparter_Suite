@@ -94,8 +94,6 @@ erDiagram
         string bio
         string avatar_key
         string city
-        boolean accepts_online
-        boolean accepts_in_person
         timestamp created_at
         timestamp updated_at
     }
@@ -177,7 +175,6 @@ erDiagram
         uuid match_id
         uuid proposed_by_user_id
         uuid other_user_id
-        string mode
         timestamp scheduled_at
         int duration_minutes
         string note
@@ -264,7 +261,6 @@ erDiagram
 | `MATCH` | Sırasız kullanıcı çifti benzersiz, yalnızca `status <> Ended` satırlarda (kısmi index) | MT-02 |
 | `CONVERSATION` | (`user_low_id`, `user_high_id`) benzersiz | MS-01 |
 | `MESSAGE` | (`conversation_id`, `sender_id`, `client_message_id`) benzersiz | MS-11 |
-| `SWAP_SESSION` | Sırasız kullanıcı çifti benzersiz, yalnızca iptal edilmemiş yüz yüze buluşmalarda (kısmi index) | SS-19 |
 | `REVIEW` | (`reviewer_id`, `reviewee_id`) benzersiz, silinmiş satırlar dahil | RV-01, RV-07 |
 | `DEVICE` | `fcm_token` benzersiz | NT-10 |
 | `BLOCK` | (`blocker_id`, `blocked_id`) birincil anahtar | — |

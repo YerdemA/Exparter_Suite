@@ -14,7 +14,7 @@ Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
 | 5 | Dikey dilimler | Tamamlandı (2026-10-14) |
 | 6 | Sertleştirme ve MVP yayını | Sürüyor: dilim 1–5 tamamlandı |
 | 7 | Web istemcisi | Başlamadı |
-| 8 | MVP sonrası modüller | Sürüyor: dilim 1 tamamlandı, dilim 2 (görüşmede uçtan uca şifreleme) iki cihazla denemeyi bekliyor; sırada dilim 11 ve 12 |
+| 8 | MVP sonrası modüller | Sürüyor: dilim 1 ve 2 tamamlandı; dilim 11 (yüz yüze buluşmanın kaldırılması) onay bekliyor, sırada dilim 12 |
 
 ## Faz 0 — Kurulum
 
@@ -371,7 +371,7 @@ Plan ve sıra kullanıcı tarafından onaylandı (2026-11-04). Sıranın mantı�
 | Dilim | Konu | Kapsam | Durum |
 |---|---|---|---|
 | 1 | Görüntülü görüşme | LiveKit, ekran paylaşımı | Tamamlandı (2026-11-04): iki gerçek cihazla denendi; eşleşme bitince görüşme de kapanıyor |
-| 2 | Görüşmede uçtan uca şifreleme | LiveKit kare şifrelemesi; anahtar iki cihaz arasında üretilir, sunucu yalnızca şifreli paketleri iletir; karşılaştırılabilir güvenlik kodu; gizlilik metni. Mesajlaşmaya uçtan uca şifreleme eklenmez (kullanıcı kararı, 2026-11-04): şikâyet ve moderasyon, web istemcisi ve çoklu cihaz bunu zorlaştırır. | Sürüyor |
+| 2 | Görüşmede uçtan uca şifreleme | LiveKit kare şifrelemesi; anahtar iki cihaz arasında üretilir, sunucu yalnızca şifreli paketleri iletir; karşılaştırılabilir güvenlik kodu; gizlilik metni. Mesajlaşmaya uçtan uca şifreleme eklenmez (kullanıcı kararı, 2026-11-04): şikâyet ve moderasyon, web istemcisi ve çoklu cihaz bunu zorlaştırır. | Tamamlandı: iki gerçek cihazla denendi, 1.0.0 (8) yayında (kullanıcı, 2026-11-12) |
 | 3 | Güven göstergesi ve rozetler | Var olan istatistiklerden (eşleşme, oturum, puan) profilde güven göstergesi ve rozetler | Başlamadı |
 | 4 | Mesajlarda dosya | Görsel ile not ve kaynak paylaşımı için PDF, Word gibi belgeler (kullanıcı kararı, 2026-11-04); tür ve boyut sınırları, şikâyet akışı | Başlamadı |
 | 5 | Kapsamlı yetenek kataloğu | Alt kategoriler, çok daha fazla yetenek, katalogda arama; mevcut kullanıcı yeteneklerinin taşınması | Başlamadı |
@@ -380,7 +380,7 @@ Plan ve sıra kullanıcı tarafından onaylandı (2026-11-04). Sıranın mantı�
 | 8 | Gönderi akışı | 8A metin + görsel, 8B video; beğeni, yorum, şikâyet | Başlamadı |
 | 9 | Google ile giriş | Brief soru 5; Apple girişi yalnızca iOS gelirse | Başlamadı |
 | 10 | Çoklu dil (İngilizce) | Uygulama metinleri, kullanıcının diline göre e-posta ve bildirimler, katalog çevirileri | Başlamadı |
-| 11 | Yüz yüze buluşmanın kaldırılması | Yüz yüze buluşma bildirimi, profildeki yüz yüze takas tercihi, keşfetteki mod süzgeci ve tercih uyumu; sözleşme, backend, mobil, belgeler ve brief | Plan onay bekliyor |
+| 11 | Yüz yüze buluşmanın kaldırılması | Yüz yüze buluşma bildirimi, profildeki yüz yüze takas tercihi, keşfetteki mod süzgeci ve tercih uyumu; sözleşme, backend, mobil, belgeler ve brief | İlk adım bitti, onay bekliyor |
 | 12 | Vibe etiketleri | Kullanıcı 20–25 etiketlik sabit listeden (Meraklı, Sıcakkanlı, Zeki, Eğlenceli, Miskin…) kendine uyan en fazla 3 etiketi profiline ekler; etiketler keşfetteki eşleşme uygunluğunu etkiler | Başlamadı |
 
 Dilim 11 ve 12 sonradan eklendi ve sıradaki dilimlerden (3–10) önce yapılır (kullanıcı kararı, 2026-11-12). Uygulama yalnızca çevrimiçi takas içindir; yüz yüze buluşmayla ilgili hiçbir şey kalmaz.
@@ -390,6 +390,23 @@ Faz 8'in dışında kalanlar:
 - **Üyelik ve ödeme** (Google Play Billing, yetenek sınırının plana bağlanması): genel yayından ve uygulama kitle kazandıktan sonra (kullanıcı kararı, 2026-11-04). O zamana kadar Exparter ücretsizdir.
 - **Reşit olmayan kullanıcılar:** Faz 8'e alınmadı (kullanıcı kararı, 2026-11-04); veli onayı ve yetişkinlerle iletişim ciddi hukuki risk taşır, ayrı bir kararla ele alınır.
 
+### Dilim 11 — Yüz yüze buluşmanın kaldırılması
+
+Plan ve kararlar kullanıcı tarafından onaylandı (2026-11-12). Branch `phase-8/11-remove-in-person`.
+
+Kararlar: iki adımda yapılır (aşağıda); kayıtlı yüz yüze buluşmalar ve yalnızca onlara dayanan değerlendirmeler silinir; şehir isteğe bağlı profil bilgisi ve keşfet süzgeci olarak kalır.
+
+- Sözleşme: `reportInPersonSession` ucu, `SessionMode`, profil güncellemesindeki `acceptsOnline` / `acceptsInPerson`, keşfetteki `mode` süzgeci ve `in_person_already_reported`, `swap_mode_required`, `city_required` hata kodları çıktı. Oturumda `scheduledAt`, `durationMinutes`, `callOpensAt` ve `callClosesAt` artık hep dolu.
+- Backend: `SwapSession` yalnızca çevrimiçi oturumdur; profil yalnızca görünen adla tamamlanmış sayılır ve şehir isteğe bağlıdır; keşfet sıralamasından "tercih uyumu" basamağı çıktı (uyum, puan, yenilik).
+- Veritabanı (`RemoveInPersonMeetings`): yüz yüze buluşmalar silinir. Onlara dayanan değerlendirme, aynı çiftin tamamlanmış bir çevrimiçi oturumu varsa ona bağlanır, yoksa silinir. `mode`, `accepts_online`, `accepts_in_person` sütunları ve çift başına tek bildirim dizini kalkar; `scheduled_at` ile `duration_minutes` zorunlu olur. Yerel veritabanının bir kopyasında denendi: 14 buluşma ve 20 değerlendirme silindi, 2 değerlendirme çevrimiçi oturuma taşındı.
+- Mobil: profil formunda takas tercihi yerine isteğe bağlı şehir ("Belirtmek istemiyorum" seçeneğiyle); profillerde ve keşfet kartında yalnızca şehir; keşfette mod süzgeci yok; eşleşmede "Yüz yüze buluştuk" yok.
+- Eski sürümler (ilk adım): 1.0.0 (8) ve öncesi bu alanlar olmadan profil, keşfet ve oturum yanıtlarını okuyamaz. Bu yüzden yanıtlar `acceptsOnline: true`, `acceptsInPerson: false` ve oturumda `mode: "Online"` değerlerini sabit olarak taşımayı sürdürür (sözleşmede `deprecated`); eski sürümün gönderdiği tercih alanları ve `mode` süzgeci yok sayılır. Eski sürümde "Yüz yüze buluştuk" düğmesi genel hata mesajı verir.
+- İkinci adım (bekliyor): test kullanıcıları yeni sürüme geçince bu üç sabit alan sözleşmeden ve yanıtlardan silinir.
+- Testler (2026-11-12): backend 551 (183 domain, 244 uygulama, 124 entegrasyon), mobil 271. Yüz yüze bildirimini kısayol olarak kullanan testler gerçek bir çevrimiçi oturumu tamamlar. Uçtan uca test yeniden yazıldı (bir dakika sonra başlayan oturum kabul edilir, karşı taraf tamamlandı işaretler, uygulamadan onaylanır) ama emülatörde çalıştırılmadı.
+- Belgeler: iş kuralları (PR-03, PR-04, SS-15, SS-19 kaldırıldı; PR-05, SS-14, SS-16 ve keşfet sıralaması güncellendi), sözlük, domain modeli, ERD, hata kodları, brief Bölüm 6 ve 7.
+- Sürüm 1.0.0 (9) olarak işaretlendi.
+- Kalan: `main`'e merge onayı; 1.0.0 (9) derlemesi ve yüklenmesi; mağaza ekran görüntüleri (`docs/store/screenshots`, Play kaydı) ve sitedeki ekran görselleri (`deploy/site/img`) hâlâ "Yüz yüze" süzgecini ve buluşma kartını gösteriyor, yeniden çekilmeli (`scripts/seed-store-screenshots.py` güncellendi, çalıştırılmadı); ikinci adım.
+
 ### Dilim 2 — Görüşmede uçtan uca şifreleme
 
 Plan kullanıcı tarafından onaylandı (2026-11-04; ADR 0016). Branch `phase-8/2-call-e2ee`.
@@ -397,7 +414,7 @@ Plan kullanıcı tarafından onaylandı (2026-11-04; ADR 0016). Branch `phase-8/
 - Cihazlar X25519 ile anahtarı kendi aralarında üretir; açık anahtarlar LiveKit katılımcı özelliği olarak yayımlanır (veri kanalı, anahtar anlaşılmadan şifrelendiği için kullanılamadı), ortak anahtar sunucuya hiç gitmez. LiveKit kare şifrelemesi kamera, mikrofon ve ekran paylaşımını şifreler.
 - Kararlar (kullanıcı, 2026-11-04): görüşme ekranında iki tarafta aynı çıkan 6 haneli güvenlik kodu gösterilir; karşı taraf eski sürümdeyse görüşme şifresiz sürmez, güncellemesi gerektiği söylenir; şifreleme kurulamazsa görüşme açılmaz.
 - Adımlar: ADR 0016; backend (görüşme anahtarında kendi özelliklerini güncelleme izni); mobil (anahtar değişimi, güvenlik kodu, görüşme ekranı durumları, `cryptography` 2.9.0); testler; gizlilik metni; iki gerçek cihazla deneme ve 1.0.0+8.
-- Emülatörde doğrulandı (2026-11-04): yerel LiveKit'e karşı uygulamanın bağlantı sınıfı ile ikinci bir katılımcı aynı güvenlik kodunu buldu ve karşı taraf kamera görüntüsünü anlaşılan anahtarla çözdü. İlk denemede açık anahtarlar veri kanalından gidiyordu ve ulaşmadı (LiveKit veri mesajlarını da henüz anlaşılmamış anahtarla şifreliyor); anahtarlar katılımcı özelliğine taşındı. İki gerçek cihazla deneme bekliyor. Backend 561, mobil 273 test.
+- Emülatörde doğrulandı (2026-11-04): yerel LiveKit'e karşı uygulamanın bağlantı sınıfı ile ikinci bir katılımcı aynı güvenlik kodunu buldu ve karşı taraf kamera görüntüsünü anlaşılan anahtarla çözdü. İlk denemede açık anahtarlar veri kanalından gidiyordu ve ulaşmadı (LiveKit veri mesajlarını da henüz anlaşılmamış anahtarla şifreliyor); anahtarlar katılımcı özelliğine taşındı. Backend 561, mobil 273 test. İki gerçek cihazla denendi, sorun çıkmadı; 1.0.0 (8) Play incelemesinden geçti ve yayında (kullanıcı, 2026-11-12).
 
 ### Dilim 1 — Görüntülü görüşme
 

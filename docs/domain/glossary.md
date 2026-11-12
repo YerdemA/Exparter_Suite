@@ -7,8 +7,7 @@ Arayüzde Türkçe terim, kodda İngilizce ad kullanılır. Bu tablo ikisi aras�
 | Kullanıcı | `User` | Kimlik kaydı: e-posta, parola hash'i, durum. Kişisel bilgi taşımaz. |
 | Kullanıcı adı | `Username` | Kullanıcının benzersiz, herkese görünen adı. Girişte e-posta yerine kullanılabilir. |
 | E-posta doğrulaması | `EmailVerifiedAt` | Kullanıcının e-postasını doğruladığı an. Doğrulanmamış kullanıcı başkalarıyla etkileşime giremez. |
-| Profil | `Profile` | Kullanıcının herkese görünen yüzü: ad, biyografi, avatar, şehir, takas tercihi. |
-| Çevrimiçi takas, Yüz yüze takas | `AcceptsOnline`, `AcceptsInPerson` | Profildeki takas tercihi; en az biri seçilir. Yüz yüze takasta şehir zorunludur. |
+| Profil | `Profile` | Kullanıcının herkese görünen yüzü: ad, biyografi, avatar, şehir. |
 | Kategori | `SkillCategory` | Yeteneklerin gruplandığı başlık (ör. Müzik, Dil). |
 | Yetenek | `Skill` | Katalogdaki tek bir yetenek (ör. Gitar). |
 | Yetenek önerisi | `Skill` (`PendingApproval`) | Kullanıcının katalogda olmayan bir yeteneği önermesi. Admin onaylayana kadar katalogda görünmez. |
@@ -26,9 +25,7 @@ Arayüzde Türkçe terim, kodda İngilizce ad kullanılır. Bu tablo ikisi aras�
 | Eşleşmeyi sonlandırma | match ending | İki tarafın karşılıklı onayıyla eşleşmenin kapanması. |
 | Sohbet | `Conversation` | İki kullanıcı arasındaki tek mesajlaşma kanalı. İlk eşleşmede açılır. |
 | Mesaj | `Message` | Sohbetteki tek bir metin mesajı. |
-| Takas oturumu | `SwapSession` | Eşleşen iki kullanıcının planladığı tek bir buluşma (tarih, süre, biçim). |
-| Oturum biçimi | `SessionMode` | `Online` veya `InPerson` (yüz yüze). |
-| Yüz yüze buluşma bildirimi | `SwapSession` (`InPerson`) | Uygulama dışında ayarlanan buluşmanın sonradan "Yüz yüze buluştuk" diye bildirilmesi; doğrudan onay bekler. |
+| Takas oturumu | `SwapSession` | Eşleşen iki kullanıcının planladığı tek bir çevrimiçi görüşme (tarih, süre). |
 | Tamamlama onayı | completion confirmation | Bir tarafın oturumu tamamlandı işaretlemesi ve diğerinin bunu onaylaması. |
 | Görüntülü görüşme | call | Kabul edilmiş çevrimiçi oturumun uygulama içindeki görüşmesi (LiveKit odası, oda adı oturum kimliği). |
 | Görüşme penceresi | `CallOpensAt`, `CallClosesAt` | Görüşmeye katılınabilen aralık: başlangıçtan 10 dakika önce ile süre bittikten 15 dakika sonrası. |
