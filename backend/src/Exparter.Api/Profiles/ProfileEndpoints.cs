@@ -9,9 +9,7 @@ namespace Exparter.Api.Profiles;
 internal sealed record UpdateProfileRequest(
     string DisplayName,
     string? Bio,
-    string? City,
-    bool AcceptsOnline,
-    bool AcceptsInPerson);
+    string? City);
 
 internal sealed record AvatarUploadUrlRequest(string ContentType, long ContentLength);
 
@@ -32,9 +30,7 @@ internal static class ProfileEndpoints
                     user.GetUserId(),
                     request.DisplayName,
                     request.Bio,
-                    request.City,
-                    request.AcceptsOnline,
-                    request.AcceptsInPerson),
+                    request.City),
                 cancellationToken)));
 
         me.MapPost("/avatar/upload-url", async (AvatarUploadUrlRequest request, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>

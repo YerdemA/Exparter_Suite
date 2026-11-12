@@ -42,8 +42,6 @@ class ApiProfileRepository implements ProfileRepository {
     required String displayName,
     required String? bio,
     required String? city,
-    required bool acceptsOnline,
-    required bool acceptsInPerson,
   }) =>
       guardApiCall(
         () => _api.profiles.updateOwnProfile(
@@ -51,8 +49,6 @@ class ApiProfileRepository implements ProfileRepository {
             displayName: displayName,
             bio: bio,
             city: city,
-            acceptsOnline: acceptsOnline,
-            acceptsInPerson: acceptsInPerson,
           ),
         ),
       );

@@ -19,7 +19,7 @@ public interface ISessionRepository
     /// <summary>Sessions a user cancelled, with the reason they gave; newest first.</summary>
     Task<PagedList<SwapSession>> ListCancelledByUsersAsync(PageRequest page, CancellationToken cancellationToken);
 
-    /// <summary>Newest first, by scheduled time (or, for in-person meetings, when they were reported).</summary>
+    /// <summary>Newest first, by scheduled time.</summary>
     Task<PagedList<SwapSession>> ListByMatchAsync(Guid matchId, PageRequest page, CancellationToken cancellationToken);
 
     /// <inheritdoc cref="ListByMatchAsync"/>
@@ -39,7 +39,7 @@ public interface ISessionRepository
     /// The online sessions of any of the users that may overlap the given time, whatever
     /// their status; callers check the exact overlap and whether a session still counts.
     /// </summary>
-    Task<IReadOnlyList<SwapSession>> ListOnlineAroundAsync(
+    Task<IReadOnlyList<SwapSession>> ListAroundAsync(
         IReadOnlyCollection<Guid> userIds,
         DateTimeOffset start,
         DateTimeOffset end,
@@ -61,12 +61,6 @@ public interface ISessionRepository
         IReadOnlyCollection<Guid> matchIds,
         DateTimeOffset now,
         CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Whether the two users have an in-person meeting on record, in any of their
-    /// matches, that was not cancelled.
-    /// </summary>
-    Task<bool> HasInPersonMeetingBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken);
 
     /// <summary>The earliest completed session of the two users, in any of their matches.</summary>
     Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, DateTimeOffset now, CancellationToken cancellationToken);
@@ -106,9 +100,8 @@ public sealed record SwapSessionDto(
     Guid Id,
     Guid MatchId,
     Guid ProposedByUserId,
-    DateTimeOffset? ScheduledAt,
-    int? DurationMinutes,
-    SessionMode Mode,
+    DateTimeOffset ScheduledAt,
+    int DurationMinutes,
     string? Note,
     SwapSessionStatus Status,
     Guid? CompletionMarkedByUserId,
@@ -120,9 +113,13 @@ public sealed record SwapSessionDto(
     string? CancelReason,
     DateTimeOffset? CancelledAt,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? CallOpensAt,
-    DateTimeOffset? CallClosesAt)
+    DateTimeOffset CallOpensAt,
+    DateTimeOffset CallClosesAt)
 {
+    // App versions up to 1.0.0+8 cannot read a session without the mode they used to
+    // tell two kinds of session apart by. Remove once those versions are no longer in use.
+    public string Mode => "Online";
+
     /// <summary>Describes the session as it stands at <paramref name="now"/>, passed deadlines included.</summary>
     public static SwapSessionDto From(SwapSession session, DateTimeOffset now)
     {
@@ -134,7 +131,6 @@ public sealed record SwapSessionDto(
             session.ProposedByUserId,
             session.ScheduledAt,
             session.DurationMinutes,
-            session.Mode,
             session.Note,
             status,
             session.CompletionMarkedByUserId,
@@ -153,9 +149,6 @@ public sealed record SwapSessionDto(
 
 public static class SessionConflicts
 {
-    public static AppException InPersonAlreadyReported() =>
-        AppException.Conflict("in_person_already_reported", "The two users have already reported an in-person meeting.");
-
     public static AppException TimeTaken() =>
         AppException.Conflict("session_time_taken", "The user already has a session at this time.");
 
@@ -212,10 +205,10 @@ internal static class SessionExtensions
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        var start = session.ScheduledAt!.Value;
-        var end = session.EndsAt!.Value;
+        var start = session.ScheduledAt;
+        var end = session.EndsAt;
         var otherUserId = session.OtherThan(actingUserId);
-        var overlapping = (await sessions.ListOnlineAroundAsync([actingUserId, otherUserId], start, end, cancellationToken))
+        var overlapping = (await sessions.ListAroundAsync([actingUserId, otherUserId], start, end, cancellationToken))
             .Where(other => other.Id != session.Id && other.OverlapsWith(start, end))
             .ToList();
 
@@ -272,7 +265,7 @@ public sealed class ProposeSessionCommandHandler(
         var match = await matches.GetForParticipantAsync(command.MatchId, command.UserId, cancellationToken);
         match.EnsureAcceptsSessions();
 
-        var session = SwapSession.ProposeOnline(
+        var session = SwapSession.Propose(
             match.Id,
             command.UserId,
             match.OtherThan(command.UserId),
@@ -283,37 +276,6 @@ public sealed class ProposeSessionCommandHandler(
         await sessions.EnsureTimeIsFreeAsync(session, command.UserId, now, cancellationToken);
         sessions.Add(session);
         notifier.Notify(session.OtherUserId, NotificationType.SessionProposed, session.NotificationData(command.UserId));
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return SwapSessionDto.From(session, now);
-    }
-}
-
-public sealed record ReportInPersonSessionCommand(Guid UserId, Guid MatchId) : ICommand<SwapSessionDto>;
-
-public sealed class ReportInPersonSessionCommandHandler(
-    IMatchDirectory matches,
-    ISessionRepository sessions,
-    IUserNotifier notifier,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider) : ICommandHandler<ReportInPersonSessionCommand, SwapSessionDto>
-{
-    public async ValueTask<SwapSessionDto> Handle(ReportInPersonSessionCommand command, CancellationToken cancellationToken)
-    {
-        var now = timeProvider.GetUtcNow();
-        var match = await matches.GetForParticipantAsync(command.MatchId, command.UserId, cancellationToken);
-        match.EnsureAcceptsSessions();
-
-        // Nobody else sees an in-person meeting take place, so two users could inflate
-        // their statistics with reports; one per pair is all that counts.
-        var otherUserId = match.OtherThan(command.UserId);
-        if (await sessions.HasInPersonMeetingBetweenAsync(command.UserId, otherUserId, cancellationToken))
-        {
-            throw SessionConflicts.InPersonAlreadyReported();
-        }
-
-        var session = SwapSession.ReportInPerson(match.Id, command.UserId, otherUserId, now);
-        sessions.Add(session);
-        notifier.Notify(otherUserId, NotificationType.SessionCompletionMarked, session.NotificationData(command.UserId));
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return SwapSessionDto.From(session, now);
     }

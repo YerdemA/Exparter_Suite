@@ -28,12 +28,6 @@ internal static class SessionEndpoints
             return Results.Created($"/api/v1/sessions/{session.Id}", session);
         });
 
-        ofMatch.MapPost("/in-person", async (Guid matchId, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>
-        {
-            var session = await sender.Send(new ReportInPersonSessionCommand(user.GetUserId(), matchId), cancellationToken);
-            return Results.Created($"/api/v1/sessions/{session.Id}", session);
-        });
-
         var sessions = routes.MapGroup("/sessions").RequireAuthorization();
 
         sessions.MapGet("", async (SwapSessionStatus? status, DateTimeOffset? from, DateTimeOffset? to, int? page, int? pageSize, ClaimsPrincipal user, ISender sender, CancellationToken cancellationToken) =>

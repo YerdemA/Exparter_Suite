@@ -80,10 +80,10 @@ public class ReviewHandlerTests
 
     private ReviewDtoFactory DtoFactory => new(new FakeUserSummaries(_users));
 
-    /// <summary>A meeting the two users reported and confirmed.</summary>
+    /// <summary>A session the two users held and both called completed.</summary>
     private SwapSession AddCompletedSession(Guid first, Guid second)
     {
-        var session = SwapSession.ReportInPerson(Guid.NewGuid(), first, second, _clock.GetUtcNow());
+        var session = HeldSessions.MarkedCompleted(Guid.NewGuid(), first, second, _clock.GetUtcNow());
         session.ConfirmCompleted(second, _clock.GetUtcNow());
         _sessions.Items.Add(session);
         return session;
@@ -144,8 +144,8 @@ public class ReviewHandlerTests
     public async Task A_review_needs_a_completed_session_between_the_two_users()
     {
         // Proposed, pending and cancelled sessions do not count; neither does one with someone else.
-        _sessions.Items.Add(SwapSession.ProposeOnline(Guid.NewGuid(), _ali, _ayse, _clock.GetUtcNow().AddDays(1), 60, null, _clock.GetUtcNow()));
-        var pending = SwapSession.ReportInPerson(Guid.NewGuid(), _ali, _ayse, _clock.GetUtcNow());
+        _sessions.Items.Add(SwapSession.Propose(Guid.NewGuid(), _ali, _ayse, _clock.GetUtcNow().AddDays(1), 60, null, _clock.GetUtcNow()));
+        var pending = HeldSessions.MarkedCompleted(Guid.NewGuid(), _ali, _ayse, _clock.GetUtcNow());
         _sessions.Items.Add(pending);
         AddCompletedSession(_ali, _can);
 

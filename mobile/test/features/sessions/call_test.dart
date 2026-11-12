@@ -172,24 +172,21 @@ void main() {
   late List<String> log;
 
   SwapSession session({
-    SessionMode mode = SessionMode.online,
     SwapSessionStatus status = SwapSessionStatus.scheduled,
     Duration startsIn = const Duration(minutes: 5),
   }) {
     final start = now.add(startsIn);
-    final online = mode == SessionMode.online;
     return SwapSession(
       id: 'session-1',
       matchId: 'match-1',
       proposedByUserId: 'user-deniz',
-      mode: mode,
       status: status,
       completedAutomatically: false,
       createdAt: now,
-      scheduledAt: online ? start : null,
-      durationMinutes: online ? 60 : null,
-      callOpensAt: online ? start.subtract(const Duration(minutes: 10)) : null,
-      callClosesAt: online ? start.add(const Duration(minutes: 75)) : null,
+      scheduledAt: start,
+      durationMinutes: 60,
+      callOpensAt: start.subtract(const Duration(minutes: 10)),
+      callClosesAt: start.add(const Duration(minutes: 75)),
     );
   }
 
@@ -216,8 +213,7 @@ void main() {
   });
 
   group('callWindowAt', () {
-    test('only an accepted online session that was not cancelled has a call', () {
-      expect(callWindowAt(session(mode: SessionMode.inPerson), now), CallWindow.none);
+    test('only an accepted session that was not cancelled has a call', () {
       expect(callWindowAt(session(status: SwapSessionStatus.proposed), now), CallWindow.none);
       expect(callWindowAt(session(status: SwapSessionStatus.cancelled), now), CallWindow.none);
       expect(callWindowAt(session(status: SwapSessionStatus.completionPending), now), CallWindow.open);
@@ -231,7 +227,7 @@ void main() {
 
     test('the call opens ten minutes before the start and closes fifteen minutes after the end', () {
       final scheduled = session(startsIn: const Duration(hours: 1));
-      final start = scheduled.scheduledAt!;
+      final start = scheduled.scheduledAt;
 
       expect(callWindowAt(scheduled, start.subtract(const Duration(minutes: 11))), CallWindow.upcoming);
       expect(callWindowAt(scheduled, start.subtract(const Duration(minutes: 10))), CallWindow.open);

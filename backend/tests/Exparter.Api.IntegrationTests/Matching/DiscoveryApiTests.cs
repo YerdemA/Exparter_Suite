@@ -14,8 +14,7 @@ public class DiscoveryApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     private async Task<TestSession> RegisterAsync(
         string city,
         string displayName = "Test Kullanıcı",
-        bool verified = true,
-        bool acceptsOnline = false)
+        bool verified = true)
     {
         var session = await TestSession.RegisterAsync(_client);
         if (verified)
@@ -26,7 +25,7 @@ public class DiscoveryApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         var response = await session.SendAsync(
             HttpMethod.Put,
             "/api/v1/me/profile",
-            new { displayName, city, acceptsOnline, acceptsInPerson = true });
+            new { displayName, city });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return session;
     }
@@ -148,11 +147,11 @@ public class DiscoveryApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task Filters_narrow_suggestions_by_offered_skill_category_and_mode()
+    public async Task Filters_narrow_suggestions_by_offered_skill_and_category()
     {
         const string city = "75";
         var viewer = await TestSession.RegisterAsync(_client);
-        var guitarist = await RegisterAsync(city, acceptsOnline: true);
+        var guitarist = await RegisterAsync(city);
         await guitarist.AddSkillAsync("gitar", "Offered", "Advanced");
         var yogi = await RegisterAsync(city);
         await yogi.AddSkillAsync("yoga", "Offered", "Advanced");
@@ -164,13 +163,12 @@ public class DiscoveryApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
 
         var bySkill = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&skillId={guitarId}"));
         var byCategory = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&categoryId={categoryId}"));
-        var online = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&mode=Online"));
-        var inPerson = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&mode=InPerson"));
+        // An app version that still has the swap mode filter sends it; it narrows nothing.
+        var withOldFilter = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&mode=InPerson"));
 
         Assert.Equal(guitarist.UserId, IdOf(Assert.Single(bySkill)));
         Assert.Equal(guitarist.UserId, IdOf(Assert.Single(byCategory)));
-        Assert.Equal(guitarist.UserId, IdOf(Assert.Single(online)));
-        Assert.Equal(2, inPerson.Count);
+        Assert.Equal(2, withOldFilter.Count);
     }
 
     [Fact]

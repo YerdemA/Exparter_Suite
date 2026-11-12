@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Exparter.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Exparter.Api.IntegrationTests;
 
@@ -9,6 +12,8 @@ namespace Exparter.Api.IntegrationTests;
 public sealed class TestSession
 {
     public const string Password = "Passw0rd!x";
+
+    private static int _heldSessions;
 
     private readonly HttpClient _client;
 
@@ -51,7 +56,7 @@ public sealed class TestSession
         var response = await session.SendAsync(
             HttpMethod.Put,
             "/api/v1/me/profile",
-            new { displayName = "Test Kullanıcı", bio = "Merhaba", city = "34", acceptsOnline = true, acceptsInPerson = true });
+            new { displayName = "Test Kullanıcı", bio = "Merhaba", city = "34" });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         await session.AddSkillAsync("gitar", "Offered", "Advanced");
         return session;
@@ -67,6 +72,31 @@ public sealed class TestSession
             new { skillId = await FindSkillIdAsync(search), type, level });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+    }
+
+    /// <summary>
+    /// A session of the match that took place and that this user marked as completed; it
+    /// waits for <paramref name="other"/> to confirm. Its start is moved into the past,
+    /// standing in for time going by.
+    /// </summary>
+    public async Task<JsonElement> MarkSessionCompletedAsync(ApiFixture fixture, TestSession other, string matchPath)
+    {
+        // Each gets a time of its own: nobody can be planned into two sessions at once.
+        var scheduledAt = DateTimeOffset.UtcNow.AddDays(30).AddHours(3 * Interlocked.Increment(ref _heldSessions));
+        var proposed = await SendAsync(HttpMethod.Post, $"{matchPath}/sessions", new { scheduledAt, durationMinutes = 60 });
+        Assert.Equal(HttpStatusCode.Created, proposed.StatusCode);
+        var id = (await proposed.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await other.SendAsync(HttpMethod.Post, $"/api/v1/sessions/{id}/accept")).StatusCode);
+
+        await using (var scope = fixture.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE sessions.swap_sessions SET scheduled_at = now() - interval '2 hours' WHERE id = {id}");
+        }
+
+        var marked = await SendAsync(HttpMethod.Post, $"/api/v1/sessions/{id}/completion");
+        Assert.Equal(HttpStatusCode.OK, marked.StatusCode);
+        return await marked.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     public async Task<Guid> FindSkillIdAsync(string search)

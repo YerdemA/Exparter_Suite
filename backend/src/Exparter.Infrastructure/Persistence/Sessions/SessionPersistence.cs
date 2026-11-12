@@ -16,7 +16,6 @@ internal sealed class SwapSessionConfiguration : IEntityTypeConfiguration<SwapSe
         builder.ToTable("swap_sessions", Schema);
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
-        builder.Property(x => x.Mode).HasConversion<string>().HasMaxLength(16);
         builder.Property(x => x.Note).HasMaxLength(SwapSession.NoteMaxLength);
         builder.Property(x => x.CancelReason).HasMaxLength(SwapSession.CancelReasonMaxLength);
 
@@ -91,7 +90,7 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
                 && (x.Status == SwapSessionStatus.Proposed || x.Status == SwapSessionStatus.Scheduled))
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<SwapSession>> ListOnlineAroundAsync(
+    public async Task<IReadOnlyList<SwapSession>> ListAroundAsync(
         IReadOnlyCollection<Guid> userIds,
         DateTimeOffset start,
         DateTimeOffset end,
@@ -101,8 +100,7 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
         var earliestStart = start - TimeSpan.FromMinutes(SwapSession.AllowedDurations.Max());
         return await dbContext.SwapSessions
             .AsNoTracking()
-            .Where(x => x.Mode == SessionMode.Online
-                && (userIds.Contains(x.ProposedByUserId) || userIds.Contains(x.OtherUserId))
+            .Where(x => (userIds.Contains(x.ProposedByUserId) || userIds.Contains(x.OtherUserId))
                 && x.Status != SwapSessionStatus.Declined
                 && x.Status != SwapSessionStatus.Cancelled
                 && x.ScheduledAt > earliestStart
@@ -151,14 +149,6 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
             .ToListAsync(cancellationToken))
         .ToHashSet();
 
-    public Task<bool> HasInPersonMeetingBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken) =>
-        dbContext.SwapSessions.AnyAsync(
-            x => x.Mode == SessionMode.InPerson
-                && x.Status != SwapSessionStatus.Cancelled
-                && ((x.ProposedByUserId == userId && x.OtherUserId == otherUserId)
-                    || (x.ProposedByUserId == otherUserId && x.OtherUserId == userId)),
-            cancellationToken);
-
     public async Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, DateTimeOffset now, CancellationToken cancellationToken) =>
         await Completed(
                 dbContext.SwapSessions.Where(x => (x.ProposedByUserId == userId && x.OtherUserId == otherUserId)
@@ -175,5 +165,5 @@ internal sealed class SessionRepository(AppDbContext dbContext) : ISessionReposi
             || (x.Status == SwapSessionStatus.CompletionPending && x.CompletionConfirmDeadline <= now));
 
     private static IQueryable<SwapSession> Newest(IQueryable<SwapSession> sessions) =>
-        sessions.OrderByDescending(x => x.ScheduledAt ?? x.CreatedAt).ThenByDescending(x => x.Id);
+        sessions.OrderByDescending(x => x.ScheduledAt).ThenByDescending(x => x.Id);
 }

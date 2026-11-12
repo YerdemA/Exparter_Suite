@@ -48,8 +48,6 @@ class SessionActions extends _$SessionActions {
         ),
       );
 
-  Future<bool> reportInPerson(String matchId) => _run((repository) => repository.reportInPerson(matchId));
-
   Future<bool> accept(String sessionId) => _run((repository) => repository.accept(sessionId));
 
   Future<bool> decline(String sessionId) => _run((repository) => repository.decline(sessionId));

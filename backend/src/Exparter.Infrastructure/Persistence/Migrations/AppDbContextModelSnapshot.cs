@@ -685,14 +685,6 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
-                    b.Property<bool>("AcceptsInPerson")
-                        .HasColumnType("boolean")
-                        .HasColumnName("accepts_in_person");
-
-                    b.Property<bool>("AcceptsOnline")
-                        .HasColumnType("boolean")
-                        .HasColumnName("accepts_online");
-
                     b.Property<string>("AvatarKey")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
@@ -827,7 +819,7 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("day_reminder_sent_at");
 
-                    b.Property<int?>("DurationMinutes")
+                    b.Property<int>("DurationMinutes")
                         .HasColumnType("integer")
                         .HasColumnName("duration_minutes");
 
@@ -838,12 +830,6 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("MatchId")
                         .HasColumnType("uuid")
                         .HasColumnName("match_id");
-
-                    b.Property<string>("Mode")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("mode");
 
                     b.Property<string>("Note")
                         .HasMaxLength(500)
@@ -858,7 +844,7 @@ namespace Exparter.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("proposed_by_user_id");
 
-                    b.Property<DateTimeOffset?>("ScheduledAt")
+                    b.Property<DateTimeOffset>("ScheduledAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("scheduled_at");
 

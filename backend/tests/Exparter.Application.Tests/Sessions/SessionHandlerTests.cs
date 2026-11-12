@@ -67,32 +67,26 @@ internal sealed class InMemorySessions : ISessionRepository
             .Select(x => x.MatchId)
             .ToHashSet());
 
-    public Task<bool> HasInPersonMeetingBetweenAsync(Guid userId, Guid otherUserId, CancellationToken cancellationToken) =>
-        Task.FromResult(Items.Any(x => x.Mode == SessionMode.InPerson
-            && x.Status != SwapSessionStatus.Cancelled
-            && x.IsParticipant(userId)
-            && x.IsParticipant(otherUserId)));
-
     public Task<Guid?> FindCompletedBetweenAsync(Guid userId, Guid otherUserId, DateTimeOffset now, CancellationToken cancellationToken) =>
         Task.FromResult(Items
             .Where(x => x.IsParticipant(userId) && x.IsParticipant(otherUserId) && x.StatusAt(now) == SwapSessionStatus.Completed)
             .Select(x => (Guid?)x.Id)
             .FirstOrDefault());
 
-    public Task<IReadOnlyList<SwapSession>> ListOnlineAroundAsync(
+    public Task<IReadOnlyList<SwapSession>> ListAroundAsync(
         IReadOnlyCollection<Guid> userIds,
         DateTimeOffset start,
         DateTimeOffset end,
         CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<SwapSession>>(Items
-            .Where(x => x.Mode == SessionMode.Online && userIds.Any(x.IsParticipant) && x.ScheduledAt < end)
+            .Where(x => userIds.Any(x.IsParticipant) && x.ScheduledAt < end)
             .ToList());
 
     public void Add(SwapSession session) => Items.Add(session);
 
     private static PagedList<SwapSession> Paged(IEnumerable<SwapSession> source, PageRequest page)
     {
-        var all = source.OrderByDescending(x => x.ScheduledAt ?? x.CreatedAt).ToList();
+        var all = source.OrderByDescending(x => x.ScheduledAt).ToList();
         return new PagedList<SwapSession>(all, page.Page, page.PageSize, all.Count);
     }
 }
@@ -160,9 +154,13 @@ public class SessionHandlerTests
         return (aliCan, ayseCan, can);
     }
 
-    private Task<SwapSessionDto> ReportAsync(Guid? userId = null) =>
-        new ReportInPersonSessionCommandHandler(_matches, _sessions, _notifier, _unitOfWork, _clock)
-            .Handle(new ReportInPersonSessionCommand(userId ?? _ali, _matchId), CancellationToken.None).AsTask();
+    /// <summary>A session that has just taken place and that Ali marked as completed; Ayşe has yet to confirm.</summary>
+    private SwapSessionDto AddMarkedCompleted()
+    {
+        var session = HeldSessions.MarkedCompleted(_matchId, _ali, _ayse, _clock.GetUtcNow());
+        _sessions.Items.Add(session);
+        return SwapSessionDto.From(session, _clock.GetUtcNow());
+    }
 
     private Task<SwapSessionDto> ChangeAsync(Guid sessionId, Guid userId, SessionAction action) =>
         new ChangeSessionCommandHandler(_sessions, _notifier, _unitOfWork, _clock)
@@ -194,7 +192,6 @@ public class SessionHandlerTests
         var dto = await ProposeAsync(note: "https://meet.example/abc");
 
         Assert.Equal(SwapSessionStatus.Proposed, dto.Status);
-        Assert.Equal(SessionMode.Online, dto.Mode);
         Assert.Equal((_matchId, _ali, 60), (dto.MatchId, dto.ProposedByUserId, dto.DurationMinutes));
         Assert.Equal("https://meet.example/abc", dto.Note);
         Assert.Equal(_ayse, Assert.Single(_sessions.Items).OtherUserId);
@@ -205,7 +202,6 @@ public class SessionHandlerTests
     {
         Assert.Equal("not_found", await AppCodeOfAsync(() => ProposeAsync(userId: Guid.NewGuid())));
         Assert.Equal("not_found", await AppCodeOfAsync(() => ProposeAsync(matchId: Guid.NewGuid())));
-        Assert.Equal("not_found", await AppCodeOfAsync(() => ReportAsync(Guid.NewGuid())));
         Assert.Equal(
             "not_found",
             await AppCodeOfAsync(() => new ListMatchSessionsQueryHandler(_matches, _sessions, _clock)
@@ -221,7 +217,6 @@ public class SessionHandlerTests
         SetMatch(isActive: false, hasPendingEndRequest: endPending);
 
         Assert.Equal(code, await AppCodeOfAsync(() => ProposeAsync()));
-        Assert.Equal(code, await AppCodeOfAsync(() => ReportAsync()));
     }
 
     [Fact]
@@ -277,7 +272,7 @@ public class SessionHandlerTests
         // A proposer's own proposal holds their time, so they can only have been booked by
         // a race or by sessions planned before this rule; the answer is refused all the same.
         var later = await ProposeAsync(at: Tomorrow.AddHours(5));
-        var clash = SwapSession.ProposeOnline(aliCan, can, _ali, Tomorrow.AddHours(5), 30, null, _clock.GetUtcNow());
+        var clash = SwapSession.Propose(aliCan, can, _ali, Tomorrow.AddHours(5), 30, null, _clock.GetUtcNow());
         clash.Accept(_ali, _clock.GetUtcNow());
         _sessions.Add(clash);
         Assert.Equal("other_user_busy", await AppCodeOfAsync(() => ChangeAsync(later.Id, _ayse, SessionAction.Accept)));
@@ -327,44 +322,10 @@ public class SessionHandlerTests
         Assert.Equal("not_found", await AppCodeOfAsync(() => CancelAsync(session.Id, stranger)));
         Assert.Equal("not_found", await AppCodeOfAsync(() => GetAsync(session.Id, stranger)));
 
-        var reported = await ReportAsync();
+        var reported = AddMarkedCompleted();
         Assert.Equal(
             DomainErrorCodes.NotParticipant,
             await DomainCodeOfAsync(() => ChangeAsync(reported.Id, _ali, SessionAction.ConfirmCompleted)));
-    }
-
-    [Fact]
-    public async Task An_in_person_meeting_is_reported_and_confirmed_without_a_time()
-    {
-        var reported = await ReportAsync(_ayse);
-
-        Assert.Equal((SessionMode.InPerson, SwapSessionStatus.CompletionPending), (reported.Mode, reported.Status));
-        Assert.Null(reported.ScheduledAt);
-        Assert.Equal(_ayse, reported.CompletionMarkedByUserId);
-
-        var completed = await ChangeAsync(reported.Id, _ali, SessionAction.ConfirmCompleted);
-        Assert.Equal(SwapSessionStatus.Completed, completed.Status);
-    }
-
-    [Fact]
-    public async Task A_pair_can_have_only_one_in_person_meeting_that_was_not_cancelled()
-    {
-        var first = await ReportAsync();
-        Assert.Equal("in_person_already_reported", await AppCodeOfAsync(() => ReportAsync(_ayse)));
-
-        // A disputed report does not use up the pair's one meeting.
-        await CancelAsync(first.Id, _ayse);
-        var second = await ReportAsync(_ayse);
-        await ChangeAsync(second.Id, _ali, SessionAction.ConfirmCompleted);
-
-        // Nor does a later match between the same two users bring a new one.
-        var rematch = Guid.NewGuid();
-        _matches.Items[rematch] = new MatchInfo(rematch, _ayse, _ali, true, false);
-        Assert.Equal(
-            "in_person_already_reported",
-            await AppCodeOfAsync(() => new ReportInPersonSessionCommandHandler(_matches, _sessions, _notifier, _unitOfWork, _clock)
-                .Handle(new ReportInPersonSessionCommand(_ali, rematch), CancellationToken.None).AsTask()));
-        Assert.Equal(2, _sessions.Items.Count);
     }
 
     [Fact]
@@ -382,7 +343,7 @@ public class SessionHandlerTests
     public async Task Passed_deadlines_show_at_once_and_are_recorded_by_the_deadline_run()
     {
         var ignored = await ProposeAsync();
-        var reported = await ReportAsync();
+        var reported = AddMarkedCompleted();
         var handler = new ProcessSessionDeadlinesCommandHandler(_sessions, _notifier, _unitOfWork, _clock);
         Assert.Equal(0, await handler.Handle(new ProcessSessionDeadlinesCommand(), CancellationToken.None));
 
@@ -410,7 +371,7 @@ public class SessionHandlerTests
         var proposed = await ProposeAsync();
         var scheduled = await ProposeAsync(at: Tomorrow.AddHours(2));
         await ChangeAsync(scheduled.Id, _ayse, SessionAction.Accept);
-        var reported = await ReportAsync();
+        var reported = AddMarkedCompleted();
 
         await new CancelSessionsOnMatchEnded(_sessions, _clock).Handle(new MatchEnded(_matchId), CancellationToken.None);
         await new CancelSessionsOnMatchEnded(_sessions, _clock).Handle(new MatchEnded(Guid.NewGuid()), CancellationToken.None);
@@ -443,7 +404,6 @@ public class SessionHandlerTests
         var cancelled = await ProposeAsync();
         await CancelAsync(cancelled.Id, _ali, "Planım değişti.");
         Assert.Equal("Planım değişti.", _notifier.Sent[^1].Data.Reason);
-        await ReportAsync(_ayse);
 
         Assert.Equal(
             [
@@ -454,7 +414,6 @@ public class SessionHandlerTests
                 (_ayse, NotificationType.SessionDeclined),
                 (_ayse, NotificationType.SessionProposed),
                 (_ayse, NotificationType.SessionCancelled),
-                (_ali, NotificationType.SessionCompletionMarked),
             ],
             _notifier.Take());
     }
@@ -464,7 +423,7 @@ public class SessionHandlerTests
     {
         var handler = new ProcessSessionDeadlinesCommandHandler(_sessions, _notifier, _unitOfWork, _clock);
         Task<int> RunAsync() => handler.Handle(new ProcessSessionDeadlinesCommand(), CancellationToken.None).AsTask();
-        var session = SwapSession.ProposeOnline(_matchId, _ali, _ayse, _clock.GetUtcNow().AddDays(3), 60, null, _clock.GetUtcNow());
+        var session = SwapSession.Propose(_matchId, _ali, _ayse, _clock.GetUtcNow().AddDays(3), 60, null, _clock.GetUtcNow());
         session.Accept(_ayse, _clock.GetUtcNow());
         _sessions.Items.Add(session);
 
@@ -507,7 +466,7 @@ public class SessionHandlerTests
     public async Task Sessions_are_listed_per_match_and_per_user_with_filters()
     {
         var upcoming = await ProposeAsync();
-        await ReportAsync();
+        var held = AddMarkedCompleted();
         var perMatch = await new ListMatchSessionsQueryHandler(_matches, _sessions, _clock)
             .Handle(new ListMatchSessionsQuery(_ayse, _matchId, null, null), CancellationToken.None);
         var handler = new ListSessionsQueryHandler(_sessions, _clock);
@@ -518,9 +477,9 @@ public class SessionHandlerTests
         Assert.Equal(2, perMatch.TotalCount);
         Assert.Equal(2, (await ListAsync(_ali)).Count);
         Assert.Equal(upcoming.Id, Assert.Single(await ListAsync(_ayse, SwapSessionStatus.Proposed)).Id);
-        Assert.Equal(SessionMode.InPerson, Assert.Single(await ListAsync(_ayse, SwapSessionStatus.CompletionPending)).Mode);
+        Assert.Equal(held.Id, Assert.Single(await ListAsync(_ayse, SwapSessionStatus.CompletionPending)).Id);
         Assert.Equal(upcoming.Id, Assert.Single(await ListAsync(_ali, from: _clock.GetUtcNow())).Id);
-        Assert.Empty(await ListAsync(_ali, to: _clock.GetUtcNow()));
+        Assert.Equal(held.Id, Assert.Single(await ListAsync(_ali, to: _clock.GetUtcNow())).Id);
         Assert.Empty(await ListAsync(Guid.NewGuid()));
     }
 
@@ -547,7 +506,7 @@ public class SessionHandlerTests
 
         // Match 1 (this one): two completed sessions. While it runs it counts nowhere.
         await CompleteOnlineAsync();
-        var second = await ReportAsync();
+        var second = AddMarkedCompleted();
         await ChangeAsync(second.Id, _ayse, SessionAction.ConfirmCompleted);
         Assert.Equal(new UserStatsDto(0, 0, 0, 2), await stats.GetAsync(_ali, CancellationToken.None));
 

@@ -209,62 +209,17 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task An_in_person_meeting_is_reported_without_time_and_confirmed_by_the_other_user()
+    public async Task A_completion_mark_can_be_disputed_by_cancelling_with_a_reason()
     {
         var (ali, ayse, matchPath) = await MatchedPairAsync();
-
-        var reported = await OkAsync(PostAsync(ayse, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
-
-        Assert.Equal("InPerson", reported.GetProperty("mode").GetString());
-        Assert.Equal("CompletionPending", StatusOf(reported));
-        Assert.Equal(JsonValueKind.Null, reported.GetProperty("scheduledAt").ValueKind);
-        Assert.Equal(JsonValueKind.Null, reported.GetProperty("durationMinutes").ValueKind);
-        Assert.Equal(ayse.UserId, reported.GetProperty("completionMarkedByUserId").GetGuid());
-        await ProblemAssert.IsAsync(
-            await PostAsync(ayse, $"{PathOf(reported)}/completion/confirm"), HttpStatusCode.Forbidden, "not_participant");
-
-        Assert.Equal("Completed", StatusOf(await OkAsync(PostAsync(ali, $"{PathOf(reported)}/completion/confirm"))));
-    }
-
-    [Fact]
-    public async Task A_pair_can_report_an_in_person_meeting_only_once_unless_it_was_cancelled()
-    {
-        var (ali, ayse, matchPath) = await MatchedPairAsync();
-        var first = await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
-
-        await ProblemAssert.IsAsync(
-            await PostAsync(ayse, $"{matchPath}/sessions/in-person"), HttpStatusCode.Conflict, "in_person_already_reported");
-        await ProblemAssert.IsAsync(
-            await PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Conflict, "in_person_already_reported");
-
-        await OkAsync(PostAsync(ayse, $"{PathOf(first)}/cancel", new { reason = "Böyle bir buluşma olmadı." }));
-        var second = await OkAsync(PostAsync(ayse, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
-        await OkAsync(PostAsync(ali, $"{PathOf(second)}/completion/confirm"));
-
-        await ProblemAssert.IsAsync(
-            await PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Conflict, "in_person_already_reported");
-
-        // The database refuses a second one even if two reports slip past the check together.
-        var duplicate = await Record.ExceptionAsync(() => ExecuteSqlAsync(
-            $"""
-            INSERT INTO sessions.swap_sessions (id, match_id, proposed_by_user_id, other_user_id, mode, status, completed_automatically, created_at)
-            VALUES ({Guid.NewGuid()}, {Guid.NewGuid()}, {ayse.UserId}, {ali.UserId}, 'InPerson', 'CompletionPending', false, now())
-            """));
-        Assert.Contains("ix_swap_sessions_in_person_pair", duplicate?.Message);
-    }
-
-    [Fact]
-    public async Task A_reported_meeting_can_be_disputed_by_cancelling_with_a_reason()
-    {
-        var (ali, ayse, matchPath) = await MatchedPairAsync();
-        var path = PathOf(await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created));
+        var path = PathOf(await ali.MarkSessionCompletedAsync(fixture, ayse, matchPath));
 
         await ProblemAssert.IsAsync(await PostAsync(ayse, $"{path}/cancel", new { reason = "yok" }), HttpStatusCode.BadRequest, "validation_failed");
         await ProblemAssert.IsAsync(await PostAsync(ayse, $"{path}/cancel", new { }), HttpStatusCode.BadRequest, "validation_failed");
-        var cancelled = await OkAsync(PostAsync(ayse, $"{path}/cancel", new { reason = " Böyle bir buluşma olmadı. " }));
+        var cancelled = await OkAsync(PostAsync(ayse, $"{path}/cancel", new { reason = " Böyle bir oturum olmadı. " }));
 
         Assert.Equal("Cancelled", StatusOf(cancelled));
-        Assert.Equal("Böyle bir buluşma olmadı.", cancelled.GetProperty("cancelReason").GetString());
+        Assert.Equal("Böyle bir oturum olmadı.", cancelled.GetProperty("cancelReason").GetString());
         Assert.Equal(ayse.UserId, cancelled.GetProperty("cancelledByUserId").GetGuid());
         await ProblemAssert.IsAsync(await PostAsync(ayse, $"{path}/completion/confirm"), HttpStatusCode.Conflict, "invalid_state");
     }
@@ -282,7 +237,6 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         await ProblemAssert.IsAsync(
             await ProposeAsync(ali, matchPath, note: new string('a', 501)), HttpStatusCode.BadRequest, "validation_failed");
         await ProblemAssert.IsAsync(await ProposeAsync(stranger, matchPath), HttpStatusCode.NotFound, "not_found");
-        await ProblemAssert.IsAsync(await PostAsync(stranger, $"{matchPath}/sessions/in-person"), HttpStatusCode.NotFound, "not_found");
         await ProblemAssert.IsAsync(await stranger.SendAsync(HttpMethod.Get, $"{matchPath}/sessions"), HttpStatusCode.NotFound, "not_found");
         await ProblemAssert.IsAsync(await stranger.SendAsync(HttpMethod.Get, path), HttpStatusCode.NotFound, "not_found");
         await ProblemAssert.IsAsync(await PostAsync(stranger, $"{path}/accept"), HttpStatusCode.NotFound, "not_found");
@@ -347,7 +301,7 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
     {
         var (ali, ayse, matchPath) = await MatchedPairAsync();
         var ignored = await OkAsync(ProposeAsync(ali, matchPath), HttpStatusCode.Created);
-        var reported = await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
+        var reported = await ali.MarkSessionCompletedAsync(fixture, ayse, matchPath);
         await ExecuteSqlAsync(
             $"UPDATE sessions.swap_sessions SET scheduled_at = now() - interval '1 minute' WHERE id = {ignored.GetProperty("id").GetGuid()}");
         await ExecuteSqlAsync(
@@ -360,7 +314,7 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.True(completed.GetProperty("completedAutomatically").GetBoolean());
         await ProblemAssert.IsAsync(await PostAsync(ayse, $"{PathOf(ignored)}/accept"), HttpStatusCode.Conflict, "invalid_state");
         await ProblemAssert.IsAsync(
-            await PostAsync(ayse, $"{PathOf(reported)}/cancel", new { reason = "Buluşmadık ki" }), HttpStatusCode.Conflict, "invalid_state");
+            await PostAsync(ayse, $"{PathOf(reported)}/cancel", new { reason = "Görüşmedik ki" }), HttpStatusCode.Conflict, "invalid_state");
         Assert.Equal(1, (await ali.GetJsonAsync("/api/v1/sessions?status=Completed")).GetProperty("totalCount").GetInt32());
 
         await using (var scope = fixture.Services.CreateAsyncScope())
@@ -381,12 +335,10 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         var proposed = await OkAsync(ProposeAsync(ali, matchPath), HttpStatusCode.Created);
         var scheduled = await OkAsync(ProposeAsync(ali, matchPath, DateTimeOffset.UtcNow.AddDays(3)), HttpStatusCode.Created);
         await OkAsync(PostAsync(ayse, $"{PathOf(scheduled)}/accept"));
-        var reported = await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
+        var reported = await ali.MarkSessionCompletedAsync(fixture, ayse, matchPath);
 
         await OkAsync(PostAsync(ali, $"{matchPath}/end-request"));
         await ProblemAssert.IsAsync(await ProposeAsync(ali, matchPath), HttpStatusCode.Conflict, "match_end_pending");
-        await ProblemAssert.IsAsync(
-            await PostAsync(ayse, $"{matchPath}/sessions/in-person"), HttpStatusCode.Conflict, "match_end_pending");
 
         await OkAsync(PostAsync(ayse, $"{matchPath}/end-request/accept"));
 
@@ -395,7 +347,7 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         Assert.Equal("Cancelled", StatusOf(cancelled));
         Assert.Equal(JsonValueKind.Null, cancelled.GetProperty("cancelledByUserId").ValueKind);
         Assert.Equal("Cancelled", StatusOf(await ali.GetJsonAsync(PathOf(proposed))));
-        // The meeting that already happened can still be confirmed after the match ended.
+        // The session that already took place can still be confirmed after the match ended.
         Assert.Equal("Completed", StatusOf(await OkAsync(PostAsync(ayse, $"{PathOf(reported)}/completion/confirm"))));
     }
 
@@ -406,8 +358,8 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         var viewer = await TestSession.RegisterAsync(_client);
         Assert.Equal((0, 0, 0, 0), await StatsAsync(viewer, ali));
 
-        // First match: one completed meeting, then the match ends.
-        var reported = await OkAsync(PostAsync(ali, $"{firstMatch}/sessions/in-person"), HttpStatusCode.Created);
+        // First match: one completed session, then the match ends.
+        var reported = await ali.MarkSessionCompletedAsync(fixture, ayse, firstMatch);
         await OkAsync(PostAsync(ayse, $"{PathOf(reported)}/completion/confirm"));
         Assert.Equal((0, 0, 0, 1), await StatsAsync(viewer, ali));
         await EndMatchAsync(ali, ayse, firstMatch);

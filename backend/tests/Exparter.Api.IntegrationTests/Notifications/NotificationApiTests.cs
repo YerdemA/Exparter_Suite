@@ -129,29 +129,29 @@ public class NotificationApiTests(ApiFixture fixture) : IClassFixture<ApiFixture
             PostAsync(ali, $"{matchPath}/sessions", new { scheduledAt = DateTimeOffset.UtcNow.AddDays(2), durationMinutes = 60 }),
             HttpStatusCode.Created);
         await OkAsync(PostAsync(ayse, $"/api/v1/sessions/{proposed.GetProperty("id").GetGuid()}/cancel", new { reason = "O gün uygun değilim." }));
-        var reported = await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
+        var reported = await ali.MarkSessionCompletedAsync(fixture, ayse, matchPath);
         await OkAsync(PostAsync(ayse, $"/api/v1/sessions/{reported.GetProperty("id").GetGuid()}/completion/confirm"));
         await OkAsync(PostAsync(ayse, "/api/v1/reviews", new { revieweeId = ali.UserId, rating = 9 }), HttpStatusCode.Created);
         await OkAsync(PostAsync(ayse, $"{matchPath}/end-request"));
         await OkAsync(PostAsync(ali, $"{matchPath}/end-request/reject"));
 
         Assert.Equal(
-            ["MatchEndRequested", "ReviewReceived", "SessionCompleted", "SessionCancelled", "SwapRequestAccepted"],
+            ["MatchEndRequested", "ReviewReceived", "SessionCompleted", "SessionAccepted", "SessionCancelled", "SwapRequestAccepted"],
             await TypesAsync(ali));
         Assert.Equal(
-            ["MatchEndRequestRejected", "SessionCompletionMarked", "SessionProposed", "SwapRequestReceived"],
+            ["MatchEndRequestRejected", "SessionCompletionMarked", "SessionProposed", "SessionProposed", "SwapRequestReceived"],
             await TypesAsync(ayse));
-        var cancelled = (await NotificationsAsync(ali))[3].GetProperty("data");
+        var cancelled = (await NotificationsAsync(ali))[4].GetProperty("data");
         Assert.Equal("O gün uygun değilim.", cancelled.GetProperty("reason").GetString());
         Assert.Equal(matchId, cancelled.GetProperty("matchId").GetGuid());
         Assert.Equal(JsonValueKind.String, (await NotificationsAsync(ali))[0].GetProperty("data").GetProperty("deadline").ValueKind);
 
-        Assert.Equal(5, await UnreadAsync(ali));
+        Assert.Equal(6, await UnreadAsync(ali));
         Assert.Equal(HttpStatusCode.NoContent, (await PostAsync(ali, "/api/v1/notifications/read-all")).StatusCode);
         Assert.Equal(0, await UnreadAsync(ali));
-        Assert.Equal(4, await UnreadAsync(ayse));
+        Assert.Equal(5, await UnreadAsync(ayse));
         var page = await ali.GetJsonAsync("/api/v1/notifications?pageSize=2&page=2");
-        Assert.Equal(5, page.GetProperty("totalCount").GetInt32());
+        Assert.Equal(6, page.GetProperty("totalCount").GetInt32());
         Assert.Equal(2, page.GetProperty("items").GetArrayLength());
     }
 

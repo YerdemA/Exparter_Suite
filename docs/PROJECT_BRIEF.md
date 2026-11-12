@@ -163,7 +163,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 | `User` | Kimlik bilgileri (e-posta, kullanıcı adı, parola hash'i, durum) |
 | `RefreshToken` | Kullanıcının refresh token'ları |
 | `Device` | Push bildirim için FCM token'ları |
-| `Profile` | Ad, biyografi, avatar, şehir/çevrimiçi tercihi |
+| `Profile` | Ad, biyografi, avatar, şehir |
 | `SkillCategory` | Yetenek kategorisi |
 | `Skill` | Katalogdaki yetenek, bir kategoriye bağlı |
 | `UserSkill` | Kullanıcı–yetenek ilişkisi. Tip: `Offered` / `Wanted`. Seviye: `Beginner` / `Intermediate` / `Advanced` / `Expert`. |
@@ -205,7 +205,7 @@ Aşağıdakiler başlangıç taslağıdır, kesinleşmiş tasarım değildir. Fa
 - Takas isteği gönderme, kabul etme, reddetme
 - Eşleşmeler listesi
 - Gerçek zamanlı mesajlaşma
-- Çevrimiçi takas oturumu planlama, yüz yüze buluşmayı sonradan bildirme ve tamamlandı olarak işaretleme
+- Çevrimiçi takas oturumu planlama ve tamamlandı olarak işaretleme (yüz yüze buluşma bildirimi 2026-11-12'de kaldırıldı)
 - Değerlendirme
 - Uygulama içi ve push bildirimler
 

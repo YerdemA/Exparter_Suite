@@ -6,7 +6,7 @@
 |---|---|
 | Takas modeli | MVP'de tamamen karşılıklı. Zaman/kredi bankası yok. |
 | Konum | Yalnızca şehir tutulur. |
-| Eşleşme önerisi | MVP'de kural tabanlı sıralama: karşılıklı uyum, tercih uyumu, puan. |
+| Eşleşme önerisi | MVP'de kural tabanlı sıralama: karşılıklı uyum, puan. (Tercih uyumu basamağı 2026-11-12'de kalktı.) |
 | Moderasyon | Şikâyet ve engelleme MVP'de. Admin paneli MVP sonrasında. |
 | Kayıt | MVP'de yalnızca e-posta. Şema harici girişi engellemeyecek. |
 | İsteğin içeriği | Takas isteği yetenek çiftini taşır. |
@@ -37,7 +37,7 @@
 | Silinen değerlendirme | Yerine yenisi yazılamaz. |
 | Engelleme | Aktif eşleşmeyi tek taraflı sonlandırır, bekleyen istekleri iptal eder. |
 | Oturum planlama | Bir taraf önerir, diğeri kabul veya reddeder. |
-| Takas biçimi | Çevrimiçi ve yüz yüze; konum olarak yalnızca şehir. |
+| Takas biçimi | Yalnızca çevrimiçi (2026-11-12; önce çevrimiçi ve yüz yüzeydi). Konum olarak yalnızca şehir tutulur, isteğe bağlıdır. |
 | Şehir | 81 il listesinden seçilir. |
 | Önerilen yetenek | Onaylanmadan öneren kişinin profilinde de kullanılamaz. |
 | Değerlendirme yorumu | İsteğe bağlı. |
@@ -61,17 +61,16 @@
 | Avatar | Galeriden veya kameradan; kırpma ekranı yok. |
 | Gezinme | Alt gezinme çubuğu: Keşfet, Eşleşmeler, Mesajlar, Profil. |
 | Etkileşim koşulu | Profili tamamlanmamış veya e-postası doğrulanmamış kullanıcı uygulamayı gezebilir, ama etkileşime giremez, istek gönderemez ve keşfette gösterilmez. Zorunlu profil ekranı yoktur; koşul etkileşim anında uyarıyla devreye girer. |
-| Tamamlanmış profil | Görünen ad, en az bir takas tercihi (yüz yüze ise şehir) ve en az bir sunulan yetenek. |
+| Tamamlanmış profil | Görünen ad ve en az bir sunulan yetenek. Şehir isteğe bağlı (2026-11-12). |
 | Hitap | Uygulamanın tamamında ve e-postalarda "siz" hitabı kullanılır. Düğme etiketleri kısa emir kipinde kalır ("Giriş yap", "Kaydet"). Etkileşim uyarısı: "Etkileşim için profilinizi doldurup e-posta doğrulaması yapmanız gerekmektedir." |
 | Gönderiler | MVP sonrası. Yapısı aşağıda. |
 | İstek notu | İstek gönderirken isteğe bağlı, en fazla 300 karakterlik not yazılabilir. |
 | Yeniden istek | Reddedilen veya süresi dolan istekten sonra aynı kişiye 7 gün yeniden istek gönderilemez. |
 | İstatistik tanımları | "Tamamlanan eşleşme": en az bir tamamlanmış oturumu olan sona ermiş eşleşme. "İptal edilen eşleşme": hiç oturum tamamlanmadan sona eren eşleşme. Sayılar profile dilim 6'da (oturumlar) eklenir. Tanım ileride değişebilir. |
 | Mesajlaşma | Mesaj göndermek için ek koşul yok. Karşı tarafın okuduğu, gönderenin son mesajının altında "Görüldü" ile gösterilir. "Yazıyor…" göstergesi, mesaj silme ve düzenleme MVP'de yok. Alt gezinme çubuğunda Mesajlar simgesinde toplam okunmamış sayısı gösterilir. |
-| Oturumlar | Yalnızca çevrimiçi oturum planlanır; süre 30/45/60/90/120 dakika, bir eşleşmede aynı anda birden fazla planlı oturum olabilir. Yüz yüze buluşmalar tamamen kullanıcılara bırakılır, sohbette ayarlanır; yer ve tarih tutulmaz. Buluşmadan sonra taraflar "buluştuk" diye işaretleyip onaylar, böylece yüz yüze takaslar da tamamlanmış sayılır ve değerlendirilebilir. İptal sebebini yalnızca iki taraf (ileride admin) görür. |
+| Oturumlar | Yalnızca çevrimiçi oturum vardır; süre 30/45/60/90/120 dakika, bir eşleşmede aynı anda birden fazla planlı oturum olabilir. İptal sebebini yalnızca iki taraf ve admin görür. |
 | Profil istatistikleri | Profilde üçlü kesinlikle yer alır: toplam eşleşme, tamamlanan eşleşme, iptal edilen (tamamlanmamış) eşleşme; ayrıca tamamlanan oturum sayısı. Amaç kaç eşleşmeden kaçında sorun çıkmadığının anlaşılması. Eşleşme tamamen bitmeden "toplam" dahil hiçbir sayaca girmez (2026-10-13). |
 | Bildirimler | Mesajlar bildirim listesine girmez, yalnızca telefon bildirimi olur ve gönderenin adıyla mesajın başı görünür. Çevrimiçi oturumdan 24 saat ve 1 saat önce iki tarafa hatırlatma gider. Türlere göre bildirim tercihi ve e-posta bildirimi MVP'de yok. Bildirim izni ilk girişten sonra kısa bir açıklamayla istenir; reddedilirse profilden yeniden açılabilir. Bildirimler 90 gün saklanır. Bildirimler ekranı alt çubukta sekme değil, Keşfet ekranının üst köşesindeki zil simgesidir (2026-10-13). Telefon bildiriminin metnini sunucu üretir, uygulama kapalıyken de görünsün diye (2026-10-14, ADR 0012). |
-| Yüz yüze bildirim sınırı | Sahteciliğe karşı her kullanıcı çifti yalnızca bir kez yüz yüze buluşma bildirebilir (2026-10-13). |
 | Çevrimiçi görüşme | Çevrimiçi oturumlar uygulamaya gömülecek bir görüntülü görüşme modülüyle yapılacak ve yalnızca planlanan oturum saatlerinde görüşülebilecek (2026-10-13). Modül MVP sonrasında, Faz 8 dilim 1'de yapılır (2026-11-03). Altyapı kendi sunucumuzdaki LiveKit (ADR 0015). Görüşmeye planlanan başlangıçtan 10 dakika önce katılınabilir, süre bittikten 15 dakika sonra görüşme kapanır; 5 dakika kala uyarı gösterilir. Ses ve görüntü kaydedilmez, kimin ne zaman katıldığı da tutulmaz. Uygulama arka plana geçince ses sürer, kamera durur (2026-11-03). Eşleşme sona erince tamamlandı işaretli oturumun görüşmesi de kapanır; sonlandırma isteği beklerken görüşme sürer (2026-11-04). |
 | Kullanıcı istatistikleri | Kullanıcı başına istatistik tutulacak ve ileride profilde güven puanının yanında gösterilecek: "Tamamlanan Eşleşme", "İptal Edilen Eşleşme" gibi sayılar. Amaç karşı tarafa güvenip güvenmemeye yardımcı olmak; rozet/başarım modülü de bu veriye dayanacak. Dilim 4 (eşleşmeler), 6 (oturumlar) ve 7 (değerlendirmeler) bu sayıların çıkarılabileceği biçimde tasarlanır: her eşleşme ve oturumun nasıl ve kim tarafından bittiği ile zamanı saklanır. |
 | Yetenek kataloğu | MVP'de 10 kategori ve 68 yetenek (başlangıç verisi). Tam sürümde çok daha kapsamlı bir kategori yapısı kurulacak. |
@@ -81,7 +80,7 @@
 | Askıya alma | Giriş kapanır ve hesap görünmez olur; eşleşme ve sohbetler olduğu gibi kalır (2026-10-14). |
 | Şikâyet | Sebepler: Spam, Taciz, Uygunsuz içerik, Sahte profil, Diğer (Diğer'de açıklama zorunlu). Şikâyet kapanınca şikâyet edene ayrıntısız bildirim gider (2026-10-14). |
 | Görünürlük | Etkileşim koşulunu sağlamayan kullanıcı gezebilir ve başkalarına bakabilir. Kendisi keşfette öneri olarak çıkmaz, ama ad veya kullanıcı adıyla aranınca bulunur ve profili açılabilir. Koşul yalnızca başkalarını etkileyen işlemlerde aranır. |
-| Keşfet sıralaması | Karşılıklı uyum, tek yönlü uyum, tercih uyumu, puan, yenilik. Seviyesi yetmeyen yetenek uyum sayılmaz. Uyumsuz kullanıcılar listenin sonunda gösterilir. |
+| Keşfet sıralaması | Karşılıklı uyum, tek yönlü uyum, puan, yenilik (tercih uyumu 2026-11-12'de kalktı). Seviyesi yetmeyen yetenek uyum sayılmaz. Uyumsuz kullanıcılar listenin sonunda gösterilir. |
 
 ## Verilen kararlar (2026-10-14 ve sonrası)
 
@@ -102,7 +101,8 @@ Ayrıntıları ve gerekçeleri `docs/roadmap.md` ve ilgili ADR'lerdedir; burada 
 | Yönetici paneli | Mobil uygulamanın içinde, yetkili rollere görünen ekranlar. Admin panelden moderatör rolü verir ve geri alır; moderatörün yetkileri daha dardır ve her işlemi denetim için kaydedilir (2026-11-04). |
 | Mesajlarda dosya | Görsel ile not ve kaynak paylaşımı için PDF, Word gibi belgeler gönderilebilecek (2026-11-04); ayrıntılar Faz 8 dilim 4'ün başında. |
 | Üyelik ve ödeme | Genel yayından ve uygulama kitle kazandıktan sonra; o zamana kadar Exparter ücretsiz (2026-11-04). |
-| Yüz yüze buluşma | Uygulama yüz yüze buluşmaya yönlendirmez; metinler buluşmayı düzenlemediğini ve kararın kullanıcıya ait olduğunu söyler. Bildirim özelliği kalır (2026-11-04). |
+| Yüz yüze buluşma | Uygulamada yüz yüze buluşmayla ilgili hiçbir şey yoktur: bildirim özelliği, profildeki yüz yüze takas tercihi ve keşfetteki süzgeç kaldırıldı; kayıtlı bildirimler silindi (2026-11-12, Faz 8 dilim 11). Kullanım koşullarındaki "Exparter yüz yüze buluşma düzenlemez" bölümü yerinde durur. |
+| Vibe etiketleri | Kullanıcı 24 etiketlik sabit listeden en fazla 3 etiketi profiline ekler; isteğe bağlıdır ve etkileşim koşuluna girmez. Keşfette yetenek uyumu eşitse ortak etiket sayısı fazla olan öne gelir; ortak etiketler kartta ve profilde görünür (2026-11-12, Faz 8 dilim 12). |
 | Bilgilerin doğruluğu | Kullanım koşullarında kullanıcılar, diğer kullanıcıların bilgilerinin gerçeği yansıtmayabileceğini ve puanların doğrulama olmadığını kabul eder (2026-11-04, `docs/legal/compliance-research.md`). |
 | Eşleşme sınırı | Aynı anda en fazla 3 sona ermemiş eşleşme (2026-11-04, MT-10). |
 | Eşleşmeler ekranı | Süren ve biten eşleşmeler ayrı gösterilir (2026-11-04). |

@@ -58,8 +58,7 @@ Ortak kurallar:
 | `Bio` | |
 | `AvatarKey` | Nesne depolamadaki anahtar. URL saklanmaz, istek anında presigned URL üretilir. |
 | `City` | Koordinat tutulmaz. 81 ilden biri. Boş olabilir. |
-| `AcceptsOnline`, `AcceptsInPerson` | Takas tercihi; en az biri seçili olmalı. |
-| `IsComplete` (türetilmiş) | Profil bilgileri (görünen ad ve en az bir takas tercihi) girilmişse doğrudur. Etkileşim için ayrıca en az bir sunulan yetenek ve doğrulanmış e-posta gerekir; birleşik koşul `IInteractionRequirements` içindedir. |
+| `IsComplete` (türetilmiş) | Profil bilgileri (görünen ad) girilmişse doğrudur. Etkileşim için ayrıca en az bir sunulan yetenek ve doğrulanmış e-posta gerekir; birleşik koşul `IInteractionRequirements` içindedir. |
 | `CreatedAt`, `UpdatedAt` | |
 
 ## 3. Skills
@@ -168,10 +167,9 @@ Eşleşme sona erince sohbet açık kalır ve iki taraf yazmaya devam edebilir. 
 | Alan | Açıklama |
 |---|---|
 | `Id`, `MatchId` | |
-| `ProposedByUserId`, `OtherUserId` | Öneren (veya yüz yüze buluşmayı bildiren) ve karşı taraf; kullanıcının oturumlarını eşleşmeye sormadan bulmak için ikisi de saklanır. |
-| `ScheduledAt`, `DurationMinutes` | Yalnızca çevrimiçi oturumda; yüz yüze buluşmanın zamanı tutulmaz. |
-| `Mode` | `Online`, `InPerson` |
-| `Note` | Çevrimiçi oturumun isteğe bağlı notu. |
+| `ProposedByUserId`, `OtherUserId` | Öneren ve karşı taraf; kullanıcının oturumlarını eşleşmeye sormadan bulmak için ikisi de saklanır. |
+| `ScheduledAt`, `DurationMinutes` | Planlanan başlangıç ve süre (30, 45, 60, 90 veya 120 dakika). |
+| `Note` | Oturumun isteğe bağlı notu. |
 | `Status` | `Proposed`, `Scheduled`, `CompletionPending`, `Completed`, `Declined`, `Cancelled` |
 | `CompletionMarkedByUserId`, `CompletionMarkedAt`, `CompletionConfirmDeadline` | İşaret 72 saat cevapsız kalırsa oturum kendiliğinden tamamlanmış sayılır. |
 | `DayReminderSentAt`, `HourReminderSentAt`, `CompletionReminderSentAt` | Hatırlatmaların bir kez gitmesi için. |
@@ -182,8 +180,7 @@ Eşleşme sona erince sohbet açık kalır ve iki taraf yazmaya devam edebilir. 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Proposed: çevrimiçi oturum önerilir
-    [*] --> CompletionPending: yüz yüze buluşma bildirilir
+    [*] --> Proposed: oturum önerilir
     Proposed --> Scheduled: diğer taraf kabul eder
     Proposed --> Declined: diğer taraf reddeder
     Proposed --> Declined: başlangıç zamanı cevapsız geçer

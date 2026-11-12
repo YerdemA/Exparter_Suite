@@ -1,6 +1,7 @@
 using Exparter.Domain.Matching;
 using Exparter.Domain.Notifications;
 using Exparter.Domain.Sessions;
+using Exparter.Domain.Tests.Sessions;
 
 namespace Exparter.Domain.Tests.Notifications;
 
@@ -61,7 +62,7 @@ public class NotificationTests
     public void A_scheduled_session_is_reminded_of_a_day_and_an_hour_before_it_starts()
     {
         var start = Now.AddDays(3);
-        var session = SwapSession.ProposeOnline(Guid.NewGuid(), Ali, Ayse, start, 60, null, Now);
+        var session = SwapSession.Propose(Guid.NewGuid(), Ali, Ayse, start, 60, null, Now);
         Assert.False(session.TakeDueStartReminder(start.AddHours(-2)));
 
         session.Accept(Ayse, Now);
@@ -80,7 +81,7 @@ public class NotificationTests
     public void A_session_accepted_shortly_before_its_start_skips_the_reminders_it_is_already_past(double hoursAhead, int reminders)
     {
         var start = Now.AddHours(hoursAhead);
-        var session = SwapSession.ProposeOnline(Guid.NewGuid(), Ali, Ayse, start, 60, null, Now.AddDays(-1));
+        var session = SwapSession.Propose(Guid.NewGuid(), Ali, Ayse, start, 60, null, Now.AddDays(-1));
         session.Accept(Ayse, Now);
 
         var sent = Enumerable.Range(0, 2000).Count(minute => session.TakeDueStartReminder(Now.AddMinutes(minute)));
@@ -91,16 +92,16 @@ public class NotificationTests
     [Fact]
     public void A_completion_mark_is_reminded_of_once_and_only_in_its_last_day()
     {
-        var session = SwapSession.ReportInPerson(Guid.NewGuid(), Ali, Ayse, Now);
+        var session = HeldSessions.MarkedCompleted(Guid.NewGuid(), Ali, Ayse, Now);
         var deadline = Now + SwapSession.ConfirmationPeriod;
 
         Assert.False(session.TakeDueCompletionReminder(deadline.AddHours(-30)));
         Assert.True(session.TakeDueCompletionReminder(deadline.AddHours(-24)));
         Assert.False(session.TakeDueCompletionReminder(deadline.AddHours(-1)));
 
-        var answered = SwapSession.ReportInPerson(Guid.NewGuid(), Ali, Ayse, Now);
+        var answered = HeldSessions.MarkedCompleted(Guid.NewGuid(), Ali, Ayse, Now);
         answered.ConfirmCompleted(Ayse, Now);
         Assert.False(answered.TakeDueCompletionReminder(deadline.AddHours(-1)));
-        Assert.False(SwapSession.ReportInPerson(Guid.NewGuid(), Ali, Ayse, Now).TakeDueCompletionReminder(deadline));
+        Assert.False(HeldSessions.MarkedCompleted(Guid.NewGuid(), Ali, Ayse, Now).TakeDueCompletionReminder(deadline));
     }
 }

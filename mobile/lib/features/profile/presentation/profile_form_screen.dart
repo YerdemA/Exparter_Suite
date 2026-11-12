@@ -28,8 +28,6 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   final _displayName = TextEditingController();
   final _bio = TextEditingController();
   String? _city;
-  bool _acceptsOnline = true;
-  bool _acceptsInPerson = false;
   bool _initialized = false;
 
   @override
@@ -50,9 +48,6 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
     _displayName.text = profile.displayName ?? '';
     _bio.text = profile.bio ?? '';
     _city = profile.city;
-    // A blank profile has both switches off; start from the common case instead.
-    _acceptsOnline = profile.isComplete ? profile.acceptsOnline : true;
-    _acceptsInPerson = profile.acceptsInPerson;
   }
 
   Future<void> _submit() async {
@@ -64,8 +59,6 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
           displayName: _displayName.text,
           bio: _bio.text,
           city: _city,
-          acceptsOnline: _acceptsOnline,
-          acceptsInPerson: _acceptsInPerson,
         );
 
     if (saved && mounted) {
@@ -113,10 +106,8 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   }
 
   Widget _form(AppLocalizations l10n) {
-    final theme = Theme.of(context);
     final action = ref.watch(profileActionsProvider);
     final cities = ref.watch(citiesProvider);
-    final noMode = !_acceptsOnline && !_acceptsInPerson;
 
     return Form(
       key: _formKey,
@@ -156,58 +147,26 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text(l10n.profileModesTitle, style: theme.textTheme.titleMedium),
-          SwitchListTile(
-            value: _acceptsOnline,
-            onChanged: (value) => setState(() => _acceptsOnline = value),
-            title: Text(l10n.profileAcceptsOnline),
-            contentPadding: EdgeInsets.zero,
-          ),
-          SwitchListTile(
-            value: _acceptsInPerson,
-            onChanged: (value) => setState(() => _acceptsInPerson = value),
-            title: Text(l10n.profileAcceptsInPerson),
-            contentPadding: EdgeInsets.zero,
-          ),
-          // Validated as a field so that submitting scrolls to and announces it like
-          // any other error.
-          FormField<bool>(
-            key: ValueKey(noMode),
-            initialValue: noMode,
-            validator: (_) => noMode ? l10n.validationSwapMode : null,
-            builder: (field) => field.hasError
-                ? Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: Text(
-                      field.errorText!,
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          if (_acceptsInPerson) ...[
-            const SizedBox(height: AppSpacing.sm),
-            switch (cities) {
-              AsyncData(:final value) => DropdownButtonFormField<String>(
-                  initialValue: _city,
-                  isExpanded: true,
-                  items: [
-                    for (final city in value) DropdownMenuItem(value: city.code, child: Text(city.name)),
-                  ],
-                  onChanged: (value) => setState(() => _city = value),
-                  validator: (value) => value == null ? l10n.validationCity : null,
-                  decoration: InputDecoration(
-                    labelText: l10n.profileCityLabel,
-                    helperText: l10n.profileCityHelper,
-                  ),
+          switch (cities) {
+            AsyncData(:final value) => DropdownButtonFormField<String?>(
+                initialValue: _city,
+                isExpanded: true,
+                items: [
+                  DropdownMenuItem(child: Text(l10n.profileCityNone)),
+                  for (final city in value) DropdownMenuItem(value: city.code, child: Text(city.name)),
+                ],
+                onChanged: (value) => setState(() => _city = value),
+                decoration: InputDecoration(
+                  labelText: l10n.profileCityLabel,
+                  helperText: l10n.profileCityHelper,
                 ),
-              AsyncError(:final error) => _LoadError(
-                  message: errorMessage(l10n, error),
-                  onRetry: () => ref.invalidate(citiesProvider),
-                ),
-              _ => const Center(child: CircularProgressIndicator()),
-            },
-          ],
+              ),
+            AsyncError(:final error) => _LoadError(
+                message: errorMessage(l10n, error),
+                onRetry: () => ref.invalidate(citiesProvider),
+              ),
+            _ => const Center(child: CircularProgressIndicator()),
+          },
           if (action.hasError && !action.isLoading) ...[
             const SizedBox(height: AppSpacing.md),
             FormErrorBanner(message: errorMessage(l10n, action.error!)),

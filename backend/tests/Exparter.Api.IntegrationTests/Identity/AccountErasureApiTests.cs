@@ -113,8 +113,8 @@ public class AccountErasureApiTests(ApiFixture fixture) : IClassFixture<ApiFixtu
         var matchPath = $"/api/v1/matches/{match.GetProperty("id").GetGuid()}";
         var conversationPath = $"/api/v1/conversations/{match.GetProperty("conversationId").GetGuid()}";
         await OkAsync(PostAsync(leaving, $"{conversationPath}/messages", new { body = "Merhaba!" }), HttpStatusCode.Created);
-        var meeting = await OkAsync(PostAsync(leaving, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
-        await OkAsync(PostAsync(partner, $"/api/v1/sessions/{meeting.GetProperty("id").GetGuid()}/completion/confirm"));
+        var held = await leaving.MarkSessionCompletedAsync(fixture, partner, matchPath);
+        await OkAsync(PostAsync(partner, $"/api/v1/sessions/{held.GetProperty("id").GetGuid()}/completion/confirm"));
         await OkAsync(PostAsync(leaving, "/api/v1/reviews", new { revieweeId = partner.UserId, rating = 8, comment = "İyiydi." }), HttpStatusCode.Created);
         await OkAsync(PostAsync(partner, "/api/v1/reviews", new { revieweeId = leaving.UserId, rating = 9 }), HttpStatusCode.Created);
         await OkAsync(PostAsync(leaving, "/api/v1/devices", new { fcmToken = $"fcm-{Guid.NewGuid():N}", platform = "Android" }));

@@ -115,14 +115,12 @@ void main() {
       await container.read(ownProfileProvider.future);
     });
 
-    test('save trims text, drops the city of an online-only profile and updates the profile', () async {
+    test('save trims text and updates the profile', () async {
       when(
         () => repository.updateOwnProfile(
           displayName: 'Ayşe',
           bio: null,
-          city: null,
-          acceptsOnline: true,
-          acceptsInPerson: false,
+          city: '34',
         ),
       ).thenAnswer((_) async => testProfile());
 
@@ -130,8 +128,6 @@ void main() {
             displayName: '  Ayşe ',
             bio: '   ',
             city: '34',
-            acceptsOnline: true,
-            acceptsInPerson: false,
           );
 
       expect(saved, isTrue);
@@ -144,8 +140,6 @@ void main() {
           displayName: any(named: 'displayName'),
           bio: any(named: 'bio'),
           city: any(named: 'city'),
-          acceptsOnline: any(named: 'acceptsOnline'),
-          acceptsInPerson: any(named: 'acceptsInPerson'),
         ),
       ).thenThrow(const ApiException(code: ApiException.networkCode));
 
@@ -153,8 +147,6 @@ void main() {
             displayName: 'Ayşe',
             bio: '',
             city: null,
-            acceptsOnline: true,
-            acceptsInPerson: false,
           );
 
       expect(saved, isFalse);
@@ -203,47 +195,33 @@ void main() {
             displayName: any(named: 'displayName'),
             bio: any(named: 'bio'),
             city: any(named: 'city'),
-            acceptsOnline: any(named: 'acceptsOnline'),
-            acceptsInPerson: any(named: 'acceptsInPerson'),
           ),
         ).thenAnswer((_) async => testProfile());
 
-    testWidgets('a blank profile requires a name and at least one way to swap', (tester) async {
+    testWidgets('a blank profile requires a name', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile(complete: false));
       await pumpScreen(tester, const ProfileFormScreen());
 
-      await tester.tap(find.widgetWithText(SwitchListTile, l10n.profileAcceptsOnline));
-      await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, l10n.profileSave));
       await tester.pump();
 
       expect(find.text(l10n.validationRequired), findsOneWidget);
-      expect(find.text(l10n.validationSwapMode), findsOneWidget);
       verifyNever(
         () => repository.updateOwnProfile(
           displayName: any(named: 'displayName'),
           bio: any(named: 'bio'),
           city: any(named: 'city'),
-          acceptsOnline: any(named: 'acceptsOnline'),
-          acceptsInPerson: any(named: 'acceptsInPerson'),
         ),
       );
     });
 
-    testWidgets('in-person swaps require a city, chosen from the list', (tester) async {
+    testWidgets('the city is optional and chosen from the list', (tester) async {
       when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile(complete: false));
       stubSave();
       await pumpScreen(tester, const ProfileFormScreen());
 
-      expect(find.text(l10n.profileCityLabel), findsNothing);
       await tester.enterText(field(l10n.profileDisplayNameLabel), 'Ayşe');
-      await tester.tap(find.widgetWithText(SwitchListTile, l10n.profileAcceptsInPerson));
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSave));
-      await tester.pump();
-      expect(find.text(l10n.validationCity), findsOneWidget);
-
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.tap(find.byType(DropdownButtonFormField<String?>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('İstanbul').last);
       await tester.pumpAndSettle();
@@ -255,11 +233,30 @@ void main() {
           displayName: 'Ayşe',
           bio: null,
           city: '34',
-          acceptsOnline: true,
-          acceptsInPerson: true,
         ),
       ).called(1);
       expect(find.text('route:/profile'), findsOneWidget);
+    });
+
+    testWidgets('a saved city can be taken off the profile again', (tester) async {
+      when(() => repository.getOwnProfile()).thenAnswer((_) async => testProfile());
+      stubSave();
+      await pumpScreen(tester, const ProfileFormScreen());
+
+      await tester.tap(find.byType(DropdownButtonFormField<String?>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.profileCityNone).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, l10n.profileSave));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repository.updateOwnProfile(
+          displayName: any(named: 'displayName'),
+          bio: any(named: 'bio'),
+          city: null,
+        ),
+      ).called(1);
     });
 
     testWidgets('editing starts from the saved profile', (tester) async {
@@ -294,8 +291,7 @@ void main() {
       expect(find.text('Ayşe Yılmaz'), findsOneWidget);
       expect(find.text('@ayse'), findsOneWidget);
       expect(find.text('Gitar çalıyorum.'), findsOneWidget);
-      expect(find.text(l10n.profileModeOnline), findsOneWidget);
-      expect(find.text(l10n.profileModeInPersonIn('İstanbul')), findsOneWidget);
+      expect(find.widgetWithText(Chip, 'İstanbul'), findsOneWidget);
       expect(find.text(l10n.homeEmailNotVerified), findsOneWidget);
       expect(find.text(l10n.homeResendVerification), findsOneWidget);
 

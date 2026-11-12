@@ -20,7 +20,7 @@ import '../data/avatar_picker.dart';
 import 'profile_controller.dart';
 import 'widgets/profile_avatar.dart';
 import 'widgets/status_tile.dart';
-import 'widgets/swap_mode_chips.dart';
+import 'widgets/city_chip.dart';
 
 /// The signed-in user's own profile and account.
 class ProfileScreen extends ConsumerWidget {
@@ -183,12 +183,10 @@ class _ProfileBody extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
-              const SizedBox(height: AppSpacing.md),
-              SwapModeChips(
-                acceptsOnline: profile.acceptsOnline,
-                acceptsInPerson: profile.acceptsInPerson,
-                cityName: cityName,
-              ),
+              if (cityName != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                CityChip(cityName: cityName),
+              ],
               if (profile.bio != null) ...[
                 const SizedBox(height: AppSpacing.md),
                 Text(profile.bio!, style: theme.textTheme.bodyLarge),

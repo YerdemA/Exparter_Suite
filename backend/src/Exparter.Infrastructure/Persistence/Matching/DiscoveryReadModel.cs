@@ -18,8 +18,6 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
         public string? DisplayName { get; init; }
         public string? AvatarKey { get; init; }
         public string? City { get; init; }
-        public bool AcceptsOnline { get; init; }
-        public bool AcceptsInPerson { get; init; }
         public int Compatibility { get; init; }
         public int ReviewCount { get; init; }
         public double? AverageRating { get; init; }
@@ -30,7 +28,6 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
         var viewer = criteria.ViewerId;
         var searching = criteria.Search is not null;
         var pattern = criteria.Search is null ? null : $"%{EscapeLike(criteria.Search)}%";
-        var mode = criteria.Mode?.ToString();
         var (from, to) = SearchText.Translation;
 
         // The "can interact" conditions repeat IInteractionRequirements in SQL, because the
@@ -38,7 +35,6 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
         var rows = await dbContext.Database.SqlQuery<Row>(
             $"""
              SELECT u.id AS user_id, u.username, p.display_name, p.avatar_key, p.city,
-                    p.accepts_online, p.accepts_in_person,
                     CASE WHEN fit.teaches_viewer AND fit.learns_from_viewer THEN 2
                          WHEN fit.teaches_viewer THEN 1
                          ELSE 0 END AS compatibility,
@@ -60,13 +56,7 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                          JOIN skills.user_skills mine ON mine.skill_id = theirs.skill_id
                          WHERE theirs.user_id = u.id AND theirs.type = 'Wanted'
                            AND mine.user_id = {viewer} AND mine.type = 'Offered'
-                           AND mine.level >= theirs.level) AS learns_from_viewer,
-                     EXISTS (
-                         SELECT 1
-                         FROM profiles.profiles me
-                         WHERE me.user_id = {viewer}
-                           AND ((me.accepts_online AND p.accepts_online)
-                             OR (me.accepts_in_person AND p.accepts_in_person AND me.city = p.city))) AS shares_preference
+                           AND mine.level >= theirs.level) AS learns_from_viewer
              ) fit
              CROSS JOIN LATERAL (
                  SELECT count(*)::int AS review_count, avg(r.rating)::float8 AS average_rating
@@ -82,7 +72,6 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                AND ({searching}
                  OR (u.email_verified_at IS NOT NULL
                      AND p.display_name IS NOT NULL
-                     AND (p.accepts_online OR p.accepts_in_person)
                      AND EXISTS (SELECT 1 FROM skills.user_skills s WHERE s.user_id = u.id AND s.type = 'Offered')))
                AND ({criteria.SkillId}::uuid IS NULL
                  OR EXISTS (
@@ -94,13 +83,10 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                      JOIN skills.skills k ON k.id = s.skill_id
                      WHERE s.user_id = u.id AND s.type = 'Offered' AND k.category_id = {criteria.CategoryId}::uuid))
                AND ({criteria.City}::text IS NULL OR p.city = {criteria.City}::text)
-               AND ({mode}::text IS NULL
-                 OR ({mode}::text = 'Online' AND p.accepts_online)
-                 OR ({mode}::text = 'InPerson' AND p.accepts_in_person))
                AND ({pattern}::text IS NULL
                  OR u.username LIKE {pattern}::text ESCAPE '\'
                  OR lower(translate(p.display_name, {from}, {to})) LIKE {pattern}::text ESCAPE '\')
-             ORDER BY compatibility DESC, fit.shares_preference DESC, rating.average_rating DESC NULLS LAST, p.updated_at DESC, u.id
+             ORDER BY compatibility DESC, rating.average_rating DESC NULLS LAST, p.updated_at DESC, u.id
              LIMIT {criteria.Limit} OFFSET {criteria.Offset}
              """).ToListAsync(cancellationToken);
 
@@ -130,8 +116,6 @@ internal sealed class DiscoveryReadModel(AppDbContext dbContext) : IDiscoveryRea
                 row.DisplayName,
                 row.AvatarKey,
                 row.City,
-                row.AcceptsOnline,
-                row.AcceptsInPerson,
                 (Compatibility)row.Compatibility,
                 new RatingSummaryDto(row.ReviewCount, row.AverageRating),
                 SkillsOf(row.UserId, UserSkillType.Offered),

@@ -43,7 +43,7 @@ public class CallHandlerTests
     {
         var matchId = Guid.NewGuid();
         SetMatch(matchId, isActive: true);
-        var session = SwapSession.ProposeOnline(matchId, _ali, _ayse, _clock.GetUtcNow().AddDays(1), 60, null, _clock.GetUtcNow());
+        var session = SwapSession.Propose(matchId, _ali, _ayse, _clock.GetUtcNow().AddDays(1), 60, null, _clock.GetUtcNow());
         session.Accept(_ayse, _clock.GetUtcNow());
         _sessions.Add(session);
         return session;
@@ -80,9 +80,9 @@ public class CallHandlerTests
         var token = await JoinAsync(session.Id, _ali);
         await JoinAsync(session.Id, _ayse);
 
-        Assert.Equal(("wss://rtc.test", session.CallClosesAt!.Value), (token.Url, token.ExpiresAt));
+        Assert.Equal(("wss://rtc.test", session.CallClosesAt), (token.Url, token.ExpiresAt));
         Assert.Equal(
-            [(session.Id.ToString(), _ali, session.CallClosesAt.Value), (session.Id.ToString(), _ayse, session.CallClosesAt.Value)],
+            [(session.Id.ToString(), _ali, session.CallClosesAt), (session.Id.ToString(), _ayse, session.CallClosesAt)],
             _calls.Issued);
     }
 
@@ -105,7 +105,7 @@ public class CallHandlerTests
     {
         var open = Scheduled();
         var cancelled = Scheduled();
-        var later = SwapSession.ProposeOnline(Guid.NewGuid(), _ali, _ayse, _clock.GetUtcNow().AddDays(3), 60, null, _clock.GetUtcNow());
+        var later = SwapSession.Propose(Guid.NewGuid(), _ali, _ayse, _clock.GetUtcNow().AddDays(3), 60, null, _clock.GetUtcNow());
         later.Accept(_ayse, _clock.GetUtcNow());
         _sessions.Add(later);
         _clock.Advance(TimeSpan.FromDays(1));

@@ -41,7 +41,7 @@ public sealed class CreateCallTokenCommandHandler(
             throw AppException.Conflict(CallMatchEndedCode, "The match of this session has ended, so its call cannot be joined.");
         }
 
-        return issuer.Issue(session.Id.ToString(), command.UserId, session.CallClosesAt!.Value);
+        return issuer.Issue(session.Id.ToString(), command.UserId, session.CallClosesAt);
     }
 
     public const string CallMatchEndedCode = "call_match_ended";
