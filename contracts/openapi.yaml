@@ -596,9 +596,8 @@ paths:
         and returns every active user that matches, whether or not they can interact yet.
 
         Ranking in both cases: mutual compatibility first, then one-way compatibility,
-        then matching preferences (same city for in-person, or both online), then the
-        higher average rating (users without reviews after those with), then the most
-        recently updated profile. A skill counts towards compatibility only if the level
+        then the higher average rating (users without reviews after those with), then the
+        most recently updated profile. A skill counts towards compatibility only if the level
         offered is at least the minimum level wanted. The caller and suspended or leaving
         accounts are never returned. Any signed-in user may call this, including one who
         cannot interact yet.
@@ -614,10 +613,6 @@ paths:
         - name: city
           in: query
           schema: { $ref: '#/components/schemas/CityCode' }
-        - name: mode
-          in: query
-          description: Only users who accept this session mode.
-          schema: { $ref: '#/components/schemas/SessionMode' }
         - name: q
           in: query
           description: Search text matched against username and display name, ignoring case and Turkish accents.
@@ -997,7 +992,7 @@ paths:
         - $ref: '#/components/parameters/PageSize'
       responses:
         '200':
-          description: A page of sessions, newest first by scheduled time (in-person meetings by when they were reported).
+          description: A page of sessions, newest first by scheduled time.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SwapSessionPage' }
@@ -1010,9 +1005,7 @@ paths:
       description: |
         Plans an online session. The match must be active and must not have a pending end
         request. The other user accepts or declines; a proposal that is not accepted
-        before its start time is declined automatically. In-person meetings are not
-        planned here: the two users arrange them in their conversation and report them
-        afterwards (`reportInPersonSession`).
+        before its start time is declined automatically.
 
         A user cannot be in two sessions at once, in the same match or in different ones.
         A user's time is taken by their accepted sessions that were not cancelled and by
@@ -1035,34 +1028,6 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
-
-  /api/v1/matches/{matchId}/sessions/in-person:
-    post:
-      tags: [Sessions]
-      operationId: reportInPersonSession
-      summary: Report that the two users of a match met in person
-      description: |
-        In-person meetings are arranged by the users themselves; neither time nor place
-        is kept. The report creates a session that waits for the other user's
-        confirmation, exactly like an online session marked as completed: the other user
-        confirms it or disputes it by cancelling with a reason, and without an answer
-        within 72 hours it is completed automatically. The match must be active and must
-        not have a pending end request.
-
-        Two users can have only one in-person meeting on record across all their
-        matches; a further report is refused with `in_person_already_reported` unless the
-        earlier one was cancelled.
-      parameters:
-        - $ref: '#/components/parameters/MatchId'
-      responses:
-        '201':
-          description: The session, waiting for the other user's confirmation.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/SwapSession' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
@@ -1976,7 +1941,7 @@ components:
         emailVerified: { type: boolean }
         profileCompleted:
           type: boolean
-          description: Display name and at least one swap mode are set.
+          description: The display name is set.
         hasOfferedSkill:
           type: boolean
           description: The user offers at least one skill.
@@ -2008,7 +1973,7 @@ components:
     # ---------------------------------------------------------- Profiles
     UpdateProfileRequest:
       type: object
-      required: [displayName, acceptsOnline, acceptsInPerson]
+      required: [displayName]
       properties:
         displayName: { type: string, minLength: 2, maxLength: 50 }
         bio: { type: string, maxLength: 500, nullable: true }
@@ -2017,16 +1982,11 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CityCode'
-          description: Required when `acceptsInPerson` is true.
-        acceptsOnline: { type: boolean }
-        acceptsInPerson:
-          type: boolean
-          description: At least one of `acceptsOnline` and `acceptsInPerson` must be true.
 
     Profile:
       type: object
       description: The signed-in user's own profile. A new account starts with a blank one.
-      required: [userId, acceptsOnline, acceptsInPerson, isComplete, rating, createdAt, updatedAt]
+      required: [userId, isComplete, rating, createdAt, updatedAt]
       properties:
         userId: { type: string, format: uuid }
         displayName:
@@ -2039,8 +1999,14 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CityCode'
-        acceptsOnline: { type: boolean }
-        acceptsInPerson: { type: boolean }
+        acceptsOnline:
+          type: boolean
+          deprecated: true
+          description: Always true. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
+        acceptsInPerson:
+          type: boolean
+          deprecated: true
+          description: Always false. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
         avatarUrl:
           type: string
           format: uri
@@ -2049,7 +2015,7 @@ components:
         isComplete:
           type: boolean
           description: |
-            Whether the profile details (display name and swap modes) are filled in.
+            Whether the profile details (the display name) are filled in.
             Interacting with other users additionally needs a verified email and at least
             one offered skill; until then the user can browse but is hidden from others.
         rating: { $ref: '#/components/schemas/RatingSummary' }
@@ -2058,7 +2024,7 @@ components:
 
     PublicProfile:
       type: object
-      required: [userId, username, acceptsOnline, acceptsInPerson, rating]
+      required: [userId, username, rating]
       properties:
         userId: { type: string, format: uuid }
         username: { type: string }
@@ -2073,8 +2039,14 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CityCode'
-        acceptsOnline: { type: boolean }
-        acceptsInPerson: { type: boolean }
+        acceptsOnline:
+          type: boolean
+          deprecated: true
+          description: Always true. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
+        acceptsInPerson:
+          type: boolean
+          deprecated: true
+          description: Always false. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
         rating: { $ref: '#/components/schemas/RatingSummary' }
 
     AvatarUploadUrlRequest:
@@ -2203,7 +2175,7 @@ components:
 
     DiscoveryUser:
       type: object
-      required: [user, acceptsOnline, acceptsInPerson, compatibility, rating, offeredSkills, wantedSkills]
+      required: [user, compatibility, rating, offeredSkills, wantedSkills]
       properties:
         user: { $ref: '#/components/schemas/UserSummary' }
         city:
@@ -2211,8 +2183,14 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CityCode'
-        acceptsOnline: { type: boolean }
-        acceptsInPerson: { type: boolean }
+        acceptsOnline:
+          type: boolean
+          deprecated: true
+          description: Always true. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
+        acceptsInPerson:
+          type: boolean
+          deprecated: true
+          description: Always false. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
         compatibility: { $ref: '#/components/schemas/Compatibility' }
         rating: { $ref: '#/components/schemas/RatingSummary' }
         offeredSkills:
@@ -2421,10 +2399,6 @@ components:
               items: { $ref: '#/components/schemas/Message' }
 
     # ---------------------------------------------------------- Sessions
-    SessionMode:
-      type: string
-      enum: [Online, InPerson]
-
     SwapSessionStatus:
       type: string
       enum: [Proposed, Scheduled, CompletionPending, Completed, Declined, Cancelled]
@@ -2455,25 +2429,18 @@ components:
 
     SwapSession:
       type: object
-      required: [id, matchId, proposedByUserId, mode, status, completedAutomatically, createdAt]
+      required: [id, matchId, proposedByUserId, scheduledAt, durationMinutes, status, completedAutomatically, createdAt, callOpensAt, callClosesAt]
       properties:
         id: { type: string, format: uuid }
         matchId: { type: string, format: uuid }
-        proposedByUserId:
+        proposedByUserId: { type: string, format: uuid }
+        scheduledAt: { type: string, format: date-time }
+        durationMinutes: { type: integer, format: int32 }
+        mode:
           type: string
-          format: uuid
-          description: Who proposed the online session or reported the in-person meeting.
-        scheduledAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: Null for in-person meetings.
-        durationMinutes:
-          type: integer
-          format: int32
-          nullable: true
-          description: Null for in-person meetings.
-        mode: { $ref: '#/components/schemas/SessionMode' }
+          enum: [Online]
+          deprecated: true
+          description: Always `Online`. Every session is online; sent only for app versions up to 1.0.0+8.
         note: { type: string, nullable: true }
         status: { $ref: '#/components/schemas/SwapSessionStatus' }
         completionMarkedByUserId: { type: string, format: uuid, nullable: true }
@@ -2498,13 +2465,11 @@ components:
         callOpensAt:
           type: string
           format: date-time
-          nullable: true
-          description: When the video call can first be joined, 10 minutes before the start. Null for in-person meetings.
+          description: When the video call can first be joined, 10 minutes before the start.
         callClosesAt:
           type: string
           format: date-time
-          nullable: true
-          description: When the video call closes, 15 minutes after the planned end. Null for in-person meetings.
+          description: When the video call closes, 15 minutes after the planned end.
 
     CallToken:
       type: object

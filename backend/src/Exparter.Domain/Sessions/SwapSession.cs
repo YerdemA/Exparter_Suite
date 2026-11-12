@@ -2,12 +2,6 @@ using Exparter.Domain.Common;
 
 namespace Exparter.Domain.Sessions;
 
-public enum SessionMode
-{
-    Online,
-    InPerson,
-}
-
 public enum SwapSessionStatus
 {
     Proposed,
@@ -45,10 +39,8 @@ public static class SessionErrors
 }
 
 /// <summary>
-/// One meeting within a match. An online session is planned in the app: proposed,
-/// accepted, held, then marked and confirmed as completed. An in-person meeting is
-/// arranged by the two users themselves and only reported afterwards, so it starts out
-/// waiting for the other user's confirmation and has no time or duration.
+/// One online meeting within a match, planned in the app: proposed, accepted, held,
+/// then marked and confirmed as completed.
 /// </summary>
 public sealed class SwapSession
 {
@@ -84,16 +76,10 @@ public sealed class SwapSession
     public Guid Id { get; private set; }
     public Guid MatchId { get; private set; }
 
-    /// <summary>Who proposed the online session, or reported the in-person meeting.</summary>
     public Guid ProposedByUserId { get; private set; }
-
     public Guid OtherUserId { get; private set; }
-    public SessionMode Mode { get; private set; }
-
-    /// <summary>Null for in-person meetings, whose time is not kept.</summary>
-    public DateTimeOffset? ScheduledAt { get; private set; }
-
-    public int? DurationMinutes { get; private set; }
+    public DateTimeOffset ScheduledAt { get; private set; }
+    public int DurationMinutes { get; private set; }
     public string? Note { get; private set; }
 
     /// <summary>
@@ -121,7 +107,7 @@ public sealed class SwapSession
     public DateTimeOffset? HourReminderSentAt { get; private set; }
     public DateTimeOffset? CompletionReminderSentAt { get; private set; }
 
-    public static SwapSession ProposeOnline(
+    public static SwapSession Propose(
         Guid matchId,
         Guid proposerId,
         Guid otherUserId,
@@ -152,7 +138,6 @@ public sealed class SwapSession
             MatchId = matchId,
             ProposedByUserId = proposerId,
             OtherUserId = otherUserId,
-            Mode = SessionMode.Online,
             ScheduledAt = scheduledAt,
             DurationMinutes = durationMinutes,
             Note = string.IsNullOrEmpty(trimmed) ? null : trimmed,
@@ -161,28 +146,9 @@ public sealed class SwapSession
         };
     }
 
-    /// <summary>One user reports that the two met in person; the other is asked to confirm.</summary>
-    public static SwapSession ReportInPerson(Guid matchId, Guid reporterId, Guid otherUserId, DateTimeOffset now) =>
-        new()
-        {
-            Id = Guid.CreateVersion7(),
-            MatchId = matchId,
-            ProposedByUserId = reporterId,
-            OtherUserId = otherUserId,
-            Mode = SessionMode.InPerson,
-            Status = SwapSessionStatus.CompletionPending,
-            CompletionMarkedByUserId = reporterId,
-            CompletionMarkedAt = now,
-            CompletionConfirmDeadline = now + ConfirmationPeriod,
-            CreatedAt = now,
-        };
+    public DateTimeOffset CallOpensAt => ScheduledAt - CallOpensBefore;
 
-    /// <summary>Null for in-person meetings, which have no call.</summary>
-    public DateTimeOffset? CallOpensAt => Mode == SessionMode.Online ? ScheduledAt - CallOpensBefore : null;
-
-    /// <inheritdoc cref="CallOpensAt"/>
-    public DateTimeOffset? CallClosesAt =>
-        Mode == SessionMode.Online ? ScheduledAt + TimeSpan.FromMinutes(DurationMinutes!.Value) + CallClosesAfter : null;
+    public DateTimeOffset CallClosesAt => EndsAt + CallClosesAfter;
 
     /// <summary>
     /// Whether the call can be in progress: the session was accepted and not cancelled,
@@ -215,12 +181,11 @@ public sealed class SwapSession
 
     public Guid OtherThan(Guid userId) => userId == ProposedByUserId ? OtherUserId : ProposedByUserId;
 
-    /// <summary>Null for in-person meetings, whose time is not kept.</summary>
-    public DateTimeOffset? EndsAt => ScheduledAt + TimeSpan.FromMinutes(DurationMinutes ?? 0);
+    public DateTimeOffset EndsAt => ScheduledAt + TimeSpan.FromMinutes(DurationMinutes);
 
     /// <summary>Whether the session's planned time and the given one have any moment in common.</summary>
     public bool OverlapsWith(DateTimeOffset start, DateTimeOffset end) =>
-        Mode == SessionMode.Online && ScheduledAt < end && start < EndsAt;
+        ScheduledAt < end && start < EndsAt;
 
     /// <summary>
     /// Whether the session keeps the user from planning another one at the same time:
@@ -228,8 +193,7 @@ public sealed class SwapSession
     /// the user who made it, since the other user has not agreed to it.
     /// </summary>
     public bool OccupiesTimeOf(Guid userId, DateTimeOffset now) =>
-        Mode == SessionMode.Online
-        && IsParticipant(userId)
+        IsParticipant(userId)
         && StatusAt(now) switch
         {
             SwapSessionStatus.Scheduled or SwapSessionStatus.CompletionPending or SwapSessionStatus.Completed => true,
@@ -406,8 +370,7 @@ public sealed class SwapSession
     }
 
     private bool HasCall(DateTimeOffset now) =>
-        Mode == SessionMode.Online
-        && StatusAt(now) is SwapSessionStatus.Scheduled or SwapSessionStatus.CompletionPending or SwapSessionStatus.Completed;
+        StatusAt(now) is SwapSessionStatus.Scheduled or SwapSessionStatus.CompletionPending or SwapSessionStatus.Completed;
 
     private void EnsureParticipant(Guid userId)
     {

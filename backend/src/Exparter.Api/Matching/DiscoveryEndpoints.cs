@@ -15,7 +15,6 @@ internal static class DiscoveryEndpoints
                 Guid? skillId,
                 Guid? categoryId,
                 string? city,
-                SwapMode? mode,
                 string? q,
                 string? cursor,
                 int? limit,
@@ -23,7 +22,7 @@ internal static class DiscoveryEndpoints
                 ISender sender,
                 CancellationToken cancellationToken) =>
                 Results.Ok(await sender.Send(
-                    new DiscoverUsersQuery(user.GetUserId(), skillId, categoryId, city, mode, q, cursor, limit),
+                    new DiscoverUsersQuery(user.GetUserId(), skillId, categoryId, city, q, cursor, limit),
                     cancellationToken)))
             .RequireAuthorization();
 

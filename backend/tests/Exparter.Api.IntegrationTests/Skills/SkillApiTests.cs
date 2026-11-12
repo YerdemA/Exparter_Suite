@@ -168,7 +168,7 @@ public class SkillApiTests(ApiFixture fixture)
         await session.SendAsync(
             HttpMethod.Put,
             "/api/v1/me/profile",
-            new { displayName = "Ayşe", acceptsOnline = true, acceptsInPerson = false });
+            new { displayName = "Ayşe" });
         await AssertRequirementsAsync(false, true, true);
 
         // Not being able to interact yet does not hide the user's skills from others.

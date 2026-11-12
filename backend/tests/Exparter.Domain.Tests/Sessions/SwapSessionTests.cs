@@ -12,7 +12,7 @@ public class SwapSessionTests
     private static readonly Guid Ayse = Guid.NewGuid();
 
     private static SwapSession Proposed(string? note = null, int duration = 60) =>
-        SwapSession.ProposeOnline(MatchId, Ali, Ayse, Start, duration, note, Now);
+        SwapSession.Propose(MatchId, Ali, Ayse, Start, duration, note, Now);
 
     private static SwapSession Scheduled()
     {
@@ -29,7 +29,6 @@ public class SwapSessionTests
         var session = Proposed("  https://meet.example/abc  ");
 
         Assert.Equal(SwapSessionStatus.Proposed, session.Status);
-        Assert.Equal(SessionMode.Online, session.Mode);
         Assert.Equal((Start, 60), (session.ScheduledAt, session.DurationMinutes));
         Assert.Equal("https://meet.example/abc", session.Note);
         Assert.Equal((Ali, Ayse), (session.ProposedByUserId, session.OtherUserId));
@@ -50,16 +49,6 @@ public class SwapSessionTests
 
         Assert.Equal(Start.AddMinutes(60), Proposed().EndsAt);
         Assert.Equal(overlaps, Proposed().OverlapsWith(start, start.AddMinutes(durationMinutes)));
-    }
-
-    [Fact]
-    public void An_in_person_meeting_takes_nobody_s_time()
-    {
-        var meeting = SwapSession.ReportInPerson(MatchId, Ali, Ayse, Now);
-
-        Assert.Null(meeting.EndsAt);
-        Assert.False(meeting.OverlapsWith(Now.AddHours(-1), Now.AddHours(1)));
-        Assert.False(meeting.OccupiesTimeOf(Ali, Now));
     }
 
     [Fact]
@@ -89,7 +78,7 @@ public class SwapSessionTests
     public void A_session_cannot_be_proposed_for_now_or_the_past(int minutesFromNow) =>
         Assert.Equal(
             SessionErrors.SessionInPastCode,
-            CodeOf(() => SwapSession.ProposeOnline(MatchId, Ali, Ayse, Now.AddMinutes(minutesFromNow), 60, null, Now)));
+            CodeOf(() => SwapSession.Propose(MatchId, Ali, Ayse, Now.AddMinutes(minutesFromNow), 60, null, Now)));
 
     [Theory]
     [InlineData(30, true)]
@@ -199,30 +188,14 @@ public class SwapSessionTests
     }
 
     [Fact]
-    public void An_in_person_meeting_is_reported_afterwards_and_waits_for_the_other_user()
+    public void A_completion_mark_is_disputed_by_cancelling_the_session_with_a_reason()
     {
-        var session = SwapSession.ReportInPerson(MatchId, Ali, Ayse, Now);
+        var session = HeldSessions.MarkedCompleted(MatchId, Ali, Ayse, Now);
 
-        Assert.Equal(SessionMode.InPerson, session.Mode);
-        Assert.Equal(SwapSessionStatus.CompletionPending, session.Status);
-        Assert.Null(session.ScheduledAt);
-        Assert.Null(session.DurationMinutes);
-        Assert.Equal(Ali, session.CompletionMarkedByUserId);
-        Assert.Equal(Now.AddHours(72), session.CompletionConfirmDeadline);
-
-        session.ConfirmCompleted(Ayse, Now.AddHours(1));
-        Assert.Equal(SwapSessionStatus.Completed, session.Status);
-    }
-
-    [Fact]
-    public void A_reported_meeting_is_disputed_by_cancelling_it_with_a_reason()
-    {
-        var session = SwapSession.ReportInPerson(MatchId, Ali, Ayse, Now);
-
-        session.Cancel(Ayse, "  Böyle bir buluşma olmadı.  ", Now.AddHours(1));
+        session.Cancel(Ayse, "  Böyle bir oturum olmadı.  ", Now.AddHours(1));
 
         Assert.Equal(SwapSessionStatus.Cancelled, session.Status);
-        Assert.Equal((Ayse, "Böyle bir buluşma olmadı."), (session.CancelledByUserId, session.CancelReason));
+        Assert.Equal((Ayse, "Böyle bir oturum olmadı."), (session.CancelledByUserId, session.CancelReason));
         Assert.Equal(SwapSessionStatus.Cancelled, session.StatusAt(Now.AddDays(10)));
     }
 
@@ -249,7 +222,7 @@ public class SwapSessionTests
     {
         var proposed = Proposed();
         var scheduled = Scheduled();
-        var pending = SwapSession.ReportInPerson(MatchId, Ali, Ayse, Now);
+        var pending = HeldSessions.MarkedCompleted(MatchId, Ali, Ayse, Now);
         var declined = Proposed();
         declined.Decline(Ayse, Now);
 
@@ -262,7 +235,7 @@ public class SwapSessionTests
         Assert.Equal(SwapSessionStatus.Cancelled, scheduled.Status);
         Assert.Null(scheduled.CancelledByUserId);
         Assert.Null(scheduled.CancelReason);
-        // A meeting that already took place can still be confirmed.
+        // A session that already took place can still be confirmed.
         Assert.Equal(SwapSessionStatus.CompletionPending, pending.Status);
         Assert.Equal(SwapSessionStatus.Declined, declined.Status);
     }
@@ -274,17 +247,6 @@ public class SwapSessionTests
 
         Assert.Equal(Start.AddMinutes(-10), session.CallOpensAt);
         Assert.Equal(Start.AddMinutes(60), session.CallClosesAt);
-    }
-
-    [Fact]
-    public void An_in_person_meeting_has_no_call()
-    {
-        var meeting = SwapSession.ReportInPerson(MatchId, Ali, Ayse, Now);
-
-        Assert.Null(meeting.CallOpensAt);
-        Assert.Null(meeting.CallClosesAt);
-        Assert.False(meeting.IsCallOpenAt(Now));
-        Assert.Equal(SessionErrors.InvalidStateCode, CodeOf(() => meeting.EnsureCanJoinCall(Ali, Now)));
     }
 
     [Theory]

@@ -82,7 +82,7 @@ public class ProfileHandlerTests
         var profile = Profile.CreateEmpty(_userId, _clock.GetUtcNow());
         if (complete)
         {
-            profile.Update("Ayşe", "Gitar", "34", acceptsOnline: true, acceptsInPerson: true, _clock.GetUtcNow());
+            profile.Update("Ayşe", "Gitar", "34", _clock.GetUtcNow());
         }
 
         _profiles.Add(profile);
@@ -96,8 +96,8 @@ public class ProfileHandlerTests
         return key;
     }
 
-    private UpdateOwnProfileCommand UpdateCommand(string? city = "34", bool acceptsInPerson = true) =>
-        new(_userId, "Ayşe Yılmaz", "Gitar çalıyorum.", city, AcceptsOnline: true, acceptsInPerson);
+    private UpdateOwnProfileCommand UpdateCommand(string? city = "34") =>
+        new(_userId, "Ayşe Yılmaz", "Gitar çalıyorum.", city);
 
     [Fact]
     public async Task Registration_event_creates_a_blank_profile()
@@ -138,26 +138,22 @@ public class ProfileHandlerTests
     }
 
     [Theory]
-    [InlineData("A", "34", true, true, nameof(UpdateOwnProfileCommand.DisplayName))]
-    [InlineData("Ayşe", "99", true, false, nameof(UpdateOwnProfileCommand.City))]
-    [InlineData("Ayşe", null, true, true, nameof(UpdateOwnProfileCommand.City))]
-    [InlineData("Ayşe", null, false, false, nameof(UpdateOwnProfileCommand.AcceptsOnline))]
+    [InlineData("A", "34", nameof(UpdateOwnProfileCommand.DisplayName))]
+    [InlineData("Ayşe", "99", nameof(UpdateOwnProfileCommand.City))]
     public void Update_validator_rejects_invalid_fields(
         string displayName,
         string? city,
-        bool acceptsOnline,
-        bool acceptsInPerson,
         string field)
     {
         var result = new UpdateOwnProfileCommandValidator()
-            .Validate(new UpdateOwnProfileCommand(_userId, displayName, null, city, acceptsOnline, acceptsInPerson));
+            .Validate(new UpdateOwnProfileCommand(_userId, displayName, null, city));
 
         Assert.Contains(result.Errors, error => error.PropertyName == field);
     }
 
     [Fact]
-    public void Update_validator_accepts_an_online_only_profile_without_a_city() =>
-        Assert.True(new UpdateOwnProfileCommandValidator().Validate(UpdateCommand(city: null, acceptsInPerson: false)).IsValid);
+    public void Update_validator_accepts_a_profile_without_a_city() =>
+        Assert.True(new UpdateOwnProfileCommandValidator().Validate(UpdateCommand(city: null)).IsValid);
 
     [Theory]
     [InlineData(true, "Ayşe")]

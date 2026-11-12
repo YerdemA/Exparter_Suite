@@ -20,19 +20,12 @@ public enum Compatibility
     Mutual,
 }
 
-public enum SwapMode
-{
-    Online,
-    InPerson,
-}
-
 /// <param name="Search">Already folded with <see cref="SearchText.Fold"/>; null to list suggestions.</param>
 public sealed record DiscoveryCriteria(
     Guid ViewerId,
     Guid? SkillId,
     Guid? CategoryId,
     string? City,
-    SwapMode? Mode,
     string? Search,
     int Offset,
     int Limit);
@@ -45,8 +38,6 @@ public sealed record DiscoveredUser(
     string? DisplayName,
     string? AvatarKey,
     string? City,
-    bool AcceptsOnline,
-    bool AcceptsInPerson,
     Compatibility Compatibility,
     RatingSummaryDto Rating,
     IReadOnlyList<DiscoveredSkill> OfferedSkills,
@@ -97,19 +88,23 @@ public sealed record DiscoveryUserSkillDto(SkillRefDto Skill, SkillLevel Level);
 public sealed record DiscoveryUserDto(
     UserSummaryDto User,
     string? City,
-    bool AcceptsOnline,
-    bool AcceptsInPerson,
     Compatibility Compatibility,
     RatingSummaryDto Rating,
     IReadOnlyList<DiscoveryUserSkillDto> OfferedSkills,
-    IReadOnlyList<DiscoveryUserSkillDto> WantedSkills);
+    IReadOnlyList<DiscoveryUserSkillDto> WantedSkills)
+{
+    // App versions up to 1.0.0+8 cannot read this without the two swap preferences they
+    // used to show. Remove once those versions are no longer in use.
+    public bool AcceptsOnline => true;
+
+    public bool AcceptsInPerson => false;
+}
 
 public sealed record DiscoverUsersQuery(
     Guid ViewerId,
     Guid? SkillId,
     Guid? CategoryId,
     string? City,
-    SwapMode? Mode,
     string? Search,
     string? Cursor,
     int? Limit) : IQuery<CursorPage<DiscoveryUserDto>>;
@@ -127,7 +122,6 @@ public sealed partial class DiscoverUsersQueryValidator : AbstractValidator<Disc
         RuleFor(x => x.City)
             .Must(city => city is null || CityCode().IsMatch(city))
             .WithMessage("The city must be a plate code from 01 to 81.");
-        RuleFor(x => x.Mode).IsInEnum();
         RuleFor(x => x.Cursor)
             .Must(cursor => cursor is null || DiscoveryCursor.TryDecode(cursor, out _))
             .WithMessage("The cursor is not one returned by this endpoint.");
@@ -185,7 +179,7 @@ public sealed class DiscoverUsersQueryHandler(IDiscoveryReadModel readModel, IOb
 
         // One more than asked for: its presence says whether there is a next page.
         var users = await readModel.FindAsync(
-            new DiscoveryCriteria(query.ViewerId, query.SkillId, query.CategoryId, query.City, query.Mode, search, offset, limit + 1),
+            new DiscoveryCriteria(query.ViewerId, query.SkillId, query.CategoryId, query.City, search, offset, limit + 1),
             cancellationToken);
 
         var items = users.Take(limit).Select(ToDto).ToList();
@@ -201,8 +195,6 @@ public sealed class DiscoverUsersQueryHandler(IDiscoveryReadModel readModel, IOb
                 user.AvatarKey is null ? null : storage.CreateDownloadUrl(user.AvatarKey, AvatarUrlLifetime),
                 IsDeleted: false),
             user.City,
-            user.AcceptsOnline,
-            user.AcceptsInPerson,
             user.Compatibility,
             user.Rating,
             user.OfferedSkills.Select(ToDto).ToList(),

@@ -28,14 +28,14 @@ public class DiscoveryHandlerTests
     private DiscoverUsersQueryHandler Handler => new(_readModel, _storage);
 
     private DiscoverUsersQuery Query(string? search = null, string? cursor = null, int? limit = null, string? city = null) =>
-        new(_viewerId, null, null, city, null, search, cursor, limit);
+        new(_viewerId, null, null, city, search, cursor, limit);
 
     private void AddUsers(int count)
     {
         for (var index = 0; index < count; index++)
         {
             _readModel.Ranked.Add(new DiscoveredUser(
-                Guid.NewGuid(), $"user{index}", $"User {index}", null, "34", true, false, Compatibility.None, RatingSummaryDto.None, [], []));
+                Guid.NewGuid(), $"user{index}", $"User {index}", null, "34", Compatibility.None, RatingSummaryDto.None, [], []));
         }
     }
 
@@ -49,8 +49,6 @@ public class DiscoveryHandlerTests
             "Deniz",
             "avatars/x/1.jpg",
             "35",
-            AcceptsOnline: true,
-            AcceptsInPerson: true,
             Compatibility.Mutual,
             new RatingSummaryDto(4, 9.25),
             [new DiscoveredSkill(skillId, "Gitar", SkillLevel.Advanced)],

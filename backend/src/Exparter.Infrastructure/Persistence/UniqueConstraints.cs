@@ -19,9 +19,6 @@ internal static class UniqueConstraints
     public const string ConversationPerPair = "ix_conversations_pair";
     public const string MessagePerClientId = "ix_messages_client_id";
 
-    // Also over the pair in either order; created with SQL by the LimitInPersonMeetingsPerPair migration.
-    public const string InPersonMeetingPerPair = "ix_swap_sessions_in_person_pair";
-
     public const string ReviewPerPair = "ix_reviews_reviewer_id_reviewee_id";
 
     public const string DevicePerToken = "ix_devices_fcm_token";
@@ -39,7 +36,6 @@ internal static class UniqueConstraints
         OpenMatchPerPair => AppException.Conflict("match_already_exists", "The two users already have a match that has not ended."),
         // Both mean the same request arrived twice at once; the client's retry finds what the first one stored.
         ConversationPerPair or MessagePerClientId or DevicePerToken => AppException.Conflict("concurrent_update", "The resource was changed by another request."),
-        InPersonMeetingPerPair => SessionConflicts.InPersonAlreadyReported(),
         ReviewPerPair => ReviewConflicts.AlreadyExists(),
         BlockPerPair => AppException.Conflict("already_blocked", "The user is already blocked."),
         OpenReportPerTarget => AppException.Conflict("report_already_open", "This was already reported and is waiting to be reviewed."),

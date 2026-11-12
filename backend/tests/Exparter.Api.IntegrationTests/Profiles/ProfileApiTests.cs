@@ -14,8 +14,6 @@ public class ProfileApiTests(ApiFixture fixture)
         displayName = "Ayşe Yılmaz",
         bio = "Gitar çalıyorum.",
         city = "34",
-        acceptsOnline = true,
-        acceptsInPerson = true,
     };
 
     [Fact]
@@ -44,8 +42,24 @@ public class ProfileApiTests(ApiFixture fixture)
         Assert.Equal("Ayşe Yılmaz", profile.GetProperty("displayName").GetString());
         Assert.Equal("Gitar çalıyorum.", profile.GetProperty("bio").GetString());
         Assert.Equal("34", profile.GetProperty("city").GetString());
-        Assert.True(profile.GetProperty("acceptsInPerson").GetBoolean());
         Assert.True(profile.GetProperty("isComplete").GetBoolean());
+    }
+
+    [Fact]
+    public async Task An_app_version_that_still_knows_swap_preferences_can_save_and_read_the_profile()
+    {
+        var session = await TestSession.RegisterAsync(_client);
+
+        var response = await session.SendAsync(
+            HttpMethod.Put,
+            "/api/v1/me/profile",
+            new { displayName = "Ayşe Yılmaz", acceptsOnline = false, acceptsInPerson = true });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var profile = await session.GetJsonAsync("/api/v1/me/profile");
+        Assert.True(profile.GetProperty("isComplete").GetBoolean());
+        Assert.True(profile.GetProperty("acceptsOnline").GetBoolean());
+        Assert.False(profile.GetProperty("acceptsInPerson").GetBoolean());
     }
 
     [Fact]
@@ -56,11 +70,11 @@ public class ProfileApiTests(ApiFixture fixture)
         var response = await session.SendAsync(
             HttpMethod.Put,
             "/api/v1/me/profile",
-            new { displayName = "A", city = "99", acceptsOnline = false, acceptsInPerson = false });
+            new { displayName = "A", city = "99" });
 
         var problem = await ProblemAssert.IsAsync(response, HttpStatusCode.BadRequest, "validation_failed");
         Assert.Equal(
-            ["acceptsOnline", "city", "displayName"],
+            ["city", "displayName"],
             problem.GetProperty("errors").EnumerateObject().Select(property => property.Name).Order());
     }
 

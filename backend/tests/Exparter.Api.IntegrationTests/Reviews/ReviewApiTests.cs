@@ -32,10 +32,10 @@ public class ReviewApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         return $"/api/v1/matches/{match.GetProperty("id").GetGuid()}";
     }
 
-    /// <summary>The two users meet in person and both say so.</summary>
-    private static async Task<Guid> CompleteSessionAsync(TestSession first, TestSession second, string matchPath)
+    /// <summary>The two users hold a session and both call it completed.</summary>
+    private async Task<Guid> CompleteSessionAsync(TestSession first, TestSession second, string matchPath)
     {
-        var reported = await OkAsync(PostAsync(first, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
+        var reported = await first.MarkSessionCompletedAsync(fixture, second, matchPath);
         var sessionId = reported.GetProperty("id").GetGuid();
         await OkAsync(PostAsync(second, $"/api/v1/sessions/{sessionId}/completion/confirm"));
         return sessionId;
@@ -119,9 +119,9 @@ public class ReviewApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         var ayse = await TestSession.RegisterVisibleAsync(_client, fixture);
         var matchPath = await MatchAsync(ali, ayse);
 
-        // A match alone is not enough, and neither is a meeting the other side has not confirmed.
+        // A match alone is not enough, and neither is a session the other side has not confirmed.
         await ProblemAssert.IsAsync(await ReviewAsync(ali, ayse), HttpStatusCode.Conflict, "session_not_completed");
-        await OkAsync(PostAsync(ali, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
+        await ali.MarkSessionCompletedAsync(fixture, ayse, matchPath);
         await ProblemAssert.IsAsync(await ReviewAsync(ayse, ali), HttpStatusCode.Conflict, "session_not_completed");
         Assert.Equal((false, "NoCompletedSession"), await EligibilityAsync(ali, ayse));
         Assert.Equal((false, "Self"), await EligibilityAsync(ali, ali));
@@ -165,7 +165,7 @@ public class ReviewApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
             await OkAsync(user.SendAsync(
                 HttpMethod.Put,
                 "/api/v1/me/profile",
-                new { displayName = "Test Kullanıcı", city, acceptsOnline = true, acceptsInPerson = true }));
+                new { displayName = "Test Kullanıcı", city }));
         }
 
         var listed = await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}");

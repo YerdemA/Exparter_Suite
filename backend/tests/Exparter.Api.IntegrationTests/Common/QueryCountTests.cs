@@ -101,8 +101,8 @@ public class QueryCountTests(QueryCountingFixture fixture) : IClassFixture<Query
         await OkAsync(
             PostAsync(partner, $"/api/v1/conversations/{match.GetProperty("conversationId").GetGuid()}/messages", new { body = "Merhaba" }),
             HttpStatusCode.Created);
-        var meeting = await OkAsync(PostAsync(partner, $"{matchPath}/sessions/in-person"), HttpStatusCode.Created);
-        await OkAsync(PostAsync(viewer, $"/api/v1/sessions/{meeting.GetProperty("id").GetGuid()}/completion/confirm"));
+        var held = await partner.MarkSessionCompletedAsync(fixture, viewer, matchPath);
+        await OkAsync(PostAsync(viewer, $"/api/v1/sessions/{held.GetProperty("id").GetGuid()}/completion/confirm"));
         await OkAsync(
             PostAsync(partner, $"{matchPath}/sessions", new { scheduledAt = DateTimeOffset.UtcNow.AddDays(3), durationMinutes = 60 }),
             HttpStatusCode.Created);

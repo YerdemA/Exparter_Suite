@@ -4,16 +4,8 @@ namespace Exparter.Domain.Profiles;
 
 public static class ProfileErrors
 {
-    public const string SwapModeRequiredCode = "swap_mode_required";
-    public const string CityRequiredCode = "city_required";
     public const string InvalidCityCode = "invalid_city";
     public const string InvalidDisplayNameCode = "invalid_display_name";
-
-    public static DomainException SwapModeRequired() =>
-        new(SwapModeRequiredCode, "At least one of online and in-person must be accepted.");
-
-    public static DomainException CityRequired() =>
-        new(CityRequiredCode, "A city is required when in-person swaps are accepted.");
 
     public static DomainException InvalidCity() =>
         new(InvalidCityCode, "The city code is not one of the known cities.");
@@ -40,8 +32,6 @@ public sealed class Profile
     public string? Bio { get; private set; }
     public string? AvatarKey { get; private set; }
     public string? City { get; private set; }
-    public bool AcceptsOnline { get; private set; }
-    public bool AcceptsInPerson { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
@@ -49,7 +39,7 @@ public sealed class Profile
     /// Whether the profile details are filled in. It is one of the conditions for being
     /// shown to other users and interacting with them.
     /// </summary>
-    public bool IsComplete => DisplayName is not null && (AcceptsOnline || AcceptsInPerson);
+    public bool IsComplete => DisplayName is not null;
 
     /// <summary>The blank profile every account starts with.</summary>
     public static Profile CreateEmpty(Guid userId, DateTimeOffset now) =>
@@ -59,8 +49,6 @@ public sealed class Profile
         string displayName,
         string? bio,
         string? city,
-        bool acceptsOnline,
-        bool acceptsInPerson,
         DateTimeOffset now)
     {
         var name = displayName.Trim();
@@ -69,26 +57,14 @@ public sealed class Profile
             throw ProfileErrors.InvalidDisplayName();
         }
 
-        if (!acceptsOnline && !acceptsInPerson)
-        {
-            throw ProfileErrors.SwapModeRequired();
-        }
-
         if (city is not null && !Cities.IsValidCode(city))
         {
             throw ProfileErrors.InvalidCity();
         }
 
-        if (acceptsInPerson && city is null)
-        {
-            throw ProfileErrors.CityRequired();
-        }
-
         DisplayName = name;
         Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
         City = city;
-        AcceptsOnline = acceptsOnline;
-        AcceptsInPerson = acceptsInPerson;
         UpdatedAt = now;
     }
 

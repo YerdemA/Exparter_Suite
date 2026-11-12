@@ -47,9 +47,7 @@ public sealed record UpdateOwnProfileCommand(
     Guid UserId,
     string DisplayName,
     string? Bio,
-    string? City,
-    bool AcceptsOnline,
-    bool AcceptsInPerson) : ICommand<ProfileDto>;
+    string? City) : ICommand<ProfileDto>;
 
 public sealed class UpdateOwnProfileCommandValidator : AbstractValidator<UpdateOwnProfileCommand>
 {
@@ -63,13 +61,6 @@ public sealed class UpdateOwnProfileCommandValidator : AbstractValidator<UpdateO
         RuleFor(x => x.City)
             .Must(city => city is null || Cities.IsValidCode(city))
             .WithMessage("The city must be a plate code from 01 to 81.");
-        RuleFor(x => x.City)
-            .NotNull()
-            .When(x => x.AcceptsInPerson)
-            .WithMessage("A city is required when in-person swaps are accepted.");
-        RuleFor(x => x.AcceptsOnline)
-            .Must((command, acceptsOnline) => acceptsOnline || command.AcceptsInPerson)
-            .WithMessage("At least one of online and in-person must be accepted.");
     }
 }
 
@@ -89,8 +80,6 @@ public sealed class UpdateOwnProfileCommandHandler(
             command.DisplayName,
             command.Bio,
             command.City,
-            command.AcceptsOnline,
-            command.AcceptsInPerson,
             timeProvider.GetUtcNow());
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return profile.ToDto(storage, await reviews.GetRatingAsync(profile.UserId, cancellationToken));
@@ -128,8 +117,6 @@ public sealed class GetUserProfileQueryHandler(
             profile.Bio,
             Avatars.UrlOf(profile, storage),
             profile.City,
-            profile.AcceptsOnline,
-            profile.AcceptsInPerson,
             await reviews.GetRatingAsync(profile.UserId, cancellationToken));
     }
 }

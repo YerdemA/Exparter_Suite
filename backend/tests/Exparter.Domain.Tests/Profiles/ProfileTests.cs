@@ -24,7 +24,7 @@ public class ProfileTests
     {
         var profile = NewProfile();
 
-        profile.Update("  Ayşe Yılmaz ", "  Gitar çalıyorum. ", "34", acceptsOnline: true, acceptsInPerson: true, Now.AddMinutes(1));
+        profile.Update("  Ayşe Yılmaz ", "  Gitar çalıyorum. ", "34", Now.AddMinutes(1));
 
         Assert.Equal("Ayşe Yılmaz", profile.DisplayName);
         Assert.Equal("Gitar çalıyorum.", profile.Bio);
@@ -38,29 +38,25 @@ public class ProfileTests
     {
         var profile = NewProfile();
 
-        profile.Update("Ayşe", "   ", null, acceptsOnline: true, acceptsInPerson: false, Now);
+        profile.Update("Ayşe", "   ", null, Now);
 
         Assert.Null(profile.Bio);
     }
 
     [Theory]
-    [InlineData("A", null, true, false, ProfileErrors.InvalidDisplayNameCode)]
-    [InlineData("   ", null, true, false, ProfileErrors.InvalidDisplayNameCode)]
-    [InlineData("Ayşe", null, false, false, ProfileErrors.SwapModeRequiredCode)]
-    [InlineData("Ayşe", null, false, true, ProfileErrors.CityRequiredCode)]
-    [InlineData("Ayşe", "82", true, false, ProfileErrors.InvalidCityCode)]
-    [InlineData("Ayşe", "1", true, false, ProfileErrors.InvalidCityCode)]
+    [InlineData("A", null, ProfileErrors.InvalidDisplayNameCode)]
+    [InlineData("   ", null, ProfileErrors.InvalidDisplayNameCode)]
+    [InlineData("Ayşe", "82", ProfileErrors.InvalidCityCode)]
+    [InlineData("Ayşe", "1", ProfileErrors.InvalidCityCode)]
     public void Update_rejects_invalid_input_and_changes_nothing(
         string displayName,
         string? city,
-        bool acceptsOnline,
-        bool acceptsInPerson,
         string expectedCode)
     {
         var profile = NewProfile();
 
         var exception = Assert.Throws<DomainException>(
-            () => profile.Update(displayName, null, city, acceptsOnline, acceptsInPerson, Now));
+            () => profile.Update(displayName, null, city, Now));
 
         Assert.Equal(expectedCode, exception.Code);
         Assert.False(profile.IsComplete);
@@ -71,10 +67,10 @@ public class ProfileTests
     {
         var profile = NewProfile();
 
-        profile.Update(new string('a', 50), null, null, acceptsOnline: true, acceptsInPerson: false, Now);
+        profile.Update(new string('a', 50), null, null, Now);
 
         Assert.Throws<DomainException>(
-            () => profile.Update(new string('a', 51), null, null, acceptsOnline: true, acceptsInPerson: false, Now));
+            () => profile.Update(new string('a', 51), null, null, Now));
     }
 
     [Fact]
