@@ -53,3 +53,9 @@ mobile/lib/l10n/app_localizations*.dart
 
 # Marketing material made outside the app (store graphics, video, social media); kept locally.
 /marketing/
+
+# AI assistant context, kept locally only (docs/roadmap.md, Kapanış)
+CLAUDE.md
+PRODUCT.md
+DESIGN.md
+docs/PROJECT_BRIEF.md
