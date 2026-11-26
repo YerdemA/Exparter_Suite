@@ -163,12 +163,9 @@ public class DiscoveryApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
 
         var bySkill = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&skillId={guitarId}"));
         var byCategory = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&categoryId={categoryId}"));
-        // An app version that still has the swap mode filter sends it; it narrows nothing.
-        var withOldFilter = Items(await viewer.GetJsonAsync($"/api/v1/discovery/users?city={city}&mode=InPerson"));
 
         Assert.Equal(guitarist.UserId, IdOf(Assert.Single(bySkill)));
         Assert.Equal(guitarist.UserId, IdOf(Assert.Single(byCategory)));
-        Assert.Equal(2, withOldFilter.Count);
     }
 
     [Fact]

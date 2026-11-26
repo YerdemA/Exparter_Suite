@@ -46,23 +46,6 @@ public class ProfileApiTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task An_app_version_that_still_knows_swap_preferences_can_save_and_read_the_profile()
-    {
-        var session = await TestSession.RegisterAsync(_client);
-
-        var response = await session.SendAsync(
-            HttpMethod.Put,
-            "/api/v1/me/profile",
-            new { displayName = "Ayşe Yılmaz", acceptsOnline = false, acceptsInPerson = true });
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var profile = await session.GetJsonAsync("/api/v1/me/profile");
-        Assert.True(profile.GetProperty("isComplete").GetBoolean());
-        Assert.True(profile.GetProperty("acceptsOnline").GetBoolean());
-        Assert.False(profile.GetProperty("acceptsInPerson").GetBoolean());
-    }
-
-    [Fact]
     public async Task Updating_the_profile_reports_validation_errors_per_field()
     {
         var session = await TestSession.RegisterAsync(_client);

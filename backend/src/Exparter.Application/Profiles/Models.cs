@@ -23,14 +23,7 @@ public sealed record ProfileDto(
     bool IsComplete,
     RatingSummaryDto Rating,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt)
-{
-    // App versions up to 1.0.0+8 cannot read this without the two swap preferences they
-    // used to show. Remove once those versions are no longer in use.
-    public bool AcceptsOnline => true;
-
-    public bool AcceptsInPerson => false;
-}
+    DateTimeOffset UpdatedAt);
 
 /// <param name="DisplayName">Null if the user has not filled in their profile yet.</param>
 public sealed record PublicProfileDto(
@@ -40,14 +33,7 @@ public sealed record PublicProfileDto(
     string? Bio,
     Uri? AvatarUrl,
     string? City,
-    RatingSummaryDto Rating)
-{
-    // App versions up to 1.0.0+8 cannot read this without the two swap preferences they
-    // used to show. Remove once those versions are no longer in use.
-    public bool AcceptsOnline => true;
-
-    public bool AcceptsInPerson => false;
-}
+    RatingSummaryDto Rating);
 
 public sealed record AvatarUploadUrlDto(Uri UploadUrl, string ObjectKey, DateTimeOffset ExpiresAt);
 

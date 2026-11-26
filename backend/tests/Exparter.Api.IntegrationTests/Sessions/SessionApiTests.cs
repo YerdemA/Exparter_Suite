@@ -90,7 +90,6 @@ public class SessionApiTests(ApiFixture fixture) : IClassFixture<ApiFixture>
         var proposed = await OkAsync(ProposeAsync(ali, matchPath, duration: 90, note: "  https://meet.example/abc  "), HttpStatusCode.Created);
 
         Assert.Equal("Proposed", StatusOf(proposed));
-        Assert.Equal("Online", proposed.GetProperty("mode").GetString());
         Assert.Equal(90, proposed.GetProperty("durationMinutes").GetInt32());
         Assert.Equal("https://meet.example/abc", proposed.GetProperty("note").GetString());
         Assert.Equal(ali.UserId, proposed.GetProperty("proposedByUserId").GetGuid());

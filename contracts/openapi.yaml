@@ -1999,14 +1999,6 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CityCode'
-        acceptsOnline:
-          type: boolean
-          deprecated: true
-          description: Always true. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
-        acceptsInPerson:
-          type: boolean
-          deprecated: true
-          description: Always false. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
         avatarUrl:
           type: string
           format: uri
@@ -2039,14 +2031,6 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CityCode'
-        acceptsOnline:
-          type: boolean
-          deprecated: true
-          description: Always true. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
-        acceptsInPerson:
-          type: boolean
-          deprecated: true
-          description: Always false. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
         rating: { $ref: '#/components/schemas/RatingSummary' }
 
     AvatarUploadUrlRequest:
@@ -2183,14 +2167,6 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CityCode'
-        acceptsOnline:
-          type: boolean
-          deprecated: true
-          description: Always true. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
-        acceptsInPerson:
-          type: boolean
-          deprecated: true
-          description: Always false. Swap preferences no longer exist; sent only for app versions up to 1.0.0+8.
         compatibility: { $ref: '#/components/schemas/Compatibility' }
         rating: { $ref: '#/components/schemas/RatingSummary' }
         offeredSkills:
@@ -2436,11 +2412,6 @@ components:
         proposedByUserId: { type: string, format: uuid }
         scheduledAt: { type: string, format: date-time }
         durationMinutes: { type: integer, format: int32 }
-        mode:
-          type: string
-          enum: [Online]
-          deprecated: true
-          description: Always `Online`. Every session is online; sent only for app versions up to 1.0.0+8.
         note: { type: string, nullable: true }
         status: { $ref: '#/components/schemas/SwapSessionStatus' }
         completionMarkedByUserId: { type: string, format: uuid, nullable: true }
