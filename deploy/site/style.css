@@ -503,6 +503,15 @@ h3 {
   justify-content: center;
 }
 
+/* The farewell note runs to several paragraphs; the CTA spacing is meant for one. */
+.cta.farewell p {
+  margin-bottom: 1rem;
+}
+
+.cta.farewell .actions {
+  margin-top: 2rem;
+}
+
 /* ------------------------------------------------------------ Footer */
 
 .site-footer {

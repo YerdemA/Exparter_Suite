@@ -6,7 +6,11 @@ Someone who plays the guitar and wants to learn English finds someone who teache
 
 Exparter was built end to end as a production-grade product: an API-first .NET backend, a Flutter Android app, a self-hosted deployment with CI/CD, and a closed beta on Google Play with real users. The interface is in Turkish; code, comments and commits are in English.
 
-> **Status:** showcase project. The Android app ran a closed beta on Google Play (Nov 2026) against a live backend. Development is complete for the scope below; the remaining ideas are listed under [Roadmap](#roadmap-not-built).
+> **Status:** wound down; kept as a showcase project ([why](#why-it-was-wound-down)). The Android app ran a closed beta on Google Play (Nov 2026) against a live backend. Development is complete for the scope below; the remaining ideas are listed under [Roadmap](#roadmap-not-built).
+
+## Why it was wound down
+
+A skill swap only works when there are enough people on the other side. For someone who wants to trade guitar lessons for English to find a match, the app needs an active community with a wide mix of cultures, tastes and skills. Building that audience from zero is very hard; the realistic way in is through advertising and sponsorship deals, and there was no budget for either. So instead of keeping an empty marketplace running, I wrapped Exparter up as a finished showcase: the product was built, shipped and tested with real users, and the servers are being shut down.
 
 | Discover | Profile | Swap request | Chat | Sessions | Reviews |
 |---|---|---|---|---|---|
