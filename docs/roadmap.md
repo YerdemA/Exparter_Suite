@@ -390,13 +390,8 @@ Plan ve sıra kullanıcı tarafından onaylandı (2026-11-04). Sıranın mantı�
 | 8 | Gönderi akışı | 8A metin + görsel, 8B video; beğeni, yorum, şikâyet | Başlamadı |
 | 9 | Google ile giriş | Brief soru 5; Apple girişi yalnızca iOS gelirse | Başlamadı |
 | 10 | Çoklu dil (İngilizce) | Uygulama metinleri, kullanıcının diline göre e-posta ve bildirimler, katalog çevirileri | Başlamadı |
-<<<<<<< HEAD
-| 11 | Yüz yüze buluşmanın kaldırılması | Yüz yüze buluşma bildirimi, profildeki yüz yüze takas tercihi, keşfetteki mod süzgeci ve tercih uyumu; sözleşme, backend, mobil, belgeler ve brief | İlk adım `main`'de (2026-11-12); ikinci adım eski sürümler çekilince |
+| 11 | Yüz yüze buluşmanın kaldırılması | Yüz yüze buluşma bildirimi, profildeki yüz yüze takas tercihi, keşfetteki mod süzgeci ve tercih uyumu; sözleşme, backend, mobil, belgeler ve brief | İlk adım `main`'de (2026-11-12); ikinci adım `main`'de (2026-11-26) |
 | 12 | Vibe etiketleri | Kullanıcı 20–25 etiketlik sabit listeden (Meraklı, Sıcakkanlı, Zeki, Eğlenceli, Miskin…) kendine uyan en fazla 3 etiketi profiline ekler; etiketler keşfetteki eşleşme uygunluğunu etkiler | Yapılmayacak (kullanıcı kararı, 2026-11-26); plan aşağıda duruyor |
-=======
-| 11 | Yüz yüze buluşmanın kaldırılması | Yüz yüze buluşma bildirimi, profildeki yüz yüze takas tercihi, keşfetteki mod süzgeci ve tercih uyumu; sözleşme, backend, mobil, belgeler ve brief | İlk adım `main`'de (2026-11-12); ikinci adım branch'te (2026-11-26), 1.0.0 (9) yayına çıkınca merge edilir |
-| 12 | Vibe etiketleri | Kullanıcı 20–25 etiketlik sabit listeden (Meraklı, Sıcakkanlı, Zeki, Eğlenceli, Miskin…) kendine uyan en fazla 3 etiketi profiline ekler; etiketler keşfetteki eşleşme uygunluğunu etkiler | Plan onaylandı (2026-11-12), başlanmadı |
->>>>>>> phase-8/11-remove-in-person-2
 
 Dilim 11 ve 12 sonradan eklendi ve sıradaki dilimlerden (3–10) önce yapılır (kullanıcı kararı, 2026-11-12). Uygulama yalnızca çevrimiçi takas içindir; yüz yüze buluşmayla ilgili hiçbir şey kalmaz.
 
