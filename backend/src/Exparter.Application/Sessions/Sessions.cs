@@ -116,10 +116,6 @@ public sealed record SwapSessionDto(
     DateTimeOffset CallOpensAt,
     DateTimeOffset CallClosesAt)
 {
-    // App versions up to 1.0.0+8 cannot read a session without the mode they used to
-    // tell two kinds of session apart by. Remove once those versions are no longer in use.
-    public string Mode => "Online";
-
     /// <summary>Describes the session as it stands at <paramref name="now"/>, passed deadlines included.</summary>
     public static SwapSessionDto From(SwapSession session, DateTimeOffset now)
     {

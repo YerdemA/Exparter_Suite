@@ -91,14 +91,7 @@ public sealed record DiscoveryUserDto(
     Compatibility Compatibility,
     RatingSummaryDto Rating,
     IReadOnlyList<DiscoveryUserSkillDto> OfferedSkills,
-    IReadOnlyList<DiscoveryUserSkillDto> WantedSkills)
-{
-    // App versions up to 1.0.0+8 cannot read this without the two swap preferences they
-    // used to show. Remove once those versions are no longer in use.
-    public bool AcceptsOnline => true;
-
-    public bool AcceptsInPerson => false;
-}
+    IReadOnlyList<DiscoveryUserSkillDto> WantedSkills);
 
 public sealed record DiscoverUsersQuery(
     Guid ViewerId,
