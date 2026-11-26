@@ -1,6 +1,6 @@
 # Yol Haritası
 
-Fazların ayrıntısı için `docs/PROJECT_BRIEF.md` Bölüm 9'a bak.
+Fazların ayrıntısı aşağıda.
 
 ## Faz durumu
 
@@ -22,7 +22,7 @@ Kullanıcı kararı (2026-11-26): proje yalnızca vitrin (CV) projesi olarak tam
 
 1. Bitirme: dilim 11'in ikinci adımı; 1.0.0 (9). Dilim 12 (vibe etiketleri) yapılmaz.
 2. Canlıda son deneme: iki telefonla baştan sona akış; demo videosu ve güncel ekran görüntüleri.
-3. Vitrin: İngilizce `README.md` (özellikler, mimari, teknoloji, testler, yapılmayan fikirler olarak dilim 3–10, 12, web istemcisi ve üyelik); Türkçe geliştirici rehberi `docs/development.md`. Repo herkese açılır; git geçmişi tarandı, gizli bilgi yok (2026-11-26).
+3. Vitrin: İngilizce `README.md` (özellikler, mimari, teknoloji, testler, yapılmayan fikirler olarak dilim 3–10, 12, web istemcisi ve üyelik); Türkçe geliştirici rehberi `docs/development.md`. Repo herkese açılır; git geçmişi tarandı, gizli bilgi yok (2026-11-26). README'de AI ile geliştirme süreci "How it was built" bölümünde anlatılır; `CLAUDE.md`, `docs/PROJECT_BRIEF.md`, `PRODUCT.md` ve `DESIGN.md` repodan çıkarıldı, yalnızca yerelde durur (`.gitignore`), git geçmişi olduğu gibi kalır; lisans "All rights reserved" (kullanıcı kararları, 2026-11-26).
 4. Kapatma: test kullanıcılarına bildirim ve verilerin silinmesi; Oracle sunucusu, R2, Brevo, Sentry, Firebase ve dağıtım secret'ları. Tanıtım sitesi ve alan adı kalır (statik barındırmaya taşınır). Uygulama şimdilik Play'de kapalı testte kalır.
 
 

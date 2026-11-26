@@ -5,7 +5,6 @@ Vitrin sayfası (İngilizce): [README.md](../README.md).
 Yetenek takası platformu. Kullanıcılar sunabildikleri ve öğrenmek istedikleri yetenekleri ekler, karşılıklı uyumlu kişilerle eşleşir, mesajlaşır, çevrimiçi oturumları uygulamanın içinden görüntülü görüşmeyle yapar ve birbirini değerlendirir.
 
 - Durum: Android uygulaması Google Play'de kapalı testte; backend canlıda (`api.exparter.app`). Faz durumu: [docs/roadmap.md](roadmap.md).
-- Tek referans belge: [docs/PROJECT_BRIEF.md](PROJECT_BRIEF.md). Çalışma kuralları: [CLAUDE.md](../CLAUDE.md).
 
 ## Yapı
 
@@ -17,7 +16,7 @@ Yetenek takası platformu. Kullanıcılar sunabildikleri ve öğrenmek istedikle
 | `deploy/` | Canlı ortam: Docker Compose, Caddy, LiveKit, yedek betiği, herkese açık sayfalar. |
 | `infra/` | Lokal servislerin ayarları (Garage, LiveKit). |
 | `scripts/` | Admin betikleri ve mağaza görüntüsü verisi. |
-| `docs/` | Brief, ADR'ler, domain modeli, ERD, API kuralları, dağıtım ve mağaza rehberleri. |
+| `docs/` | ADR'ler, domain modeli, ERD, API kuralları, dağıtım ve mağaza rehberleri. |
 | `web/` | Web istemcisi (Faz 7, henüz başlamadı). |
 
 ## Lokal çalıştırma

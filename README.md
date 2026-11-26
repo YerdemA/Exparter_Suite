@@ -79,6 +79,16 @@ Every significant decision is recorded as an ADR in [`docs/adr/`](docs/adr/): au
 - **~270 mobile tests:** widget and provider tests, plus an end-to-end integration test on an emulator against the real backend: sign-up, email verification, profile, skills, a swap request, a match and a completed session (the second user is driven through the API).
 - **Measured performance work:** an N+1 query counter in tests, and discovery p50 latency cut from 1354 ms to 270 ms on a 10,000-user dataset.
 
+## How it was built
+
+I built Exparter with an AI coding agent (Claude Code) doing most of the implementation, while I acted as product owner, architect and tester. The aim was to find out how far a disciplined, AI-assisted workflow can take a single developer toward a real, shipped product.
+
+- **Requirements first.** Before any code, I wrote a requirements document covering the product, the non-negotiable architecture, the stack and the delivery phases. Anything it left open was marked as an open question that only I could decide.
+- **Plan, approve, build.** Every phase and every slice started with a written plan that I reviewed and approved. Each one ended with a summary, an updated roadmap and my sign-off before it was merged.
+- **Decisions on record.** Product rules (who can interact with whom, match limits, review rules, what counts as a completed match) were my calls and are logged with dates in [`docs/domain/`](docs/domain/) and [`docs/roadmap.md`](docs/roadmap.md). Technical decisions are ADRs.
+- **Guardrails over trust.** The contract-first rule, a test for every command handler and endpoint, and CI on every push kept generated code honest. Nothing was merged with failing tests.
+- **Real-world verification.** I tried the slices in the running app on an emulator and on my own phone, and tested video calls and their encryption on two real devices. I set up the cloud, DNS, email, storage and store accounts, and ran the Google Play closed beta with real testers, whose feedback shaped later releases.
+
 ## Repository layout
 
 | Path | Contents |
@@ -87,7 +97,7 @@ Every significant decision is recorded as an ADR in [`docs/adr/`](docs/adr/): au
 | [`backend/`](backend/) | .NET solution: `Domain`, `Application`, `Infrastructure`, `Api` and three test projects |
 | [`mobile/`](mobile/) | Flutter app, feature-first (`data/`, `domain/`, `presentation/` per feature) |
 | [`deploy/`](deploy/) | Production Compose file, Caddyfile, LiveKit config, backup script, public website |
-| [`docs/`](docs/) | Project brief, ADRs, domain model, business rules, ERD, API conventions, deployment guide |
+| [`docs/`](docs/) | ADRs, domain model, business rules, ERD, API conventions, deployment guide |
 
 ## Running it locally
 
